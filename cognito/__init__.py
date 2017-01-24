@@ -17,7 +17,9 @@ class UserObj(object):
 
 class User(object):
 
-    def __init__(self,username=None,password=None,access_key=None,secret_key=None,extra_fields=[]):
+    def __init__(self,user_pool_id,client_id,username,password,access_key=None,secret_key=None,extra_fields=[]):
+        self.user_pool_id = user_pool_id
+        self.client_id = client_id
         self.username = username
         self.password = password
         self.id_token = None
@@ -33,7 +35,7 @@ class User(object):
         else:
             self.client = boto3.client('cognito-idp')
 
-    def authenticate(self,user_pool_id,client_id):
+    def authenticate(self):
         """
         Authenticate the user.
         :param user_pool_id: User Pool Id found in Cognito User Pool
@@ -43,8 +45,8 @@ class User(object):
         """
 
         tokens = self.client.admin_initiate_auth(
-            UserPoolId=user_pool_id,
-            ClientId=client_id,
+            UserPoolId=self.user_pool_id,
+            ClientId=self.client_id,
             # AuthFlow='USER_SRP_AUTH'|'REFRESH_TOKEN_AUTH'|'REFRESH_TOKEN'|'CUSTOM_AUTH'|'ADMIN_NO_SRP_AUTH',
             AuthFlow='ADMIN_NO_SRP_AUTH',
             AuthParameters={
@@ -61,14 +63,16 @@ class User(object):
     def update_profile(self):
         pass
 
-    def get_user(self,user_pool_id):
+    def get_user(self):
         """
         Get the user's details
         :param user_pool_id: The Cognito User Pool Id
         :return: UserObj object
         """
         return UserObj(self.username,
-                       self.client.admin_get_user(UserPoolId=user_pool_id).get('UserAttributes'))
+                       self.client.admin_get_user(
+                           UserPoolId=self.user_pool_id,
+                           Username=self.username).get('UserAttributes'))
 
     def initiate_change_password(self):
         pass
