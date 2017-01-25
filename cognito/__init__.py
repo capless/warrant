@@ -1,4 +1,5 @@
 import boto3
+from botocore.exceptions import ClientError
 import ast
 
 
@@ -75,7 +76,35 @@ class User(object):
                            Username=self.username).get('UserAttributes'))
 
     def initiate_change_password(self):
+        """
+        Message is sent via Verification method set in User Pool(email|phone)
+        that includes password reset link 
+        """
         pass
+
+    def send_verification(self):
+        self.client.get_user_attribute_verification_code(
+            AccessToken=self.access_token,
+            AttributeName='email'
+        )
+
+    def validate_verification(self, confirmation_code):
+        self.client.verify_user_attribute(
+            AccessToken=self.access_token,
+            AttributeName='email',
+            Code=confirmation_code
+        )
+
+    def renew_access_token(self):
+        refresh_response = self.client.admin_initiate_auth(
+            UserPoolId=self.user_pool_id,
+            ClientId=self.client_id,
+            AuthFlow='REFRESH_TOKEN',
+            AuthParameters={
+                'REFRESH_TOKEN': self.refresh_token
+            },
+        )
+        self.access_token = refresh_response['AuthenticationResult']['AccessToken']
 
     def initiate_forgot_password(self):
         pass
