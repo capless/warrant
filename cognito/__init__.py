@@ -66,7 +66,7 @@ class User(object):
         Updates User attributes
         """
         user_attrs = []
-        for k, v in kwags.items():
+        for k, v in kwargs.items():
             user_attrs.append(
                 {
                     'Name': k,
