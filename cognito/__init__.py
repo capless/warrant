@@ -61,8 +61,22 @@ class User(object):
         self.access_token = tokens['AuthenticationResult']['AccessToken']
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
-    def update_profile(self):
-        pass
+    def update_profile(self, **kwargs):
+        """
+        Updates User attributes
+        """
+        user_attrs = []
+        for k, v in kwags.items():
+            user_attrs.append(
+                {
+                    'Name': k,
+                    'Value': v
+                }
+            )
+        self.client.update_user_attributes(
+            UserAttributes=user_attrs,
+            AccessToken='string'
+        )
 
     def get_user(self):
         """
@@ -77,25 +91,41 @@ class User(object):
 
     def initiate_change_password(self):
         """
+        Resets user's password as an admin.
         Message is sent via Verification method set in User Pool(email|phone)
         that includes password reset link 
         """
-        pass
-
-    def send_verification(self):
-        self.client.get_user_attribute_verification_code(
-            AccessToken=self.access_token,
-            AttributeName='email'
+        self.client.admin_reset_user_password(
+            UserPoolId=self.user_pool_id,
+            Username=self.username
         )
 
-    def validate_verification(self, confirmation_code):
+    def send_verification(self, attribute='email'):
+        """
+        Sends the user an attribute verification code for the specified attribute name.
+        :param attribute: Attribute to confirm
+        """
+        self.client.get_user_attribute_verification_code(
+            AccessToken=self.access_token,
+            AttributeName=attribute
+        )
+
+    def validate_verification(self, confirmation_code, attribute='email'):
+        """
+        Verifies the specified user attributes in the user pool.
+        :param confirmation_code: Code sent to user upon intiating verification
+        :param attribute: Attribute to confirm 
+        """
         self.client.verify_user_attribute(
             AccessToken=self.access_token,
-            AttributeName='email',
+            AttributeName=attribute,
             Code=confirmation_code
         )
 
     def renew_access_token(self):
+        """
+        Sets a new access token on the User using the refresh token.
+        """
         refresh_response = self.client.admin_initiate_auth(
             UserPoolId=self.user_pool_id,
             ClientId=self.client_id,
@@ -107,11 +137,35 @@ class User(object):
         self.access_token = refresh_response['AuthenticationResult']['AccessToken']
 
     def initiate_forgot_password(self):
-        pass
+        """
+        Sends a verification code to the user to use to change their password.
+        """
+        self.client.forgot_password(
+            ClientId=self.client_id,
+            Username=self.username
+        )
 
-    def confirm_change_password(self):
-        pass
+    def confirm_forgot_password(self, confirmation_code, password):
+        """
+        Allows a user to enter a code provided when they reset their password 
+        to update their password.
+        :param confirmation_code: The confirmation code sent by a user's request 
+        to retrieve a forgotten password
+        :param password: New password
+        """
+        self.client.confirm_forgot_password(
+            ClientId=self.client_id,
+            Username=self.username,
+            ConfirmationCode=confirmation_code,
+            Password=password
+        )
 
-    def confirm_forgot_password(self):
-        pass
-
+    def change_password(self, previous_password, proposed_password):
+        """
+        Change the User password
+        """
+        self.client.change_password(
+            PreviousPassword=previous_password,
+            ProposedPassword=proposed_password,
+            AccessToken=self.access_token
+        )
