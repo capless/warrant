@@ -66,16 +66,14 @@ class User(object):
         Updates User attributes
         """
         user_attrs = []
-        for k, v in kwargs.items():
-            user_attrs.append(
-                {
-                    'Name': k,
-                    'Value': v
-                }
-            )
-        self.client.update_user_attributes(
+        user_attrs = [{'Name': key, 'Value': value} for key, value in kwargs.items()]
+        response = self.client.update_user_attributes(
             UserAttributes=user_attrs,
             AccessToken='string'
+        )
+        self._set_attribute(
+            response,
+            {attr['Name']: attr['Value'] for attr in user_attrs}
         )
 
     def get_user(self):
@@ -91,9 +89,10 @@ class User(object):
 
     def initiate_change_password(self):
         """
-        Resets user's password as an admin.
+        Resets user's password as an admin
         Message is sent via Verification method set in User Pool(email|phone)
         that includes password reset link 
+        WARNING: This invalidates User's current password
         """
         self.client.admin_reset_user_password(
             UserPoolId=self.user_pool_id,
@@ -134,7 +133,12 @@ class User(object):
                 'REFRESH_TOKEN': self.refresh_token
             },
         )
-        self.access_token = refresh_response['AuthenticationResult']['AccessToken']
+        self._set_attribute(
+            refresh_response,
+            {
+                'access_token': refresh_response['AuthenticationResult']['AccessToken']
+            }
+        )
 
     def initiate_forgot_password(self):
         """
@@ -153,19 +157,31 @@ class User(object):
         to retrieve a forgotten password
         :param password: New password
         """
-        self.client.confirm_forgot_password(
+        response = self.client.confirm_forgot_password(
             ClientId=self.client_id,
             Username=self.username,
             ConfirmationCode=confirmation_code,
             Password=password
         )
+        self._set_attribute(response, {'password': password})
 
     def change_password(self, previous_password, proposed_password):
         """
         Change the User password
         """
-        self.client.change_password(
+        response = self.client.change_password(
             PreviousPassword=previous_password,
             ProposedPassword=proposed_password,
             AccessToken=self.access_token
         )
+        self._set_attribute(response, {'password': password})
+
+    def _set_attribute(self, response, attribute_dict):
+        """
+        Set user attributes based on response code
+        :param response: HTTP response from Cognito
+        :attribute dict: Dictionary of attribute name and values
+        """
+        if response['HTTPStatusCode'] == 200:
+            for k, v in attribute_dict.items():
+                self.setattr(k, v)
