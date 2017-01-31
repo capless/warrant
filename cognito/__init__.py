@@ -18,7 +18,13 @@ class UserObj(object):
 
 class User(object):
 
-    def __init__(self,user_pool_id,client_id,username,password,access_key=None,secret_key=None,extra_fields=[]):
+    def __init__(
+            self, user_pool_id, client_id,
+            username=None, password=None,
+            access_key=None, secret_key=None,
+            extra_fields=[]):
+        if not ((username and password) or (access_key and secret_key)):
+            raise ValueError('Must have either username+password or access_key+secret_key')
         self.user_pool_id = user_pool_id
         self.client_id = client_id
         self.username = username
