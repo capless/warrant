@@ -18,9 +18,9 @@ class UserObj(object):
 
 class User(object):
 
-    def __init__(self,user_pool_id,client_id,username,password,access_key=None,secret_key=None,extra_fields=[]):
+    def __init__(self,username,password,app_id,user_pool_id=None,access_key=None,secret_key=None):
         self.user_pool_id = user_pool_id
-        self.client_id = client_id
+        self.app_id = app_id
         self.username = username
         self.password = password
         self.id_token = None
@@ -79,7 +79,6 @@ class User(object):
     def get_user(self):
         """
         Get the user's details
-        :param user_pool_id: The Cognito User Pool Id
         :return: UserObj object
         """
         return UserObj(self.username,
