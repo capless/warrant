@@ -3,6 +3,14 @@ from botocore.exceptions import ClientError
 import ast
 
 
+def attribute_dict(attributes):
+    """
+    :param attribute_dict: Dictionary of User Pool attribute names/values
+    :return: list of User Pool attribute formatted dicts: {'Name': <attr_name>, 'Value': <attr_value>}
+    """
+    return [{'Name': key, 'Value': value} for key, value in attributes.items()]
+
+
 class UserObj(object):
 
     def __init__(self,username, attribute_list):
@@ -23,6 +31,15 @@ class User(object):
             username=None, password=None,
             access_key=None, secret_key=None,
             extra_fields=[]):
+        """
+        :param user_pool_id: Cognito User Pool ID
+        :param client_id: Cognito User Pool Application client ID
+        :param username: User Pool username
+        :param password: User Pool password
+        :param access_key: AWS IAM access key
+        :param secret_key: AWS IAM secret key
+        :param extra_fields:
+        """
         if not ((username and password) or (access_key and secret_key)):
             raise ValueError('Must have either username+password or access_key+secret_key')
         self.user_pool_id = user_pool_id
@@ -42,12 +59,42 @@ class User(object):
         else:
             self.client = boto3.client('cognito-idp')
 
+    def register(self, username, password, **kwargs):
+        """
+        Register the user.
+        :param username: User Pool username
+        :param password: User Pool password
+        :param kwargs: Additional User Pool attributes
+        :return response: Response from Cognito
+
+        Example response::
+        {
+            'UserConfirmed': True|False,
+            'CodeDeliveryDetails': {
+                'Destination': 'string', # This value will be obfuscated
+                'DeliveryMedium': 'SMS'|'EMAIL',
+                'AttributeName': 'string'
+            }
+        }
+        """
+        user_attrs = [{'Name': key, 'Value': value} for key, value in kwargs.items()]
+        response = self.client.sign_up(
+            ClientId=self.client_id,
+            Username=username,
+            Password=password,
+            UserAttributes=attribute_dict(kwargs)
+        )
+        kwargs.update(username=username, password=password)
+        self._set_attribute(response, kwargs)
+
+        response.pop('ResponseMetadata')
+        return response
+
     def authenticate(self):
         """
         Authenticate the user.
         :param user_pool_id: User Pool Id found in Cognito User Pool
         :param client_id: App Client ID found in the Apps section of the Cognito User Pool
-        :return:
 
         """
 
@@ -71,16 +118,12 @@ class User(object):
         """
         Updates User attributes
         """
-        user_attrs = []
-        user_attrs = [{'Name': key, 'Value': value} for key, value in kwargs.items()]
+        user_attrs = attribute_dict(kwargs)
         response = self.client.update_user_attributes(
             UserAttributes=user_attrs,
             AccessToken='string'
         )
-        self._set_attribute(
-            response,
-            {attr['Name']: attr['Value'] for attr in user_attrs}
-        )
+        self._set_attribute(response, kwargs)
 
     def get_user(self):
         """
@@ -182,7 +225,7 @@ class User(object):
         )
         self._set_attribute(response, {'password': password})
 
-    def _set_attribute(self, response, attribute_dict):
+    def _set_attributes(self, response, attribute_dict):
         """
         Set user attributes based on response code
         :param response: HTTP response from Cognito
