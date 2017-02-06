@@ -85,7 +85,7 @@ class User(object):
             UserAttributes=attribute_dict(kwargs)
         )
         kwargs.update(username=username, password=password)
-        self._set_attribute(response, kwargs)
+        self._set_attributes(response, kwargs)
 
         response.pop('ResponseMetadata')
         return response
@@ -124,7 +124,7 @@ class User(object):
             UserAttributes=user_attrs,
             AccessToken='string'
         )
-        self._set_attribute(response, kwargs)
+        self._set_attributes(response, kwargs)
 
     def get_user(self):
         """
@@ -183,7 +183,7 @@ class User(object):
                 'REFRESH_TOKEN': self.refresh_token
             },
         )
-        self._set_attribute(
+        self._set_attributes(
             refresh_response,
             {
                 'access_token': refresh_response['AuthenticationResult']['AccessToken']
@@ -213,7 +213,7 @@ class User(object):
             ConfirmationCode=confirmation_code,
             Password=password
         )
-        self._set_attribute(response, {'password': password})
+        self._set_attributes(response, {'password': password})
 
     def change_password(self, previous_password, proposed_password):
         """
@@ -224,7 +224,7 @@ class User(object):
             ProposedPassword=proposed_password,
             AccessToken=self.access_token
         )
-        self._set_attribute(response, {'password': password})
+        self._set_attributes(response, {'password': password})
 
     def _set_attributes(self, response, attribute_dict):
         """

@@ -23,7 +23,9 @@ class CognitoUserPoolAuthBackend(object):
     supports_inactive_user = False
 
     def authenticate(self,request, username=None, password=None):
-        u = User(settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,username,password)
+        u = User(
+            settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
+            username=username, password=password)
         try:
             u.authenticate()
         except Boto3Error:
@@ -37,7 +39,9 @@ class CognitoUserPoolAuthBackend(object):
     def get_user(self, request, user_id):
 
         user_cls = self.get_user_class()
-        u = User(user_id,'None',user_pool_id=settings.COGNITO_USER_POOL_ID,app_id=settings.COGNITO_APP_ID,)
+        u = User(
+            settings.COGNITO_USER_POOL_ID, settings.COGNITO_APP_ID,
+            username=user_id)
         user = u.get_user()
         if not user:
             raise KeyError
