@@ -27,11 +27,15 @@ class AbstractCognitoUserPoolAuthBackend(object):
     supports_inactive_user = False
 
     @abc.abstractmethod
-    def authenticate(self):
+    def authenticate(self, username=None, password=None):
         """
         Authenticate a cognito User.
         """
-        pass
+        user = User(
+                settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
+                username=username, password=password)
+        user.authenticate()
+        return user
 
     def get_user(self, request, user_id):
 
@@ -50,16 +54,14 @@ class AbstractCognitoUserPoolAuthBackend(object):
 
 if django.VERSION[1] > 10:
     class CognitoUserPoolAuthBackend(AbstractCognitoUserPoolAuthBackend):
-        def authenticate(cls, request, username=None, password=None):
+        def authenticate(self, request, username=None, password=None):
             """
             Authenticate a cognito User and store an access, ID and 
             refresh token in the session.
             """
-            u = User(
-                settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
-                username=username, password=password)
             try:
-                u.authenticate()
+                user = super(CognitoUserPoolAuthBackend, self).authenticate(
+                    username=username, password=password)
             except Boto3Error:
                 return None
             request.session['ACCESS_TOKEN'] = u.access_token
@@ -69,15 +71,13 @@ if django.VERSION[1] > 10:
             return u.get_user()
 else:
     class CognitoUserPoolAuthBackend(AbstractCognitoUserPoolAuthBackend):
-        def authenticate(cls, username=None, password=None):
+        def authenticate(self, username=None, password=None):
             """
             Authenticate a cognito User.
             """
-            u = User(
-                settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
-                username=username, password=password)
             try:
-                u.authenticate()
+                user = super(CognitoUserPoolAuthBackend, self).authenticate(
+                    username=username, password=password)
             except Boto3Error:
                 return None
-            return u.get_user()
+            return user.get_user()
