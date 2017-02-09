@@ -1,4 +1,6 @@
+import datetime
 import boto3
+
 from botocore.exceptions import ClientError
 import ast
 
@@ -36,6 +38,8 @@ class User(object):
     def __init__(
             self, user_pool_id, client_id,
             username=None, password=None,
+            id_token=None,refresh_token=None,
+            access_token=None,expires_datetime=None,
             access_key=None, secret_key=None,
             extra_fields=[]):
         """
@@ -43,6 +47,11 @@ class User(object):
         :param client_id: Cognito User Pool Application client ID
         :param username: User Pool username
         :param password: User Pool password
+        :param id_token: ID Token returned by authentication
+        :param refresh_token: Refresh Token returned by authentication
+        :param access_token: Access Token returned by authentication
+        :param expires_datetime: Datetime object created by
+            the authenticate method
         :param access_key: AWS IAM access key
         :param secret_key: AWS IAM secret key
         :param extra_fields:
@@ -53,11 +62,12 @@ class User(object):
         self.client_id = client_id
         self.username = username
         self.password = password
-        self.id_token = None
-        self.access_token = None
-        self.refresh_token = None
+        self.id_token = id_token
+        self.access_token = access_token
+        self.refresh_token = refresh_token
         self.token_type = None
         self.expires_in = None
+        self.expires_datetime = expires_datetime
         if access_key and secret_key:
             self.client = boto3.client('cognito-idp',
                 aws_access_key_id=access_key,
@@ -65,6 +75,15 @@ class User(object):
                 )
         else:
             self.client = boto3.client('cognito-idp')
+
+    def check_token(self):
+        """
+        Checks the self.expires_datetime attribute and either refreshes
+        the tokens by calling the renew_access_tokens method or does nothing
+        :return:
+        """
+        if datetime.datetime.now() > self.expires_datetime:
+            self.renew_access_token()
 
     def register(self, username, password, **kwargs):
         """
@@ -117,6 +136,7 @@ class User(object):
             },
         )
         self.expires_in = tokens['AuthenticationResult']['ExpiresIn']
+        self.expires_datetime = datetime.datetime.now() + datetime.timedelta(seconds=self.expires_in)
         self.id_token = tokens['AuthenticationResult']['IdToken']
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.access_token = tokens['AuthenticationResult']['AccessToken']
@@ -143,9 +163,13 @@ class User(object):
         user = self.client.admin_get_user(
                            UserPoolId=self.user_pool_id,
                            Username=self.username)
-        user_metadata = {}
-        user_metadata.update(user_status=user.get('UserStatus'))
-        user_metadata.update(username=user.get('Username'))
+        user_metadata = {
+            'user_status':user.get('UserStatus'),
+            'username':user.get('Username'),
+            'expires_in':self.expires_in,
+            'expires_datetime':self.expires_datetime
+        }
+
         return UserObj(self.username, user.get('UserAttributes'), metadata=user_metadata)
 
     def initiate_change_password(self):
@@ -165,6 +189,7 @@ class User(object):
         Sends the user an attribute verification code for the specified attribute name.
         :param attribute: Attribute to confirm
         """
+        self.check_token()
         self.client.get_user_attribute_verification_code(
             AccessToken=self.access_token,
             AttributeName=attribute
@@ -176,6 +201,7 @@ class User(object):
         :param confirmation_code: Code sent to user upon intiating verification
         :param attribute: Attribute to confirm 
         """
+        self.check_token()
         self.client.verify_user_attribute(
             AccessToken=self.access_token,
             AttributeName=attribute,
@@ -230,6 +256,7 @@ class User(object):
         """
         Change the User password
         """
+        self.check_token()
         response = self.client.change_password(
             PreviousPassword=previous_password,
             ProposedPassword=proposed_password,
