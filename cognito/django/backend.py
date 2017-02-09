@@ -23,7 +23,6 @@ class Meta(object):
         self.pk = Pk()
 
 
-
 class AbstractCognitoUserPoolAuthBackend(ModelBackend):
     create_unknown_user = True
 
@@ -76,7 +75,7 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         """
         UserModel = get_user_model()
         try:
-            UserModel.objects.get(username=username)
+            return UserModel.objects.get(username=username)
         except UserModel.DoesNotExist:
             return None
 

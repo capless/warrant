@@ -1,5 +1,4 @@
 import os
-from itertools import chain
 
 from setuptools import find_packages, setup
 
@@ -22,6 +21,9 @@ setup(
         'boto3>=1.4,<1.5',
     ],
     extras_require={
-        'django': ['Django>=1.10,<1.11'],
+        'django': [
+            'Django>=1.8,<1.11',
+            'mock==2.0.0'
+        ],
     }
 )
