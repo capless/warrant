@@ -44,9 +44,9 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         if not self.supports_inactive_user and user_obj.user_status in INACTIVE_USER_STATUS:
             return None
 
-        return self._update_or_create_user(user_obj)
+        return self._update_or_create_user(user_obj, cognito_user)
 
-    def _update_or_create_user(self, user_obj):
+    def _update_or_create_user(self, user_obj, cognito_user):
         UserModel = get_user_model()
         if self.create_unknown_user:
             user, created = UserModel.objects.update_or_create(
@@ -63,9 +63,9 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
                 user = None
         # Attach tokens to user object
         if user:
-            setattr(user, 'access_token', user_obj.access_token)
-            setattr(user, 'id_token', user_obj.id_token)
-            setattr(user, 'refresh_token', user_obj.refresh_token)
+            setattr(user, 'access_token', cognito_user.access_token)
+            setattr(user, 'id_token', cognito_user.id_token)
+            setattr(user, 'refresh_token', cognito_user.refresh_token)
         return user            
 
     def get_user(self, username):
