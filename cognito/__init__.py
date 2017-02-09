@@ -5,7 +5,7 @@ import ast
 
 def attribute_dict(attributes):
     """
-    :param attribute_dict: Dictionary of User Pool attribute names/values
+    :param attributes: Dictionary of User Pool attribute names/values
     :return: list of User Pool attribute formatted dicts: {'Name': <attr_name>, 'Value': <attr_value>}
     """
     return [{'Name': key, 'Value': value} for key, value in attributes.items()]
@@ -13,7 +13,12 @@ def attribute_dict(attributes):
 
 class UserObj(object):
 
-    def __init__(self,username, attribute_list):
+    def __init__(self, username, attribute_list, metadata={}):
+        """
+        :param username:
+        :param attribute_list:
+        :param metadata: Dictionary of User metadata
+        """
         self.username = username
         self.pk = username
         for a in attribute_list:
@@ -21,7 +26,9 @@ class UserObj(object):
             value = a.get('Value')
             if value in ['true','false']:
                 value = ast.literal_eval(value.capitalize())
-            setattr(self,name,value)
+            setattr(self, name, value)
+        for key, value in metadata.items():
+            setattr(self, key.lower(), value)
 
 
 class User(object):
@@ -115,16 +122,17 @@ class User(object):
         self.access_token = tokens['AuthenticationResult']['AccessToken']
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
-    def update_profile(self, **kwargs):
+    def update_profile(self, attrs):
         """
         Updates User attributes
+        :parm attrs: Dictionary of attribute name, values
         """
-        user_attrs = attribute_dict(kwargs)
+        user_attrs = attribute_dict(attrs)
         response = self.client.update_user_attributes(
             UserAttributes=user_attrs,
-            AccessToken='string'
+            AccessToken=self.access_token
         )
-        self._set_attributes(response, kwargs)
+        self._set_attributes(response, attrs)
 
     def get_user(self):
         """
@@ -132,10 +140,13 @@ class User(object):
         :param user_pool_id: The Cognito User Pool Id
         :return: UserObj object
         """
-        return UserObj(self.username,
-                       self.client.admin_get_user(
+        user = self.client.admin_get_user(
                            UserPoolId=self.user_pool_id,
-                           Username=self.username).get('UserAttributes'))
+                           Username=self.username)
+        user_metadata = {}
+        user_metadata.update(user_status=user.get('UserStatus'))
+        user_metadata.update(username=user.get('Username'))
+        return UserObj(self.username, user.get('UserAttributes'), metadata=user_metadata)
 
     def initiate_change_password(self):
         """
@@ -232,6 +243,10 @@ class User(object):
         :param response: HTTP response from Cognito
         :attribute dict: Dictionary of attribute name and values
         """
-        if response['HTTPStatusCode'] == 200:
+        status_code = response.get(
+            'HTTPStatusCode',
+            response['ResponseMetadata']['HTTPStatusCode']
+        )
+        if status_code == 200:
             for k, v in attribute_dict.items():
-                self.setattr(k, v)
+                setattr(self, k, v)

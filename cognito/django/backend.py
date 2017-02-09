@@ -1,11 +1,15 @@
 import abc
 
 from boto3.exceptions import Boto3Error
-import django
+from django import VERSION as DJANGO_VERSION
 from django.conf import settings
+from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth import get_user_model
 
-from cognito import User
+from cognito import User as CognitoUser
 
+
+INACTIVE_USER_STATUS = ['ARCHIVED', 'COMPROMISED']
 
 class Pk(object):
 
@@ -19,65 +23,87 @@ class Meta(object):
         self.pk = Pk()
 
 
-class AbstractCognitoUserPoolAuthBackend(object):
-    __metaclass__ = abc.ABCMeta
 
-    create_unknown_user = False
+class AbstractCognitoUserPoolAuthBackend(ModelBackend):
+    create_unknown_user = True
 
     supports_inactive_user = False
 
-    @abc.abstractmethod
     def authenticate(self, username=None, password=None):
         """
-        Authenticate a cognito User.
+        Authenticate a Cognito User.
         """
-        user = User(
+        cognito_user = CognitoUser(
                 settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
                 username=username, password=password)
-        user.authenticate()
-        return user
+        try:
+            cognito_user.authenticate()
+        except Boto3Error:
+            return None
+        user_obj = cognito_user.get_user()
+        if not self.supports_inactive_user and user_obj.user_status in INACTIVE_USER_STATUS:
+            return None
 
-    def get_user(self, request, user_id):
+        return self._update_or_create_user(user_obj)
 
-        user_cls = self.get_user_class()
-        u = User(
-            settings.COGNITO_USER_POOL_ID, settings.COGNITO_APP_ID,
-            username=user_id)
-        user = u.get_user()
-        if not user:
-            raise KeyError
-        return user
+    def _update_or_create_user(self, user_obj):
+        UserModel = get_user_model()
+        if self.create_unknown_user:
+            user, created = UserModel.objects.update_or_create(
+                username=user_obj.username,
+                defaults={
+                    'email':user_obj.email,
+                    'first_name':user_obj.given_name,
+                    'last_name':user_obj.family_name,
+                })
+        else:
+            try:
+                user = UserModel.objects.get(username=user_obj.username)
+            except UserModel.DoesNotExist:
+                user = None
+        # Attach tokens to user object
+        if user:
+            setattr(user, 'access_token', user_obj.access_token)
+            setattr(user, 'id_token', user_obj.id_token)
+            setattr(user, 'refresh_token', user_obj.refresh_token)
+        return user            
 
-    def get_user_class(self):
-        return User
+    def get_user(self, username):
+        """
+        Return User found using a Cognito username.
+        This is used since Cognito usernames never change.
+        :param username: Cognito username
+        """
+        UserModel = get_user_model()
+        try:
+            UserModel.objects.get(username=username)
+        except UserModel.DoesNotExist:
+            return None
 
 
-if django.VERSION[1] > 10:
+if DJANGO_VERSION[1] > 10:
     class CognitoUserPoolAuthBackend(AbstractCognitoUserPoolAuthBackend):
         def authenticate(self, request, username=None, password=None):
             """
             Authenticate a cognito User and store an access, ID and 
             refresh token in the session.
+
             """
-            try:
-                user = super(CognitoUserPoolAuthBackend, self).authenticate(
-                    username=username, password=password)
-            except Boto3Error:
-                return None
-            request.session['ACCESS_TOKEN'] = u.access_token
-            request.session['ID_TOKEN'] = u.id_token
-            request.session['REFRESH_TOKEN'] = u.refresh_token
-            request.session.save()
-            return u.get_user()
+            user = super(CognitoUserPoolAuthBackend, self).authenticate(
+                username=username, password=password)
+            if user:
+                request.session['ACCESS_TOKEN'] = user.access_token
+                request.session['ID_TOKEN'] = user.id_token
+                request.session['REFRESH_TOKEN'] = user.refresh_token
+                request.session.save()
+            return user
+
 else:
     class CognitoUserPoolAuthBackend(AbstractCognitoUserPoolAuthBackend):
         def authenticate(self, username=None, password=None):
             """
-            Authenticate a cognito User.
+            Authenticate a cognito User
             """
-            try:
-                user = super(CognitoUserPoolAuthBackend, self).authenticate(
-                    username=username, password=password)
-            except Boto3Error:
-                return None
-            return user.get_user()
+            return super(CognitoUserPoolAuthBackend, self).authenticate(
+                username=username, password=password)
+
