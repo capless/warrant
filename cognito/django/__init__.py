@@ -4,7 +4,7 @@ from django.contrib.auth.signals import user_logged_in
 
 def add_user_tokens(sender, user, **kwargs):
     """
-    Add user tokens to the session upon login
+    Add Cognito tokens to the session upon login
     """
     request = kwargs['request']
     request.session['ACCESS_TOKEN'] = user.access_token

@@ -49,6 +49,7 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         """
         Reject users if their Cognito user status is listed in
         INACTIVE_USER_STATUS
+        :param user_obj: cognito.UserObj object
         """
         if not self.supports_inactive_user and \
                user_obj.user_status in AbstractCognitoUserPoolAuthBackend.INACTIVE_USER_STATUS:
@@ -56,18 +57,28 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         return True
 
     def _update_or_create_user(self, user_obj, cognito_user):
+        """
+        Update existing user or create a new user.
+        :param user_obj: cognito.UserObj object
+        :param cognito_user: cognito.User object 
+        :return: Auth User
+        """
+        user_attrs = {
+            'email':user_obj.email,
+            'first_name':user_obj.given_name,
+            'last_name':user_obj.family_name,
+        }
         UserModel = get_user_model()
         if self.create_unknown_user:
             user, created = UserModel.objects.update_or_create(
                 username=user_obj.username,
-                defaults={
-                    'email':user_obj.email,
-                    'first_name':user_obj.given_name,
-                    'last_name':user_obj.family_name,
-                })
+                defaults=user_attrs)
         else:
             try:
                 user = UserModel.objects.get(username=user_obj.username)
+                for k, v in user_attrs.items():
+                    setattr(user, k, v)
+                user.save()
             except UserModel.DoesNotExist:
                 user = None
         # Attach tokens to user object
@@ -82,9 +93,8 @@ if DJANGO_VERSION[1] > 10:
     class CognitoUserPoolAuthBackend(AbstractCognitoUserPoolAuthBackend):
         def authenticate(self, request, username=None, password=None):
             """
-            Authenticate a cognito User and store an access, ID and 
+            Authenticate a Cognito User and store an access, ID and 
             refresh token in the session.
-
             """
             user = super(CognitoUserPoolAuthBackend, self).authenticate(
                 username=username, password=password)
@@ -98,7 +108,7 @@ else:
     class CognitoUserPoolAuthBackend(AbstractCognitoUserPoolAuthBackend):
         def authenticate(self, username=None, password=None):
             """
-            Authenticate a cognito User
+            Authenticate a Cognito User
             """
             return super(CognitoUserPoolAuthBackend, self).authenticate(
                 username=username, password=password)
