@@ -40,10 +40,20 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         except Boto3Error:
             return None
         user_obj = cognito_user.get_user()
-        if not self.supports_inactive_user and user_obj.user_status in AbstractCognitoUserPoolAuthBackend.INACTIVE_USER_STATUS:
+        if not self.user_can_authenticate(user_obj):
             return None
 
         return self._update_or_create_user(user_obj, cognito_user)
+
+    def user_can_authenticate(self, user_obj):
+        """
+        Reject users if their Cognito user status is listed in
+        INACTIVE_USER_STATUS
+        """
+        if not self.supports_inactive_user and \
+               user_obj.user_status in AbstractCognitoUserPoolAuthBackend.INACTIVE_USER_STATUS:
+            return False
+        return True
 
     def _update_or_create_user(self, user_obj, cognito_user):
         UserModel = get_user_model()
