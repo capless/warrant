@@ -83,11 +83,3 @@ class AuthTests(TransactionTestCase):
         user = authenticate(username=settings.COGNITO_TEST_USERNAME,
                             password=settings.COGNITO_TEST_PASSWORD)
         self.assertIsNone(user)
-
-    def test_get_user(self):
-        User = get_user_model()
-        user = User.objects.create(username='NewUsername')
-        backend = CognitoUserPoolAuthBackend()
-        auth_user = backend.get_user('NewUsername')
-
-        self.assertEqual(user, auth_user)

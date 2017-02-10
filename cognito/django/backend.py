@@ -9,8 +9,6 @@ from django.contrib.auth import get_user_model
 from cognito import User as CognitoUser
 
 
-INACTIVE_USER_STATUS = ['ARCHIVED', 'COMPROMISED']
-
 class Pk(object):
 
     def value_to_string(self,user):
@@ -28,19 +26,21 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
 
     supports_inactive_user = False
 
+    INACTIVE_USER_STATUS = ['ARCHIVED', 'COMPROMISED', 'UNKNOWN']
+
     def authenticate(self, username=None, password=None):
         """
         Authenticate a Cognito User.
         """
         cognito_user = CognitoUser(
-                settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
-                username=username, password=password)
+            settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
+            username=username, password=password)
         try:
             cognito_user.authenticate()
         except Boto3Error:
             return None
         user_obj = cognito_user.get_user()
-        if not self.supports_inactive_user and user_obj.user_status in INACTIVE_USER_STATUS:
+        if not self.supports_inactive_user and user_obj.user_status in AbstractCognitoUserPoolAuthBackend.INACTIVE_USER_STATUS:
             return None
 
         return self._update_or_create_user(user_obj, cognito_user)
@@ -66,18 +66,6 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
             setattr(user, 'id_token', cognito_user.id_token)
             setattr(user, 'refresh_token', cognito_user.refresh_token)
         return user            
-
-    def get_user(self, username):
-        """
-        Return User found using a Cognito username.
-        This is used since Cognito usernames never change.
-        :param username: Cognito username
-        """
-        UserModel = get_user_model()
-        try:
-            return UserModel.objects.get(username=username)
-        except UserModel.DoesNotExist:
-            return None
 
 
 if DJANGO_VERSION[1] > 10:

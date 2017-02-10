@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cognito.django',
+    'cdu.demo',
     'django_extensions'
 ]
 
@@ -108,6 +109,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGIN_REDIRECT_URL = '/user_info'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
