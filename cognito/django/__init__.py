@@ -1,3 +1,4 @@
+from django import VERSION as DJANGO_VERSION
 from django.contrib.auth.signals import user_logged_in
 
 
@@ -11,4 +12,7 @@ def add_user_tokens(sender, user, **kwargs):
     request.session['REFRESH_TOKEN'] = user.refresh_token
     request.session.save()
 
-user_logged_in.connect(add_user_tokens)
+# If using Django 1.11 or higher, CognitoUserPoolAuthBackend
+# handles storing the tokens in the session.
+if DJANGO_VERSION[1] < 11:
+    user_logged_in.connect(add_user_tokens)
