@@ -84,7 +84,6 @@ if DJANGO_VERSION[1] > 10:
                 request.session['REFRESH_TOKEN'] = user.refresh_token
                 request.session.save()
             return user
-
 else:
     class CognitoUserPoolAuthBackend(AbstractCognitoUserPoolAuthBackend):
         def authenticate(self, username=None, password=None):
@@ -93,4 +92,3 @@ else:
             """
             return super(CognitoUserPoolAuthBackend, self).authenticate(
                 username=username, password=password)
-
