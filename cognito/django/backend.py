@@ -1,6 +1,7 @@
 import abc
 
 from boto3.exceptions import Boto3Error
+from botocore.exceptions import ClientError
 from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
@@ -37,7 +38,7 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
             username=username, password=password)
         try:
             cognito_user.authenticate()
-        except Boto3Error:
+        except (Boto3Error, ClientError):
             return None
         user_obj = cognito_user.get_user()
         if not self.user_can_authenticate(user_obj):
