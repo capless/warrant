@@ -22,7 +22,21 @@ AUTHENTICATION_BACKENDS = [
 Your User Pool ID can be found in the Pool Details tab in the AWS console.
 Your App ID is found in the Apps tab, listed as "App client id".
 
-Check the cdu/demo directory for an example project.
+### CognitoUserPoolAuthBackend Behavior
+Since the username of a Cognito User can never change,
+this is used by the backend to match a Cognito User with a local Django
+User.
+
+If a Django user is not found, one is created using the attributes
+fetched from Cognito. If an existing Django user is found, their
+attributes are updated.
+
+Upon successful login, the three identity tokens returned from Cognito
+(ID token, Refresh token, Access token) are stored in the user's request
+session.
+
+Check the cdu/demo directory for an example project with a login and
+user details page.
 
 ### Customizing CognitoUserPoolAuthBackend Behavior
 Create your own backend class that inhereits from `CognitoUserPoolAuthBackend`.
