@@ -14,7 +14,7 @@ setup(
     description='Cognito integration using boto3.',
     long_description=README,
     author='MetaMetrics, Inc.',
-    author_email='engineering@lexile.com',
+    author_email='brian@ipoots.com',
     url='http://www.metametricsinc.com/',
     license='GPLv3',
     install_requires=[
