@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate, get_user_model, signals
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import TransactionTestCase
 from django.test.client import RequestFactory
+from django.utils.six import iteritems
 
 from cognito.django.backend import CognitoUserPoolAuthBackend
 from cognito import User as CognitoUser
@@ -19,16 +20,28 @@ class AuthTests(TransactionTestCase):
         mock_cognito_user.refresh_token = 'refreshtoken'
 
     def create_mock_user_obj(self, **kwargs):
+        """
+        Create a mock UserObj
+        :param: kwargs containing desired attrs
+        :return: returns mock UserObj
+        """
         mock_user_obj = MagicMock(
-            user_status=kwargs.get('user_status', 'CONFIRMED'),
-            username=kwargs.get('access_token', 'testuser'),
-            email=kwargs.get('email', 'test@email.com'),
-            given_name=kwargs.get('given_name', 'FirstName'),
-            family_name=kwargs.get('family_name', 'LastName'),
+            user_status=kwargs.pop('user_status', 'CONFIRMED'),
+            username=kwargs.pop('access_token', 'testuser'),
+            email=kwargs.pop('email', 'test@email.com'),
+            given_name=kwargs.pop('given_name', 'FirstName'),
+            family_name=kwargs.pop('family_name', 'LastName'),
         )
+        for k, v in kwargs.iteritems():
+            setattr(mock, k, v)
+
         return mock_user_obj
 
     def setup_mock_user(self, mock_cognito_user):
+        """
+        Configure mocked Cognito User
+        :param mock_cognito_user: mock Cognito User
+        """
         mock_cognito_user.return_value = mock_cognito_user
         self.set_tokens(mock_cognito_user)
 

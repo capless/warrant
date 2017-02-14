@@ -1,3 +1,4 @@
+"""Custom Django authentication backend"""
 import abc
 
 from boto3.exceptions import Boto3Error
@@ -31,7 +32,10 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
 
     def authenticate(self, username=None, password=None):
         """
-        Authenticate a Cognito User.
+        Authenticate a Cognito User
+        :param username: Cognito username
+        :param password: Cognito password
+        :return: returns User instance of AUTH_USER_MODEL or None
         """
         cognito_user = CognitoUser(
             settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
@@ -41,16 +45,17 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         except (Boto3Error, ClientError):
             return None
         user_obj = cognito_user.get_user()
-        if not self.user_can_authenticate(user_obj):
+        if not self.cognito_user_can_authenticate(user_obj):
             return None
 
         return self._update_or_create_user(user_obj, cognito_user)
 
-    def user_can_authenticate(self, user_obj):
+    def cognito_user_can_authenticate(self, user_obj):
         """
         Reject users if their Cognito user status is listed in
         INACTIVE_USER_STATUS
         :param user_obj: cognito.UserObj object
+        :return: Boolean
         """
         if not self.supports_inactive_user and \
                user_obj.user_status in AbstractCognitoUserPoolAuthBackend.INACTIVE_USER_STATUS:
@@ -59,10 +64,10 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
 
     def _update_or_create_user(self, user_obj, cognito_user):
         """
-        Update existing user or create a new user.
+        Update existing user or create a new Django user.
         :param user_obj: cognito.UserObj object
         :param cognito_user: cognito.User object 
-        :return: Auth User
+        :return: User instance of AUTH_USER_MODEL, with token attrs attached
         """
         user_attrs = {
             'email':user_obj.email,
