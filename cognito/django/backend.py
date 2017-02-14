@@ -7,6 +7,7 @@ from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
+from django.utils.six import iteritems
 
 from cognito import User as CognitoUser
 
@@ -29,6 +30,15 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
     supports_inactive_user = False
 
     INACTIVE_USER_STATUS = ['ARCHIVED', 'COMPROMISED', 'UNKNOWN']
+
+    # Mapping of Cognito User attribute name to Django User attribute name
+    COGNITO_ATTR_MAPPING = getattr(settings, 'COGNITO_ATTR_MAPPING',
+        {
+            'email': 'email',
+            'given_name': 'first_name',
+            'family_name': 'last_name',
+        }
+    )
 
     def authenticate(self, username=None, password=None):
         """
@@ -69,11 +79,10 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         :param cognito_user: cognito.User object 
         :return: User instance of AUTH_USER_MODEL, with token attrs attached
         """
-        user_attrs = {
-            'email':user_obj.email,
-            'first_name':user_obj.given_name,
-            'last_name':user_obj.family_name,
-        }
+        user_attrs = {}
+        for cognito_attr, django_attr in iteritems(AbstractCognitoUserPoolAuthBackend.COGNITO_ATTR_MAPPING):
+            user_attrs[django_attr] = getattr(user_obj, cognito_attr)
+
         UserModel = get_user_model()
         if self.create_unknown_user:
             user, created = UserModel.objects.update_or_create(
@@ -82,7 +91,7 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         else:
             try:
                 user = UserModel.objects.get(username=user_obj.username)
-                for k, v in user_attrs.items():
+                for k, v in iteritems(user_attrs):
                     setattr(user, k, v)
                 user.save()
             except UserModel.DoesNotExist:

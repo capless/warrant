@@ -22,6 +22,16 @@ AUTHENTICATION_BACKENDS = [
 Your User Pool ID can be found in the Pool Details tab in the AWS console.
 Your App ID is found in the Apps tab, listed as "App client id".
 
+3. Set `COGNITO_ATTR_MAPPING` in your settings file to a dictionary mapping a
+Cognito attribute name to a Django User attribute name. Defaults to:
+```python
+{
+    'email': 'email',
+    'given_name': 'first_name',
+    'family_name': 'last_name',
+}
+```
+
 ### CognitoUserPoolAuthBackend Behavior
 Since the username of a Cognito User can never change,
 this is used by the backend to match a Cognito User with a local Django
