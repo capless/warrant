@@ -11,26 +11,25 @@ handle password verification and fetching of user attributes.
 Keep in mind that Django will attempt to authenticate a user using
 each backend listed, in the order listed until successful.
 
-```python
-AUTHENTICATION_BACKENDS = [
-    'cognito.django.backend.CognitoUserPoolAuthBackend',
-    ...
-]
-```
-
+    ```python
+    AUTHENTICATION_BACKENDS = [
+        'cognito.django.backend.CognitoUserPoolAuthBackend',
+        ...
+    ]
+    ```
 2. Set `COGNITO_USER_POOL_ID` and `COGNITO_APP_ID` in your settings file as well.
 Your User Pool ID can be found in the Pool Details tab in the AWS console.
 Your App ID is found in the Apps tab, listed as "App client id".
 
 3. Set `COGNITO_ATTR_MAPPING` in your settings file to a dictionary mapping a
 Cognito attribute name to a Django User attribute name. Defaults to:
-```python
-{
-    'email': 'email',
-    'given_name': 'first_name',
-    'family_name': 'last_name',
-}
-```
+    ```python
+    {
+        'email': 'email',
+        'given_name': 'first_name',
+        'family_name': 'last_name',
+    }
+    ```
 
 ### CognitoUserPoolAuthBackend Behavior
 Since the username of a Cognito User can never change,
