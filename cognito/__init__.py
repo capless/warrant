@@ -56,8 +56,7 @@ class User(object):
         :param secret_key: AWS IAM secret key
         :param extra_fields:
         """
-        if not ((username and password) or (access_key and secret_key)):
-            raise ValueError('Must have either username+password or access_key+secret_key')
+
         self.user_pool_id = user_pool_id
         self.client_id = client_id
         self.username = username
@@ -87,7 +86,11 @@ class User(object):
 
     def register(self, username, password, **kwargs):
         """
-        Register the user.
+        Register the user. Other base attributes from AWS Cognito User Pools
+        are  address, birthdate, email, family_name (last name), gender,
+        given_name (first name), locale, middle_name, name, nickname,
+        phone_number, picture, preferred_username, profile, zoneinfo,
+        updated at, website
         :param username: User Pool username
         :param password: User Pool password
         :param kwargs: Additional User Pool attributes
@@ -115,6 +118,23 @@ class User(object):
 
         response.pop('ResponseMetadata')
         return response
+
+    def confirm_sign_up(self,confirmation_code,username=None):
+        """
+        Using the confirmation code that is either sent via email or text
+        message.
+        :param confirmation_code: Confirmation code sent via text or email
+        :param username: User's username
+        :return:
+        """
+        if not username:
+            username = self.username
+        self.client.confirm_sign_up(
+            ClientId=self.client_id,
+            Username=username,
+            ConfirmationCode=confirmation_code
+        )
+
 
     def authenticate(self):
         """
@@ -172,7 +192,7 @@ class User(object):
 
         return UserObj(self.username, user.get('UserAttributes'), metadata=user_metadata)
 
-    def initiate_change_password(self):
+    def admin_initiate_change_password(self):
         """
         Resets user's password as an admin
         Message is sent via Verification method set in User Pool(email|phone)
@@ -262,7 +282,7 @@ class User(object):
             ProposedPassword=proposed_password,
             AccessToken=self.access_token
         )
-        self._set_attributes(response, {'password': password})
+        self._set_attributes(response, {'password': proposed_password})
 
     def _set_attributes(self, response, attribute_dict):
         """
