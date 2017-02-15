@@ -25,6 +25,8 @@ class Meta(object):
 
 
 class AbstractCognitoUserPoolAuthBackend(ModelBackend):
+    __metaclass__ = abc.ABCMeta
+
     create_unknown_user = True
 
     supports_inactive_user = False
@@ -40,6 +42,7 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         }
     )
 
+    @abc.abstractmethod
     def authenticate(self, username=None, password=None):
         """
         Authenticate a Cognito User
@@ -52,7 +55,7 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
             username=username, password=password)
         try:
             cognito_user.authenticate()
-        except (Boto3Error, ClientError):
+        except (Boto3Error, ClientError) as e:
             return None
         user_obj = cognito_user.get_user()
         if not self.cognito_user_can_authenticate(user_obj):
