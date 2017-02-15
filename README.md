@@ -5,15 +5,15 @@ easy to login users with or without SRP (secure remote password protocol).
 Included is a Django authentication backend that uses the utility class to
 handle password verification and fetching of user attributes.
 
-## Using the CognitoUserPoolAuthBackend
+## Using the CognitoBackend
 1. In your Django project settings file, add the dotted path of
-`CognitoUserPoolAuthBackend` to your list of `AUTHENTICATION_BACKENDS`.
+`CognitoBackend` to your list of `AUTHENTICATION_BACKENDS`.
 Keep in mind that Django will attempt to authenticate a user using
 each backend listed, in the order listed until successful.
 
     ```python
     AUTHENTICATION_BACKENDS = [
-        'cognito.django.backend.CognitoUserPoolAuthBackend',
+        'cognito.django.backend.CognitoBackend',
         ...
     ]
     ```
@@ -31,7 +31,7 @@ Cognito attribute name to a Django User attribute name. Defaults to:
     }
     ```
 
-### CognitoUserPoolAuthBackend Behavior
+### CognitoBackend Behavior
 Since the username of a Cognito User can never change,
 this is used by the backend to match a Cognito User with a local Django
 User.
@@ -47,8 +47,8 @@ session.
 Check the cdu/demo directory for an example project with a login and
 user details page.
 
-### Customizing CognitoUserPoolAuthBackend Behavior
-Create your own backend class that inhereits from `CognitoUserPoolAuthBackend`.
+### Customizing CognitoBackend Behavior
+Create your own backend class that inhereits from `CognitoBackend`.
 
 Setting the class variable `create_unknown_user` to `False` prevents the backend
 from creating a new local Django user and only updates existing users.

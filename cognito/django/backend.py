@@ -24,7 +24,7 @@ class Meta(object):
         self.pk = Pk()
 
 
-class AbstractCognitoUserPoolAuthBackend(ModelBackend):
+class AbstractCognitoBackend(ModelBackend):
     __metaclass__ = abc.ABCMeta
 
     create_unknown_user = True
@@ -71,7 +71,7 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         :return: Boolean
         """
         if not self.supports_inactive_user and \
-               user_obj.user_status in AbstractCognitoUserPoolAuthBackend.INACTIVE_USER_STATUS:
+               user_obj.user_status in AbstractCognitoBackend.INACTIVE_USER_STATUS:
             return False
         return True
 
@@ -83,7 +83,7 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
         :return: User instance of AUTH_USER_MODEL, with token attrs attached
         """
         user_attrs = {}
-        for cognito_attr, django_attr in iteritems(AbstractCognitoUserPoolAuthBackend.COGNITO_ATTR_MAPPING):
+        for cognito_attr, django_attr in iteritems(AbstractCognitoBackend.COGNITO_ATTR_MAPPING):
             user_attrs[django_attr] = getattr(user_obj, cognito_attr)
 
         UserModel = get_user_model()
@@ -108,13 +108,13 @@ class AbstractCognitoUserPoolAuthBackend(ModelBackend):
 
 
 if DJANGO_VERSION[1] > 10:
-    class CognitoUserPoolAuthBackend(AbstractCognitoUserPoolAuthBackend):
+    class CognitoBackend(AbstractCognitoBackend):
         def authenticate(self, request, username=None, password=None):
             """
             Authenticate a Cognito User and store an access, ID and 
             refresh token in the session.
             """
-            user = super(CognitoUserPoolAuthBackend, self).authenticate(
+            user = super(CognitoBackend, self).authenticate(
                 username=username, password=password)
             if user:
                 request.session['ACCESS_TOKEN'] = user.access_token
@@ -123,10 +123,10 @@ if DJANGO_VERSION[1] > 10:
                 request.session.save()
             return user
 else:
-    class CognitoUserPoolAuthBackend(AbstractCognitoUserPoolAuthBackend):
+    class CognitoBackend(AbstractCognitoBackend):
         def authenticate(self, username=None, password=None):
             """
             Authenticate a Cognito User
             """
-            return super(CognitoUserPoolAuthBackend, self).authenticate(
+            return super(CognitoBackend, self).authenticate(
                 username=username, password=password)

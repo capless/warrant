@@ -9,7 +9,7 @@ from django.test import TransactionTestCase
 from django.test.client import RequestFactory
 from django.utils.six import iteritems
 
-from cognito.django.backend import CognitoUserPoolAuthBackend
+from cognito.django.backend import CognitoBackend
 from cognito import User as CognitoUser
 
 
@@ -128,7 +128,7 @@ class AuthTests(TransactionTestCase):
 
     @patch('cognito.django.backend.CognitoUser', autospec=True)
     def test_existing_user_updated_disabled_create_unknown_user(self, mock_cognito_user):
-        class AlternateCognitoUserPoolAuthBackend(CognitoUserPoolAuthBackend):
+        class AlternateCognitoBackend(CognitoBackend):
             create_unknown_user = False
 
         self.setup_mock_user(mock_cognito_user)
@@ -136,7 +136,7 @@ class AuthTests(TransactionTestCase):
         User = get_user_model()
         existing_user = User.objects.create(username='testuser', email='None')
 
-        backend = AlternateCognitoUserPoolAuthBackend()
+        backend = AlternateCognitoBackend()
         user = backend.authenticate(username='testuser',
                             password='password')
         self.assertEqual(user.id, existing_user.id)
@@ -149,12 +149,12 @@ class AuthTests(TransactionTestCase):
 
     @patch('cognito.django.backend.CognitoUser', autospec=True)
     def test_user_not_found_disabled_create_unknown_user(self, mock_cognito_user):
-        class AlternateCognitoUserPoolAuthBackend(CognitoUserPoolAuthBackend):
+        class AlternateCognitoBackend(CognitoBackend):
             create_unknown_user = False
 
         self.setup_mock_user(mock_cognito_user)
 
-        backend = AlternateCognitoUserPoolAuthBackend()
+        backend = AlternateCognitoBackend()
         user = backend.authenticate(username='testuser',
                             password='password')
 

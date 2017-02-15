@@ -29,7 +29,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 AUTHENTICATION_BACKENDS = [
-    'cognito.django.backend.CognitoUserPoolAuthBackend'
+    'cognito.django.backend.CognitoBackend'
 ]
 COGNITO_TEST_USERNAME = env('COGNITO_TEST_USERNAME')
 COGNITO_TEST_PASSWORD = env('COGNITO_TEST_PASSWORD')
