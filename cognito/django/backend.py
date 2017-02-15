@@ -33,6 +33,8 @@ class AbstractCognitoBackend(ModelBackend):
 
     INACTIVE_USER_STATUS = ['ARCHIVED', 'COMPROMISED', 'UNKNOWN']
 
+    UNAUTHORIZED_ERROR_CODE = 'NotAuthorizedException'
+
     # Mapping of Cognito User attribute name to Django User attribute name
     COGNITO_ATTR_MAPPING = getattr(settings, 'COGNITO_ATTR_MAPPING',
         {
@@ -56,12 +58,18 @@ class AbstractCognitoBackend(ModelBackend):
         try:
             cognito_user.authenticate()
         except (Boto3Error, ClientError) as e:
-            return None
+            return self.handle_error_response(e)
         user_obj = cognito_user.get_user()
         if not self.cognito_user_can_authenticate(user_obj):
             return None
 
         return self._update_or_create_user(user_obj, cognito_user)
+
+    def handle_error_response(self, error):
+        error_code = error.response['Error']['Code']
+        if error_code == AbstractCognitoBackend.UNAUTHORIZED_ERROR_CODE:
+            return None
+        raise error
 
     def cognito_user_can_authenticate(self, user_obj):
         """

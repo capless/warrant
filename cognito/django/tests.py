@@ -54,7 +54,6 @@ class AuthTests(TransactionTestCase):
 
         user = authenticate(username='testuser',
                             password='password')
-
         self.assertIsNotNone(user)
 
     @patch('cognito.django.backend.CognitoUser', autospec=True)
@@ -64,7 +63,7 @@ class AuthTests(TransactionTestCase):
             {
                 'Error': 
                     {
-                        'Message': u'Incorrect username or password.', 'Code': u'NotAuthorizedException'
+                        'Message': 'Incorrect username or password.', 'Code': 'NotAuthorizedException'
                     }
             },
             'AdminInitiateAuth')
@@ -80,7 +79,7 @@ class AuthTests(TransactionTestCase):
             {
                 'Error': 
                     {
-                        'Message': u'Incorrect username or password.', 'Code': u'NotAuthorizedException'
+                        'Message': 'Incorrect username or password.', 'Code': 'NotAuthorizedException'
                     }
             },
             'AdminInitiateAuth')
@@ -95,7 +94,27 @@ class AuthTests(TransactionTestCase):
 
         user = self.client.login(username='testuser',
                                  password='password')
-        self.assertIsNotNone(user)
+        self.assertTrue(user)
+
+    @patch('cognito.django.backend.CognitoUser', autospec=True)
+    def test_boto_error_raised(self, mock_cognito_user):
+        """
+        Check that any error other than NotAuthorizedException is
+        raised as an exception
+        """
+        mock_cognito_user.return_value = mock_cognito_user
+        mock_cognito_user.authenticate.side_effect = ClientError(
+            {
+                'Error': 
+                    {
+                        'Message': 'Generic Error Message.', 'Code': 'SomeError'
+                    }
+            },
+            'AdminInitiateAuth')
+        with self.assertRaises(ClientError) as error:
+            user = authenticate(username='testuser',
+                                password='password')
+        self.assertEqual(error.exception.response['Error']['Code'], 'SomeError')
 
     @patch('cognito.django.backend.CognitoUser', autospec=True)
     def test_new_user_created(self, mock_cognito_user):
@@ -190,9 +209,10 @@ class AuthTests(TransactionTestCase):
     def test_add_user_tokens(self):
         User = get_user_model()
         user = User.objects.create(username=settings.COGNITO_TEST_USERNAME)
-        setattr(user, 'access_token', 'access_token_value')
-        setattr(user, 'id_token', 'id_token_value')
-        setattr(user, 'refresh_token', 'refresh_token_value')
+        user.access_token = 'access_token_value'
+        user.id_token = 'id_token_value'
+        user.refresh_token = 'refresh_token_value'
+        user.backend = 'cognito.django.backend.CognitoBackend'
 
         request = RequestFactory().get('/login')
         middleware = SessionMiddleware()
@@ -203,3 +223,17 @@ class AuthTests(TransactionTestCase):
         self.assertEqual(request.session['ACCESS_TOKEN'], 'access_token_value')
         self.assertEqual(request.session['ID_TOKEN'], 'id_token_value')
         self.assertEqual(request.session['REFRESH_TOKEN'], 'refresh_token_value')
+
+    def test_model_backend(self):
+        """
+        Check that the logged in signal plays nice with other backends
+        """
+        User = get_user_model()
+        user = User.objects.create(username=settings.COGNITO_TEST_USERNAME)
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+
+        request = RequestFactory().get('/login')
+        middleware = SessionMiddleware()
+        middleware.process_request(request)
+        request.session.save()
+        signals.user_logged_in.send(sender=user.__class__, request=request, user=user)
