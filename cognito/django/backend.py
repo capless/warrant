@@ -35,6 +35,8 @@ class AbstractCognitoBackend(ModelBackend):
 
     UNAUTHORIZED_ERROR_CODE = 'NotAuthorizedException'
 
+    USER_NOT_FOUND_ERROR_CODE = 'UserNotFoundException'
+
     # Mapping of Cognito User attribute name to Django User attribute name
     COGNITO_ATTR_MAPPING = getattr(settings, 'COGNITO_ATTR_MAPPING',
         {
@@ -67,7 +69,10 @@ class AbstractCognitoBackend(ModelBackend):
 
     def handle_error_response(self, error):
         error_code = error.response['Error']['Code']
-        if error_code == AbstractCognitoBackend.UNAUTHORIZED_ERROR_CODE:
+        if error_code in [
+                AbstractCognitoBackend.UNAUTHORIZED_ERROR_CODE,
+                AbstractCognitoBackend.USER_NOT_FOUND_ERROR_CODE
+            ]:
             return None
         raise error
 

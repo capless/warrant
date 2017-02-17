@@ -138,7 +138,7 @@ class AuthTests(TransactionTestCase):
         user = authenticate(username='testuser',
                             password='password')
         self.assertEqual(user.id, existing_user.id)
-        self.assertNotEqual(user.email, existing_user)
+        self.assertNotEqual(user.email, existing_user.email)
         self.assertEqual(User.objects.count(), 1)
 
         updated_user = User.objects.get(username='testuser')
