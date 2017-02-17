@@ -34,16 +34,6 @@ class UserObj(object):
 
 
 class Cognito(object):
-    user_pool_id = None
-    client_id = None
-    username = None
-    password = None
-    id_token = None
-    access_token = None
-    refresh_token = None
-    token_type = None
-    expires_in = None
-    expires_datetime = None
 
     def __init__(
             self, user_pool_id, client_id,
@@ -51,7 +41,7 @@ class Cognito(object):
             id_token=None,refresh_token=None,
             access_token=None,expires_datetime=None,
             access_key=None, secret_key=None,
-            extra_fields=[]):
+            ):
         """
         :param user_pool_id: Cognito User Pool ID
         :param client_id: Cognito User Pool Application client ID
@@ -64,7 +54,6 @@ class Cognito(object):
             the authenticate method
         :param access_key: AWS IAM access key
         :param secret_key: AWS IAM secret key
-        :param extra_fields:
         """
 
         self.user_pool_id = user_pool_id
