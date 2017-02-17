@@ -109,6 +109,50 @@ u = Cognito('your-user-pool-id','your-client-id')
 u.confirm_sign_up('users-conf-code',username='bob')
 ```
 
+####Update Profile
+
+Update the user's profile
+
+```python
+from cognito import Cognito
+
+u = Cognito('your-user-pool-id','your-client-id',
+    id_token='id-token',refresh_token='refresh-token',
+    access_token='access-token')
+
+u.update_profile({'given_name':'Edward','family_name':'Smith',})
+```
+
+####Send Verification
+
+Send verification email or text for either the email or phone attributes.
+
+```python
+from cognito import Cognito
+
+u = Cognito('your-user-pool-id','your-client-id',
+    id_token='id-token',refresh_token='refresh-token',
+    access_token='access-token')
+
+u.send_verification(attribute='email')
+```
+
+
+####Get User
+
+Get all of the user's attributes
+
+**Important:** Returns a UserObj project
+
+```python
+from cognito import Cognito
+
+u = Cognito('your-user-pool-id','your-client-id',
+    username='bob')
+
+user = u.get_user()
+```
+
 ####Logout
 
 Logs the user out of all clients. Erases the access token.
@@ -124,4 +168,3 @@ u = Cognito('your-user-pool-id','your-client-id',
 
 u.logout()
 ```
-

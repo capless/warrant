@@ -138,7 +138,6 @@ class Cognito(object):
             ConfirmationCode=confirmation_code
         )
 
-
     def authenticate(self):
         """
         Authenticate the user.
@@ -187,8 +186,6 @@ class Cognito(object):
             UserAttributes=user_attrs,
             AccessToken=self.access_token
         )
-
-
 
     def get_user(self):
         """
