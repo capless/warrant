@@ -1,0 +1,24 @@
+{
+    "status_code": 200, 
+    "data": {
+        "AuthenticationResult": {
+            "ExpiresIn": 3600, 
+            "IdToken": "eyJraWQiOiI2M1dlV0tueTBycm5RSVdyZ1REUWVPSlkwVXJFWFRsUdFwZ25xejNYclpZPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJjN2Q4OTBmNi1lYjM4LTQ5OGQtOGY4NS03YTZjNGFmMzNkN2EiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZ2VuZGVyIjoibWFsZSIsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbVwvdXMtZWFzdC0xX0JnYmY5Y3lMdCIsImNvZ25pdG86dXNlcm5hbWUiOiJiamlud3JpZ2h0IiwicHJlZmVycmVkX3VzZXJuYW1lIjoiYnJpYW4iLCJnaXZlbl9uYW1lIjoiSmVua2lucyIsImF1ZCI6IjdnZTFpbGV2MzkwdmVxZDhlc2FibGRsZHUwIiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE0ODczNTc0MDYsIm5hbWUiOiJCcmlhbiBKaW53cmlnaHQiLCJleHAiOjE0ODczNjEwMDYsImlhdCI6MTQ4NzM1NzQwNiwiZW1haWwiOiJicmlhbkBpcG9vdHMuY29tIn0.VZIcDrhfG_M3NoymcDnGpqavsvB31lylRoh5zRDHkFe5Af-pqvROzpMKH2CVN5qSpPJZp1z6AFzWLWi4ol8TAvbbxjk1LjY1ZN99_wb3OlmNKOadurZ1FYU6Pdl0t6VGBo-OVccdwYig6MWNroj5wYfxXZMK7tFXno8_Rmr4Nm3X3IWfEJ0ZRTVbPBwbqrcRKLl0_fX36l1cOrLqkxdgaUq5VuPoitYUwwfXfeVpu2Q7JRtHbKYd23hm2V0MelPx80LUV0zTTkUearTetzss9fb3IFmHoJuk59kBnjuN2SgDXQYVVt644QgSEs4td4mZpcDlGkaAM_uZ05td06D3eg",
+            "TokenType": "Bearer", 
+            "AccessToken": "eyJraWQiOiJRTkVqRHkyNEs0N2ljOExNT2xxZFhEeEIxQjZLcd4wb2lDSzVOZGNvU053PSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJjN2Q4OTBmNi1lYjM4LTQ5OGQtOGY4NS03YTZjNGFmMzNkN2EiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6ImF3cy5jb2duaXRvLnNpZ25pbi51c2VyLmFkbWluIiwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfQmdiZjljeUx0IiwiZXhwIjoxNDg3MzYxMDA2LCJpYXQiOjE0ODczNTc0MDYsImp0aSI6IjM2NjFiZWM3LWYxMmYtNGUwYy04YmMxLTI4MDg0NjBjODIzMyIsImNsaWVudF9pZCI6IjdnZTFpbGV2MzkwdmVxZDhlc2FibGRsZHUwIiwidXNlcm5hbWUiOiJiamlud3JpZ2h0In0.DiT74SN5ISxKidY2bhnQXnIEhOT3ymzc5IJiAI6D_IPwNhy-8_io00xOMInYYLJkXa-erHnDSV7yPG0TG-6ipJaRDtIDcVaPvsn28N008IGOl2xX811h-iRlMxLxcLEvvCr7Aj5vwo8rOCPpP9JanOh2Dec57P3vSQ7N-nat3zpVchWH0dtLt_4wQmoay6l_cIZMebJxU2DqfJi4cOqlE1Zr3cuA-F66BBgZ1sb-69BrWt5QOWfbJwxkAEH8dm2qAWJLfMucCReNEPg-acUu25G-MpXg0_-T3oBFpwvGrp88hzmTlkQ0Ib8rKNEL6UIj3Q2fSVFqa90MxEqFerDd5g"
+        }, 
+        "ChallengeParameters": {}, 
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "e5fc864b-f541-11e6-837a-4758886fbf75", 
+            "HTTPHeaders": {
+                "date": "Fri, 17 Feb 2017 18:50:05 GMT", 
+                "x-amzn-requestid": "e5fc864b-f541-11e6-837a-4758886fbf75", 
+                "content-length": "1963", 
+                "content-type": "application/x-amz-json-1.1", 
+                "connection": "keep-alive"
+            }
+        }
+    }
+}

@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
 
-from cognito import User as CognitoUser
+from cognito import Cognito as CognitoUser
 
 
 INACTIVE_USER_STATUS = ['ARCHIVED', 'COMPROMISED']

@@ -33,7 +33,17 @@ class UserObj(object):
             setattr(self, key.lower(), value)
 
 
-class User(object):
+class Cognito(object):
+    user_pool_id = None
+    client_id = None
+    username = None
+    password = None
+    id_token = None
+    access_token = None
+    refresh_token = None
+    token_type = None
+    expires_in = None
+    expires_datetime = None
 
     def __init__(
             self, user_pool_id, client_id,
@@ -75,13 +85,17 @@ class User(object):
         else:
             self.client = boto3.client('cognito-idp')
 
+    def switch_session(self,session):
+        self.client = session.client('cognito-idp')
+
     def check_token(self):
         """
         Checks the self.expires_datetime attribute and either refreshes
         the tokens by calling the renew_access_tokens method or does nothing
-        :return:
+        :return: bool
         """
-        if datetime.datetime.now() > self.expires_datetime:
+        now = datetime.datetime.now()
+        if now > self.expires_datetime:
             self.renew_access_token()
 
     def register(self, username, password, **kwargs):
@@ -155,12 +169,24 @@ class User(object):
                 'PASSWORD': self.password
             },
         )
+
         self.expires_in = tokens['AuthenticationResult']['ExpiresIn']
         self.expires_datetime = datetime.datetime.now() + datetime.timedelta(seconds=self.expires_in)
         self.id_token = tokens['AuthenticationResult']['IdToken']
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.access_token = tokens['AuthenticationResult']['AccessToken']
         self.token_type = tokens['AuthenticationResult']['TokenType']
+
+    def logout(self):
+        self.client.global_sign_out(
+            AccessToken=self.access_token
+        )
+        self.expires_in = None
+        self.expires_datetime = None
+        self.id_token = None
+        self.refresh_token = None
+        self.access_token = None
+        self.token_type = None
 
     def update_profile(self, attrs):
         """
@@ -172,7 +198,8 @@ class User(object):
             UserAttributes=user_attrs,
             AccessToken=self.access_token
         )
-        self._set_attributes(response, attrs)
+
+
 
     def get_user(self):
         """
@@ -191,18 +218,6 @@ class User(object):
         }
 
         return UserObj(self.username, user.get('UserAttributes'), metadata=user_metadata)
-
-    def admin_initiate_change_password(self):
-        """
-        Resets user's password as an admin
-        Message is sent via Verification method set in User Pool(email|phone)
-        that includes password reset link 
-        WARNING: This invalidates User's current password
-        """
-        self.client.admin_reset_user_password(
-            UserPoolId=self.user_pool_id,
-            Username=self.username
-        )
 
     def send_verification(self, attribute='email'):
         """
@@ -240,10 +255,16 @@ class User(object):
                 'REFRESH_TOKEN': self.refresh_token
             },
         )
+
         self._set_attributes(
             refresh_response,
             {
-                'access_token': refresh_response['AuthenticationResult']['AccessToken']
+                'access_token': refresh_response['AuthenticationResult']['AccessToken'],
+                'id_token': refresh_response['AuthenticationResult']['IdToken'],
+                'token_type': refresh_response['AuthenticationResult']['TokenType'],
+                'expires_in': refresh_response['AuthenticationResult']['ExpiresIn'],
+                'expires_datetime':datetime.datetime.now() + datetime.timedelta(
+                    seconds=refresh_response['AuthenticationResult']['ExpiresIn'])
             }
         )
 
