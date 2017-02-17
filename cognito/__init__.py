@@ -1,7 +1,5 @@
 import datetime
 import boto3
-
-from botocore.exceptions import ClientError
 import ast
 
 
@@ -75,6 +73,12 @@ class Cognito(object):
             self.client = boto3.client('cognito-idp')
 
     def switch_session(self,session):
+        """
+        Primarily used for unit testing so we can take advantage of the
+        placebo library (https://githhub.com/garnaat/placebo)
+        :param session: boto3 session
+        :return:
+        """
         self.client = session.client('cognito-idp')
 
     def check_token(self):
@@ -144,7 +148,6 @@ class Cognito(object):
         :param user_pool_id: User Pool Id found in Cognito User Pool
         :param client_id: App Client ID found in the Apps section of the Cognito User Pool
         :return:
-
         """
 
         tokens = self.client.admin_initiate_auth(
@@ -166,6 +169,12 @@ class Cognito(object):
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
     def logout(self):
+        """
+        Logs the user out of all clients and removes the expires_in,
+        expires_datetime, id_token, refresh_token, access_token, and token_type
+        attributes
+        :return:
+        """
         self.client.global_sign_out(
             AccessToken=self.access_token
         )
