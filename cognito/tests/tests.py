@@ -1,8 +1,6 @@
 import unittest
 import datetime
 
-import boto3
-import placebo
 from mock import patch
 from envs import env
 from placebo.utils import placebo_session
@@ -52,9 +50,6 @@ class CognitoTestCase(unittest.TestCase):
         self.password = env('COGNITO_TEST_PASSWORD')
         self.user = Cognito(self.cognito_user_pool_id,self.app_id,
                          self.username,self.password)
-        self.user_na = Cognito(self.cognito_user_pool_id,self.app_id,
-                           self.username,self.password)
-
 
     @placebo_session
     def test_authenticate(self,session):
