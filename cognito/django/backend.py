@@ -7,6 +7,7 @@ from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
+from django.forms import ValidationError
 from django.utils.six import iteritems
 
 from cognito import Cognito as CognitoUser
@@ -28,10 +29,6 @@ class AbstractCognitoBackend(ModelBackend):
     __metaclass__ = abc.ABCMeta
 
     create_unknown_user = True
-
-    supports_inactive_user = False
-
-    INACTIVE_USER_STATUS = ['ARCHIVED', 'COMPROMISED', 'UNKNOWN']
 
     UNAUTHORIZED_ERROR_CODE = 'NotAuthorizedException'
 
@@ -62,8 +59,6 @@ class AbstractCognitoBackend(ModelBackend):
         except (Boto3Error, ClientError) as e:
             return self.handle_error_response(e)
         user_obj = cognito_user.get_user()
-        if not self.cognito_user_can_authenticate(user_obj):
-            return None
 
         return self._update_or_create_user(user_obj, cognito_user)
 
@@ -75,18 +70,6 @@ class AbstractCognitoBackend(ModelBackend):
             ]:
             return None
         raise error
-
-    def cognito_user_can_authenticate(self, user_obj):
-        """
-        Reject users if their Cognito user status is listed in
-        INACTIVE_USER_STATUS
-        :param user_obj: cognito.UserObj object
-        :return: Boolean
-        """
-        if not self.supports_inactive_user and \
-               user_obj.user_status in AbstractCognitoBackend.INACTIVE_USER_STATUS:
-            return False
-        return True
 
     def _update_or_create_user(self, user_obj, cognito_user):
         """
