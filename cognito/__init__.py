@@ -81,7 +81,7 @@ class User(object):
         the tokens by calling the renew_access_tokens method or does nothing
         :return:
         """
-        if datetime.datetime.now() > self.expires_datetime:
+        if self.expires_datetime and (datetime.datetime.now() > self.expires_datetime):
             self.renew_access_token()
 
     def register(self, username, password, **kwargs):
@@ -222,7 +222,7 @@ class User(object):
         :param attribute: Attribute to confirm 
         """
         self.check_token()
-        self.client.verify_user_attribute(
+        return self.client.verify_user_attribute(
             AccessToken=self.access_token,
             AttributeName=attribute,
             Code=confirmation_code
