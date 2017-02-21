@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 README = open(os.path.join(os.path.dirname(__file__), 'README.md')).read()
 
-packages = find_packages(exclude=['tests*'])
+packages = find_packages(exclude=['tests*', 'tests', 'cognito/tests*', 'cdu*', 'cdu'])
 
 setup(
     name='cognito',
@@ -14,7 +14,7 @@ setup(
     description='Cognito integration using boto3.',
     long_description=README,
     author='MetaMetrics, Inc.',
-    author_email='engineering@lexile.com',
+    author_email='brian@ipoots.com',
     url='http://www.metametricsinc.com/',
     license='GPLv3',
     install_requires=[

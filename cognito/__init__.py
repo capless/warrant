@@ -244,7 +244,7 @@ class Cognito(object):
         :param attribute: Attribute to confirm 
         """
         self.check_token()
-        self.client.verify_user_attribute(
+        return self.client.verify_user_attribute(
             AccessToken=self.access_token,
             AttributeName=attribute,
             Code=confirmation_code

@@ -40,7 +40,6 @@ COGNITO_USER_POOL_ID = env('COGNITO_USER_POOL_ID')
 COGNITO_APP_ID = env('COGNITO_APP_ID')
 
 # Application definition
-COGNITO_USER_ATTRIBUTES = ('email','phone','name','gender','preferred_username','address')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -49,8 +48,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cognito.django',
-    'crispy_forms',
+    'cdu.demo',
+    'crispy_forms,'
     'django_extensions'
 ]
 
@@ -114,6 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGIN_REDIRECT_URL = '/user_info'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
