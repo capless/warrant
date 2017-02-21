@@ -197,6 +197,18 @@ class Cognito(object):
         )
 
     def get_user(self):
+        user = self.client.get_user(
+                AccessToken=self.access_token
+            )
+        user_metadata = {
+            'username': user.get('Username'),
+            'expires_in': self.expires_in,
+            'expires_datetime': self.expires_datetime
+        }
+
+        return UserObj(self.username, user.get('UserAttributes'), metadata=user_metadata)
+
+    def admin_get_user(self):
         """
         Get the user's details
         :param user_pool_id: The Cognito User Pool Id
