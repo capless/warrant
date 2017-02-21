@@ -9,7 +9,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
 from django.utils.six import iteritems
 
-from cognito import User as CognitoUser
+from cognito import Cognito as CognitoUser
 
 
 class Pk(object):

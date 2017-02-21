@@ -1,0 +1,25 @@
+{
+    "status_code": 200, 
+    "data": {
+        "AuthenticationResult": {
+            "ExpiresIn": 3600, 
+            "IdToken": "eyJraWQiOiI2M1dlV0tueTBycm5RSddyZ1REUWVPSlkwVXJFWFRsUHFwZ25xejNYclpZPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJjN2Q4OTBmNi1lYjM4LTQ5OGQtOGY4NS03YTZjNGFmMzNkN2EiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZ2VuZGVyIjoibWFsZSIsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbVwvdXMtZWFzdC0xX0JnYmY5Y3lMdCIsImNvZ25pdG86dXNlcm5hbWUiOiJiamlud3JpZ2h0IiwicHJlZmVycmVkX3VzZXJuYW1lIjoiYnJpYW4iLCJhdWQiOiI3Z2UxaWxldjM5MHZlcWQ4ZXNhYmxkbGR1MCIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNDg3MzU2OTg5LCJuYW1lIjoiQnJpYW4gSmlud3JpZ2h0IiwiZXhwIjoxNDg3MzYwNTg5LCJpYXQiOjE0ODczNTY5ODksImVtYWlsIjoiYnJpYW5AaXBvb3RzLmNvbSJ9.cVUB-CZFpxPgasxRWSEtzrxsxvMgGoBTaC1LDrTzeWxsf9rXaiuTgB-d3fedW28W5MSuU4vvbfamLo05QOHW6ikJ9bq8fXToWIe-Wojh-dpp9n-zGXkQ0vGnkZTvEok9UXsuTnSos1JKUUfvtTSoOkEpdMXHArxpSycqxuzrcclyumyiO9bT4zOtuszWasuD2nLNoYgbF81bXOkpzyT1p6gPwqk1fFZBg3DZgZPSWp1bBZQr9IsQDw2cmcs4pQZZQJk4-HqgJlF4r6NynrGpNZcVlJdJ7G7SdVzRzoTpdQKh4az5E2pRPoc7v2V2c3wxMCTOuIDwtzdbP2zd9tfddg",
+            "RefreshToken": "eyJjdHkiOiJKV1QiLCJlbmMidiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.M4714KWtznZAUrJ9YlEOGbz7GbR0XLjZXGgXQwxw0Su-Qp_eBKQ67sePvh99OyDW7aRuK3Ro4ggMY1H-2uXrYQOq01txLLDvRVJKjMjCTua6hwZCAqjZej02xdrQLCFf1kPX2lFolOAeM8EwxC0aGFl-8lP4LXK6cr2_xSh8SuK9nz5j3T6A921Whn5c_J4SdjLcH1fqVrnp9G-Dcnfj6KLoYAIMAPKiLUUdBMnrDzkDdcpYf3TCoXHZs0qGP1EuP0vUmupO8nB1y8tU7A80pc4JnC23TVfBLg-JdQCHT5_7waCBS-DEpneexzZ7xAnsxdZpBX39gUlucIfxq0Udtw.scua39YKl2ELQ8Gb.Mu8Eh4dtaUitfIlefeMemEF3DjgSAwwr-8Ig_17guKU-NnVVNEvbBkIWny42WPMT9vEIREfQFgceJSeeRC6uj_Xf6__QEyh6hbZpJfkZ67FoAmPOC437qtMsytCGFcxgteIUsrraWh0i9R2n9LYOjWR-cKe65qMU7dZ_zRwbRB4XHE65_h3igS25pnCzP6Gu-EIbftBwvmlsmeGeK0Hnc16pUuOY_0JLeqF_c5u4nglZzQ1fNm9pnzIkus89Fpy4E48p4DgahNyY2p2RsNE3gyyAKBGNzoeagXbFzkmAQ28eUZ3Meb7-5pdmGaP0LTUj44ki_q0sN-NtzYGYwO-Q1w3UCCe4-9iUXpZN_b5WZGN0WDhTkHoN0diwnaHUx-gX-yozAmIWrP8tGyie0-3TnsQhvU4a3MbX0ka0-0Jnw2d70jusSqa4istYTmC7yUCSNd13Imww5qj2R2OnAwZNo051oby1pmGNRoaZ03aTFfXKMuuyyXvUjCqu8DgF_gfE-WPkH6Oi42M47c5e0NElhemRS1Umwm3oUvc-Seo3nLFtzI3Lm46wn-pptFjQt7JKmLy-_u8OddPvrfyGWkhOct4LjhlGvt8AHEFFeHRVDCEjOqW8qU4qu71t-nSkfaIqr84AgvDeysvuesUlEeLEX1MjpSKq60myCrGEiqdnMnEOAaben84zACMgzYWkSp6MJ8cgTn9Lh-rAZQ_uMQtXb5_bNxCGtZypaPwXTyYy3t3wc2U6FlwCDmT-cnQVqBT0G6zJ8rfwb7VBo2H-1uK8VB2O9Wwp0i5_e72cRAjVvyjOElvqM06B2uhKpGQu3fbF2WfSm94jsTUrcwUzT-m4l3TPl3onQpaHhWYs_G_Vw0eAqBIWZ1Qs0rIVNo4GVghw3FwRUpwIZSbqBK5FN_ZPo6uyFQQ4rCBdS_ilP7TLDb5AHHLQCXH_dtgb6esWJQEiKQyfSFpm8-fSOD50N5Il7xUTvEqNrd70aDGKjMF3e2kmbIb6YMtBu-SZIVMFiPU9EKmuZkSzRjUYPYab9jYEa7itfcF-n_x0oTuJj2zXkxSEBdSHjShKh4HR28mlEUnXhpyCH-6tmNdQ1qAUqGDc4gRPPW13plI6gl-o5hJ8pNPONOSAhpmoiqcK11XijivdN22OL9EFGQ.bgV_4RaS4QHfd0spFIT1ow",
+            "TokenType": "Bearer", 
+            "AccessToken": "eyJraWQiOiJRTkVqRHkyNEs0NdljOExNT2xxZFhEeEIxQjZLcU4wb2lDSzVOZGNvU053PSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJjN2Q4OTBmNi1lYjM4LTQ5OGQtOGY4NS03YTZjNGFmMzNkN2EiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6ImF3cy5jb2duaXRvLnNpZ25pbi51c2VyLmFkbWluIiwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfQmdiZjljeUx0IiwiZXhwIjoxNDg3MzYwNTg5LCJpYXQiOjE0ODczNTY5ODksImp0aSI6ImFjN2ZjMGJjLWY1ZmQtNDJjMy04NGI2LWU4MDY5NDA1ZGEwYyIsImNsaWVudF9pZCI6IjdnZTFpbGV2MzkwdmVxZDhlc2FibGRsZHUwIiwidXNlcm5hbWUiOiJiamlud3JpZ2h0In0.XH8WmMzutx-nxoSM3v0Tuv4lI38OzlhlBJwG0erWBlfl4_GQ8ONG9VnsMr1-XInXn3gr3hnM3P5tI9lc_y0oLjgIY4ar9wowdCATWOm3dDDeeocbTxVy04UAZ6yTFDs-YUeWq8hDY4qVdRK8erBNi6o91Tb6ImI73K_NnFXmBd5yv7xEeZ15uQa1gxV-tOS6N8UX6ebHka9RPNU1sovRLrQuokyYu7D5eaMJVm3Pz5npIbIXSAFnzGeEEQS3S4YIatG9ctdQfnbvn_njoy51BmBaE2y3wYqy2AGli-zjuQoINdRrLm5yPMJ6Sj-3M-bZ0wZOCFIs0kNl1RLdIIRwyw"
+        }, 
+        "ChallengeParameters": {}, 
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "ed9d74f3-f540-11e6-b21d-819251e49ee5", 
+            "HTTPHeaders": {
+                "date": "Fri, 17 Feb 2017 18:43:09 GMT", 
+                "x-amzn-requestid": "ed9d74f3-f540-11e6-b21d-819251e49ee5", 
+                "content-length": "3558", 
+                "content-type": "application/x-amz-json-1.1", 
+                "connection": "keep-alive"
+            }
+        }
+    }
+}
