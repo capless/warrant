@@ -32,10 +32,15 @@ AUTHENTICATION_BACKENDS = [
     'cognito.django.backend.CognitoUserPoolAuthBackend'
 ]
 COGNITO_TEST_USERNAME = env('COGNITO_TEST_USERNAME')
+
 COGNITO_TEST_PASSWORD = env('COGNITO_TEST_PASSWORD')
+
 COGNITO_USER_POOL_ID = env('COGNITO_USER_POOL_ID')
+
 COGNITO_APP_ID = env('COGNITO_APP_ID')
+
 # Application definition
+COGNITO_USER_ATTRIBUTES = ('email','phone','name','gender','preferred_username','address')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -45,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cognito.django',
+    'crispy_forms',
     'django_extensions'
 ]
 
@@ -127,3 +133,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
