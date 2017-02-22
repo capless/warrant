@@ -119,20 +119,20 @@ class AuthTests(TransactionTestCase):
     @patch('cognito.django.backend.CognitoUser', autospec=True)
     def test_new_user_created(self, mock_cognito_user):
         self.setup_mock_user(mock_cognito_user)
-
+    
         User = get_user_model()
         self.assertEqual(User.objects.count(), 0) 
-
+    
         user = authenticate(username='testuser',
                             password='password')
-
+    
         self.assertEqual(User.objects.count(), 1) 
         self.assertEqual(user.username, 'testuser')
-
+    
     @patch('cognito.django.backend.CognitoUser', autospec=True)
     def test_existing_user_updated(self, mock_cognito_user):
         self.setup_mock_user(mock_cognito_user)
-
+    
         User = get_user_model()
         existing_user = User.objects.create(username='testuser', email='None')
         user = authenticate(username='testuser',
@@ -140,70 +140,43 @@ class AuthTests(TransactionTestCase):
         self.assertEqual(user.id, existing_user.id)
         self.assertNotEqual(user.email, existing_user.email)
         self.assertEqual(User.objects.count(), 1)
-
+    
         updated_user = User.objects.get(username='testuser')
         self.assertEqual(updated_user.email, user.email)
         self.assertEqual(updated_user.id, user.id)
-
+    
     @patch('cognito.django.backend.CognitoUser', autospec=True)
     def test_existing_user_updated_disabled_create_unknown_user(self, mock_cognito_user):
         class AlternateCognitoBackend(CognitoBackend):
             create_unknown_user = False
-
+    
         self.setup_mock_user(mock_cognito_user)
-
+    
         User = get_user_model()
         existing_user = User.objects.create(username='testuser', email='None')
-
+    
         backend = AlternateCognitoBackend()
         user = backend.authenticate(username='testuser',
                             password='password')
         self.assertEqual(user.id, existing_user.id)
         self.assertNotEqual(user.email, existing_user)
         self.assertEqual(User.objects.count(), 1)
-
+    
         updated_user = User.objects.get(username='testuser')
         self.assertEqual(updated_user.email, user.email)
         self.assertEqual(updated_user.id, user.id)
-
+    
     @patch('cognito.django.backend.CognitoUser', autospec=True)
     def test_user_not_found_disabled_create_unknown_user(self, mock_cognito_user):
         class AlternateCognitoBackend(CognitoBackend):
             create_unknown_user = False
-
+    
         self.setup_mock_user(mock_cognito_user)
-
+    
         backend = AlternateCognitoBackend()
         user = backend.authenticate(username='testuser',
                             password='password')
-
-        self.assertIsNone(user)
-
-    @patch('cognito.django.backend.CognitoUser')
-    def test_inactive_user(self, mock_cognito_user):
-        """
-        Check that inactive users cannot login.
-        In our case, a user is considered inactive if their
-        user status in Cognito is 'ARCHIVED' or 'COMPROMISED' or 'UNKNOWN'
-        """
-        mock_cognito_user.return_value = mock_cognito_user
-        mock_user_obj = MagicMock()
-        mock_user_obj.user_status = 'COMPROMISED'
-        mock_cognito_user.get_user.return_value = mock_user_obj
-        user = authenticate(username=settings.COGNITO_TEST_USERNAME,
-                            password=settings.COGNITO_TEST_PASSWORD)
-        self.assertIsNone(user)
-
-        mock_user_obj.user_status = 'ARCHIVED'
-        mock_cognito_user.get_user.return_value = mock_user_obj
-        user = authenticate(username=settings.COGNITO_TEST_USERNAME,
-                            password=settings.COGNITO_TEST_PASSWORD)
-        self.assertIsNone(user)
-
-        mock_user_obj.user_status = 'UNKNOWN'
-        mock_cognito_user.get_user.return_value = mock_user_obj
-        user = authenticate(username=settings.COGNITO_TEST_USERNAME,
-                            password=settings.COGNITO_TEST_PASSWORD)
+    
         self.assertIsNone(user)
 
     def test_add_user_tokens(self):

@@ -95,6 +95,7 @@ class AbstractCognitoBackend(ModelBackend):
                 user.save()
             except UserModel.DoesNotExist:
                 user = None
+
         # Attach tokens to user object
         if user:
             setattr(user, 'access_token', cognito_user.access_token)
