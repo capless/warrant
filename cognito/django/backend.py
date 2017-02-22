@@ -58,7 +58,7 @@ class AbstractCognitoBackend(ModelBackend):
             cognito_user.authenticate()
         except (Boto3Error, ClientError) as e:
             return self.handle_error_response(e)
-        user_obj = cognito_user.get_user()
+        user_obj = cognito_user.admin_get_user()
 
         return self._update_or_create_user(user_obj, cognito_user)
 

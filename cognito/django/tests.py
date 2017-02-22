@@ -46,7 +46,7 @@ class AuthTests(TransactionTestCase):
         self.set_tokens(mock_cognito_user)
 
         mock_user_obj = self.create_mock_user_obj()
-        mock_cognito_user.get_user.return_value = mock_user_obj
+        mock_cognito_user.admin_get_user.return_value = mock_user_obj
 
     @patch('cognito.django.backend.CognitoUser', autospec=True)
     def test_user_authentication(self, mock_cognito_user):
