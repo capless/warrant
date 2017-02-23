@@ -55,7 +55,8 @@ u = Cognito('your-user-pool-id','your-client-id',
 
 Register a user to the user pool
 
-**Important:** The keyword arguments used for this method depend on your user pool's configuration, and make sure the client id (app id) used has write permissions for the attriubtes you are trying to create. Example, if you want to create a user with a given_name equal to Johnson make sure the client_id you're using has permissions to edit or create given_name for a user in the pool.
+**Important:** The keyword arguments used for this method depend on your user pool's configuration, and make sure the client id (app id) used has write permissions for the attributes you are trying to create.  
+Example: to create a user with a given_name equal to Johnson make sure the client_id you're using has permissions to edit or create given_name for a user in the pool.
 
 
 ```python
@@ -155,7 +156,7 @@ user = u.get_user()
 
 ####Logout
 
-Logs the user out of all clients. Erases the access token.
+Logs the user out of all clients. Erases all token related attributes.
 
 ```python
 from cognito import Cognito
