@@ -19,7 +19,8 @@ from django.contrib.auth import views as auth_views
 from demo.views import UserView
 
 urlpatterns = [
-    url(r'^login/$', auth_views.login, {'template_name': 'login.html'}, name='login'),
+    url(r'^accounts/login/$', auth_views.login, {'template_name': 'login.html'}, name='login'),
+    url(r'^accounts/logout/$', auth_views.logout, {'template_name': 'logout.html'}, name='logout'),
     url(r'^user_info/$', UserView.as_view(), name='user_view'),
     url(r'^admin/', admin.site.urls),
     url(r'^accounts/', include('cognito.django.urls'))

@@ -1,10 +1,15 @@
+{% extends 'cognito/base.html' %}
 {% load crispy_forms_tags %}
-{% extends 'base.html' %}
+
 
 {% block sidebar %}
 
 {% endblock %}
 
 {% block main_content %}
+    <form action="." method="post" class="form">
+    {% csrf_token %}
     {{ form|crispy }}
+    <input type="submit" class="btn btn-primary">
+    </form>
 {% endblock %}

@@ -1,25 +1,26 @@
 from django.conf import settings
 from django.views.generic import FormView, TemplateView
 from braces.views._access import AccessMixin,LoginRequiredMixin
+
 from cognito import Cognito
-from cognito.django.forms import ProfileForm
+from cognito.django.utils import get_cognito
+
+from .forms import ProfileForm
 
 
 class TokenMixin(AccessMixin):
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.access_token:
+        if not request.session['REFRESH_TOKEN']:
             return self.handle_no_permission(request)
-
         return super(TokenMixin, self).dispatch(
             request, *args, **kwargs)
 
 class GetUserMixin(object):
 
     def get_user(self):
-        c = Cognito(settings.COGNITO_USER_POOL_ID,
-                    settings.COGNITO_APP_ID,
-                    access_token=self.request.user.access_token)
+        c = get_cognito(self.request)
+        return c.get_user()
 
 class ProfileView(LoginRequiredMixin,TokenMixin,GetUserMixin,TemplateView):
     template_name = 'cognito/profile.html'
@@ -37,6 +38,7 @@ class UpdateProfileView(LoginRequiredMixin,TokenMixin,GetUserMixin,FormView):
     def get_initial(self):
 
         u = self.get_user()
+
         return {
             'name':u.name,
             'email':u.email,
@@ -45,6 +47,3 @@ class UpdateProfileView(LoginRequiredMixin,TokenMixin,GetUserMixin,FormView):
             'address':u.address,
             'preferred_username':u.preferred_username
         }
-
-
-

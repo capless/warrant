@@ -1,6 +1,8 @@
 import datetime
 import boto3
 import ast
+import json
+import base64
 
 
 def attribute_dict(attributes):
@@ -10,46 +12,38 @@ def attribute_dict(attributes):
     """
     return [{'Name': key, 'Value': value} for key, value in attributes.items()]
 
+def decode_jwt(token):
+    """Decode base64, padding being optional.
 
-class UserObj(object):
+    :param data: Base64 data as an ASCII byte string
+    :returns: The decoded byte string.
 
-    def __init__(self, username, attribute_list, metadata={}):
-        """
-        :param username:
-        :param attribute_list:
-        :param metadata: Dictionary of User metadata
-        """
-        self.username = username
-        self.pk = username
-        for a in attribute_list:
-            name = a.get('Name')
-            value = a.get('Value')
-            if value in ['true','false']:
-                value = ast.literal_eval(value.capitalize())
-            setattr(self, name, value)
-        for key, value in metadata.items():
-            setattr(self, key.lower(), value)
+    """
+    header,payload,signature = token.split('.')
+    missing_padding = len(payload) % 4
+    if missing_padding != 0:
+        payload += b'='* (4 - missing_padding)
+    return json.loads(base64.decodestring(payload))
 
 
 class Cognito(object):
 
+    user_class = dict
+
     def __init__(
             self, user_pool_id, client_id,
-            username=None, password=None,
+            username=None,
             id_token=None,refresh_token=None,
-            access_token=None,expires_datetime=None,
+            access_token=None,secret_hash=None,
             access_key=None, secret_key=None,
             ):
         """
         :param user_pool_id: Cognito User Pool ID
         :param client_id: Cognito User Pool Application client ID
         :param username: User Pool username
-        :param password: User Pool password
         :param id_token: ID Token returned by authentication
         :param refresh_token: Refresh Token returned by authentication
         :param access_token: Access Token returned by authentication
-        :param expires_datetime: Datetime object created by
-            the authenticate method
         :param access_key: AWS IAM access key
         :param secret_key: AWS IAM secret key
         """
@@ -57,13 +51,12 @@ class Cognito(object):
         self.user_pool_id = user_pool_id
         self.client_id = client_id
         self.username = username
-        self.password = password
         self.id_token = id_token
         self.access_token = access_token
         self.refresh_token = refresh_token
+        self.secret_hash = secret_hash
         self.token_type = None
-        self.expires_in = None
-        self.expires_datetime = expires_datetime
+
         if access_key and secret_key:
             self.client = boto3.client('cognito-idp',
                 aws_access_key_id=access_key,
@@ -71,6 +64,10 @@ class Cognito(object):
                 )
         else:
             self.client = boto3.client('cognito-idp')
+
+    def get_user_obj(self,username=None,attribute_list=[],metadata={}):
+        return self.user_class(username=username,attribute_list=attribute_list,
+                               metadata=metadata)
 
     def switch_session(self,session):
         """
@@ -81,15 +78,26 @@ class Cognito(object):
         """
         self.client = session.client('cognito-idp')
 
+
     def check_token(self):
         """
-        Checks the self.expires_datetime attribute and either refreshes
+        Checks the exp attribute of the access_token and either refreshes
         the tokens by calling the renew_access_tokens method or does nothing
-        :return: bool
+        :return: None
         """
+        if not self.access_token:
+            raise AttributeError('Access Token Required to Check Token')
         now = datetime.datetime.now()
-        if now > self.expires_datetime:
+        dec_access_token = decode_jwt(self.access_token)
+
+        if now > datetime.datetime.fromtimestamp(dec_access_token['exp']):
             self.renew_access_token()
+            return True
+        return False
+
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__,
+                          sort_keys=True, indent=4)
 
     def register(self, username, password, **kwargs):
         """
@@ -142,27 +150,28 @@ class Cognito(object):
             ConfirmationCode=confirmation_code
         )
 
-    def authenticate(self):
+    def authenticate(self, password):
         """
         Authenticate the user.
         :param user_pool_id: User Pool Id found in Cognito User Pool
         :param client_id: App Client ID found in the Apps section of the Cognito User Pool
         :return:
         """
-
+        auth_params = {
+                'USERNAME': self.username,
+                'PASSWORD': password
+            }
+        auth_params['']
         tokens = self.client.admin_initiate_auth(
             UserPoolId=self.user_pool_id,
             ClientId=self.client_id,
             # AuthFlow='USER_SRP_AUTH'|'REFRESH_TOKEN_AUTH'|'REFRESH_TOKEN'|'CUSTOM_AUTH'|'ADMIN_NO_SRP_AUTH',
             AuthFlow='ADMIN_NO_SRP_AUTH',
-            AuthParameters={
-                'USERNAME': self.username,
-                'PASSWORD': self.password
-            },
+            AuthParameters=auth_params,
         )
 
-        self.expires_in = tokens['AuthenticationResult']['ExpiresIn']
-        self.expires_datetime = datetime.datetime.now() + datetime.timedelta(seconds=self.expires_in)
+
+
         self.id_token = tokens['AuthenticationResult']['IdToken']
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.access_token = tokens['AuthenticationResult']['AccessToken']
@@ -178,8 +187,7 @@ class Cognito(object):
         self.client.global_sign_out(
             AccessToken=self.access_token
         )
-        self.expires_in = None
-        self.expires_datetime = None
+
         self.id_token = None
         self.refresh_token = None
         self.access_token = None
@@ -197,16 +205,20 @@ class Cognito(object):
         )
 
     def get_user(self):
+        # self.check_token()
         user = self.client.get_user(
                 AccessToken=self.access_token
             )
         user_metadata = {
             'username': user.get('Username'),
-            'expires_in': self.expires_in,
-            'expires_datetime': self.expires_datetime
+            'id_token': self.id_token,
+            'access_token': self.access_token,
+            'refresh_token': self.refresh_token
         }
 
-        return UserObj(self.username, user.get('UserAttributes'), metadata=user_metadata)
+        return self.get_user_obj(username=self.username,
+                                 attribute_list=user.get('UserAttributes'),
+                                 metadata=user_metadata)
 
     def admin_get_user(self):
         """
@@ -220,11 +232,14 @@ class Cognito(object):
         user_metadata = {
             'user_status':user.get('UserStatus'),
             'username':user.get('Username'),
-            'expires_in':self.expires_in,
-            'expires_datetime':self.expires_datetime
+            'id_token': self.id_token,
+            'access_token': self.access_token,
+            'refresh_token': self.refresh_token
         }
+        return self.get_user_obj(username=self.username,
+                                 atttribute_list=user.get('UserAttributes'),
+                                 metadata=user_metadata)
 
-        return UserObj(self.username, user.get('UserAttributes'), metadata=user_metadata)
 
     def send_verification(self, attribute='email'):
         """
@@ -241,7 +256,7 @@ class Cognito(object):
         """
         Verifies the specified user attributes in the user pool.
         :param confirmation_code: Code sent to user upon intiating verification
-        :param attribute: Attribute to confirm 
+        :param attribute: Attribute to confirm
         """
         self.check_token()
         return self.client.verify_user_attribute(
@@ -268,10 +283,7 @@ class Cognito(object):
             {
                 'access_token': refresh_response['AuthenticationResult']['AccessToken'],
                 'id_token': refresh_response['AuthenticationResult']['IdToken'],
-                'token_type': refresh_response['AuthenticationResult']['TokenType'],
-                'expires_in': refresh_response['AuthenticationResult']['ExpiresIn'],
-                'expires_datetime':datetime.datetime.now() + datetime.timedelta(
-                    seconds=refresh_response['AuthenticationResult']['ExpiresIn'])
+                'token_type': refresh_response['AuthenticationResult']['TokenType']
             }
         )
 
@@ -286,9 +298,9 @@ class Cognito(object):
 
     def confirm_forgot_password(self, confirmation_code, password):
         """
-        Allows a user to enter a code provided when they reset their password 
+        Allows a user to enter a code provided when they reset their password
         to update their password.
-        :param confirmation_code: The confirmation code sent by a user's request 
+        :param confirmation_code: The confirmation code sent by a user's request
         to retrieve a forgotten password
         :param password: New password
         """

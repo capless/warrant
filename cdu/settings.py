@@ -29,8 +29,9 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 AUTHENTICATION_BACKENDS = [
-    'cognito.django.backend.CognitoUserPoolAuthBackend'
+    'cognito.django.backend.CognitoBackend'
 ]
+
 COGNITO_TEST_USERNAME = env('COGNITO_TEST_USERNAME')
 
 COGNITO_TEST_PASSWORD = env('COGNITO_TEST_PASSWORD')
@@ -38,6 +39,8 @@ COGNITO_TEST_PASSWORD = env('COGNITO_TEST_PASSWORD')
 COGNITO_USER_POOL_ID = env('COGNITO_USER_POOL_ID')
 
 COGNITO_APP_ID = env('COGNITO_APP_ID')
+
+COGNITO_ATTR_MAPPING = env('COGNITO_ATTR_MAPPING',{},var_type='dict')
 
 # Application definition
 
@@ -49,7 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cdu.demo',
-    'crispy_forms,'
+    'cognito.django',
+    'crispy_forms',
     'django_extensions'
 ]
 
@@ -80,6 +84,8 @@ TEMPLATES = [
         },
     },
 ]
+
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 WSGI_APPLICATION = 'cdu.wsgi.application'
 
