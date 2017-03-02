@@ -3,6 +3,7 @@ import boto3
 import ast
 import json
 import base64
+import jwt
 
 
 def attribute_dict(attributes):
@@ -11,19 +12,6 @@ def attribute_dict(attributes):
     :return: list of User Pool attribute formatted dicts: {'Name': <attr_name>, 'Value': <attr_value>}
     """
     return [{'Name': key, 'Value': value} for key, value in attributes.items()]
-
-def decode_jwt(token):
-    """Decode base64, padding being optional.
-
-    :param data: Base64 data as an ASCII byte string
-    :returns: The decoded byte string.
-
-    """
-    header,payload,signature = token.split('.')
-    missing_padding = len(payload) % 4
-    if missing_padding != 0:
-        payload += b'='* (4 - missing_padding)
-    return json.loads(base64.decodestring(payload))
 
 
 class UserObj(object):
@@ -108,7 +96,7 @@ class Cognito(object):
         if not self.access_token:
             raise AttributeError('Access Token Required to Check Token')
         now = datetime.datetime.now()
-        dec_access_token = decode_jwt(self.access_token)
+        dec_access_token = jwt.decode(self.access_token,verify=False)
 
         if now > datetime.datetime.fromtimestamp(dec_access_token['exp']):
             self.renew_access_token()

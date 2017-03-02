@@ -1,12 +1,9 @@
-from django.conf import settings
 from django.urls import reverse_lazy
 from django.views.generic import FormView, TemplateView
 from django.contrib import messages
 from braces.views._access import AccessMixin,LoginRequiredMixin
 
-from cognito import Cognito
-from cognito.django.utils import get_cognito,user_obj_to_django
-
+from .utils import get_cognito
 from .forms import ProfileForm
 
 
