@@ -10,16 +10,7 @@ from django.contrib.auth import get_user_model
 from django.utils.six import iteritems
 
 from cognito import Cognito
-
-
-def cognito_to_dict(attr_list,mapping):
-    user_attrs = dict()
-    for i in attr_list:
-        name = mapping.get(i.get('Name'))
-        if name:
-            value = i.get('Value')
-            user_attrs[name] = value
-    return user_attrs
+from .utils import cognito_to_dict
 
 
 class CognitoUser(Cognito):

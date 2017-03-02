@@ -26,9 +26,30 @@ def decode_jwt(token):
     return json.loads(base64.decodestring(payload))
 
 
+class UserObj(object):
+
+    def __init__(self, username, attribute_list, metadata={}):
+        """
+        :param username:
+        :param attribute_list:
+        :param metadata: Dictionary of User metadata
+        """
+        self.username = username
+        self.pk = username
+        for a in attribute_list:
+            name = a.get('Name')
+            value = a.get('Value')
+            if value in ['true','false']:
+                value = ast.literal_eval(value.capitalize())
+            setattr(self, name, value)
+        for key, value in metadata.items():
+            setattr(self, key.lower(), value)
+
+
+
 class Cognito(object):
 
-    user_class = dict
+    user_class = UserObj
 
     def __init__(
             self, user_pool_id, client_id,
@@ -78,7 +99,6 @@ class Cognito(object):
         """
         self.client = session.client('cognito-idp')
 
-
     def check_token(self):
         """
         Checks the exp attribute of the access_token and either refreshes
@@ -94,10 +114,6 @@ class Cognito(object):
             self.renew_access_token()
             return True
         return False
-
-    def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__,
-                          sort_keys=True, indent=4)
 
     def register(self, username, password, **kwargs):
         """
@@ -161,7 +177,7 @@ class Cognito(object):
                 'USERNAME': self.username,
                 'PASSWORD': password
             }
-        auth_params['']
+
         tokens = self.client.admin_initiate_auth(
             UserPoolId=self.user_pool_id,
             ClientId=self.client_id,
@@ -237,7 +253,7 @@ class Cognito(object):
             'refresh_token': self.refresh_token
         }
         return self.get_user_obj(username=self.username,
-                                 atttribute_list=user.get('UserAttributes'),
+                                 attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata)
 
 

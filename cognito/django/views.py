@@ -1,9 +1,11 @@
 from django.conf import settings
+from django.urls import reverse_lazy
 from django.views.generic import FormView, TemplateView
+from django.contrib import messages
 from braces.views._access import AccessMixin,LoginRequiredMixin
 
 from cognito import Cognito
-from cognito.django.utils import get_cognito
+from cognito.django.utils import get_cognito,user_obj_to_django
 
 from .forms import ProfileForm
 
@@ -35,15 +37,15 @@ class UpdateProfileView(LoginRequiredMixin,TokenMixin,GetUserMixin,FormView):
     template_name = 'cognito/update-profile.html'
     form_class = ProfileForm
 
+    def get_success_url(self):
+        return reverse_lazy('update-profile')
+
     def get_initial(self):
-
         u = self.get_user()
-
-        return {
-            'name':u.name,
-            'email':u.email,
-            'gender':u.gender,
-            'phone':u.phone,
-            'address':u.address,
-            'preferred_username':u.preferred_username
-        }
+        return u.__dict__
+    
+    def form_valid(self, form):
+        c = get_cognito(self.request)
+        c.update_profile(form.cleaned_data)
+        messages.success(self.request,'You have successfully updated your profile.')
+        return super(UpdateProfileView, self).form_valid(form)

@@ -15,8 +15,6 @@ class UserObjTestCase(unittest.TestCase):
         self.user_metadata = {
             'user_status': 'CONFIRMED',
             'username': 'bjones',
-            'expires_in': '5',
-            'expires_datetime': datetime.datetime.now() + datetime.timedelta(seconds=5)
         }
         self.user_info = [
             {'Name': 'name', 'Value': 'Brian Jones'},
@@ -49,12 +47,12 @@ class CognitoTestCase(unittest.TestCase):
         self.username = env('COGNITO_TEST_USERNAME')
         self.password = env('COGNITO_TEST_PASSWORD')
         self.user = Cognito(self.cognito_user_pool_id,self.app_id,
-                         self.username,self.password)
+                         self.username)
 
     @placebo_session
     def test_authenticate(self,session):
         self.user.switch_session(session)
-        self.user.authenticate()
+        self.user.authenticate(self.password)
         self.assertNotEqual(self.user.access_token,None)
         self.assertNotEqual(self.user.id_token, None)
         self.assertNotEqual(self.user.refresh_token, None)
@@ -62,7 +60,7 @@ class CognitoTestCase(unittest.TestCase):
     @placebo_session
     def test_logout(self,session):
         self.user.switch_session(session)
-        self.user.authenticate()
+        self.user.authenticate(self.password)
         self.user.logout()
         self.assertEqual(self.user.id_token,None)
         self.assertEqual(self.user.refresh_token,None)
@@ -83,7 +81,7 @@ class CognitoTestCase(unittest.TestCase):
     @placebo_session
     def test_renew_tokens(self,session):
         self.user.switch_session(session)
-        self.user.authenticate()
+        self.user.authenticate(self.password)
         acc_token = self.user.access_token
         self.user.renew_access_token()
         acc_token_b = self.user.access_token
@@ -92,21 +90,21 @@ class CognitoTestCase(unittest.TestCase):
     @placebo_session
     def test_update_profile(self,session):
         self.user.switch_session(session)
-        self.user.authenticate()
+        self.user.authenticate(self.password)
         self.user.update_profile({'given_name':'Jenkins'})
         u = self.user.get_user()
         self.assertEquals(u.given_name,'Jenkins')
 
     @placebo_session
-    def test_get_user(self,session):
+    def test_admin_get_user(self,session):
         self.user.switch_session(session)
-        u = self.user.get_user()
+        u = self.user.admin_get_user()
         self.assertEqual(u.pk,self.username)
 
     @placebo_session
     def test_send_verification(self,session):
         self.user.switch_session(session)
-        self.user.authenticate()
+        self.user.authenticate(self.password)
         self.user.send_verification()
         with self.assertRaises(ClientError) as vm:
             self.user.send_verification(attribute='randomattribute')
@@ -114,25 +112,22 @@ class CognitoTestCase(unittest.TestCase):
     @placebo_session
     def test_check_token(self,session):
         self.user.switch_session(session)
-        self.user.authenticate()
-        self.user.expires_datetime = datetime.datetime.now() - datetime.timedelta(days=1)
-        og_exp_time = self.user.expires_datetime
+        self.user.authenticate(self.password)
         og_acc_token = self.user.access_token
         self.user.check_token()
-        self.assertNotEqual(og_exp_time,self.user.expires_datetime)
         self.assertNotEquals(og_acc_token,self.user.access_token)
 
 
     @patch('cognito.Cognito', autospec=True)
     def test_validate_verification(self,cognito_user):
         u = cognito_user(self.cognito_user_pool_id,self.app_id,
-                     username=self.username,password=self.password)
+                     username=self.username)
         u.validate_verification('4321')
 
     @patch('cognito.Cognito', autospec=True)
     def test_confirm_forgot_password(self,cognito_user):
         u = cognito_user(self.cognito_user_pool_id, self.app_id,
-                         username=self.username, password=self.password)
+                         username=self.username)
         u.confirm_forgot_password('4553','samplepassword')
         with self.assertRaises(TypeError) as vm:
             u.confirm_forgot_password(self.password)
@@ -140,10 +135,9 @@ class CognitoTestCase(unittest.TestCase):
     @placebo_session
     def test_change_password(self,session):
         self.user.switch_session(session)
-        self.user.authenticate()
-        og_password = self.user.password
+        self.user.authenticate(self.password)
         self.user.change_password(self.password,'crazypassword$45DOG')
-        self.assertNotEqual(self.user.password,og_password)
+
         with self.assertRaises(TypeError) as vm:
             self.user.change_password(self.password)
 
