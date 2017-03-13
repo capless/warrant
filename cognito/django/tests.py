@@ -10,7 +10,7 @@ from django.test.client import RequestFactory
 from django.utils.six import iteritems
 
 from cognito.django.backend import CognitoBackend
-from cognito import User as CognitoUser
+from cognito import Cognito as CognitoUser
 
 
 class AuthTests(TransactionTestCase):
@@ -33,7 +33,7 @@ class AuthTests(TransactionTestCase):
             family_name=kwargs.pop('family_name', 'LastName'),
         )
         for k, v in kwargs.iteritems():
-            setattr(mock, k, v)
+            setattr(mock_user_obj, k, v)
 
         return mock_user_obj
 

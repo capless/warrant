@@ -92,7 +92,7 @@ class CognitoTestCase(unittest.TestCase):
         self.user.switch_session(session)
         self.user.authenticate(self.password)
         self.user.update_profile({'given_name':'Jenkins'})
-        u = self.user.get_user()
+        u = self.user.admin_get_user()
         self.assertEquals(u.given_name,'Jenkins')
 
     @placebo_session
