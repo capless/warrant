@@ -29,12 +29,19 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 AUTHENTICATION_BACKENDS = [
-    'cognito.django.backend.CognitoUserPoolAuthBackend'
+    'cognito.django.backend.CognitoBackend'
 ]
+
 COGNITO_TEST_USERNAME = env('COGNITO_TEST_USERNAME')
+
 COGNITO_TEST_PASSWORD = env('COGNITO_TEST_PASSWORD')
+
 COGNITO_USER_POOL_ID = env('COGNITO_USER_POOL_ID')
+
 COGNITO_APP_ID = env('COGNITO_APP_ID')
+
+COGNITO_ATTR_MAPPING = env('COGNITO_ATTR_MAPPING',{},var_type='dict')
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -44,7 +51,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cognito.django'
+    'cdu.demo',
+    'cognito.django',
+    'crispy_forms',
+    'django_extensions'
 ]
 
 MIDDLEWARE = [
@@ -74,6 +84,8 @@ TEMPLATES = [
         },
     },
 ]
+
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 WSGI_APPLICATION = 'cdu.wsgi.application'
 
@@ -107,6 +119,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGIN_REDIRECT_URL = '/user_info'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
@@ -126,3 +139,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
