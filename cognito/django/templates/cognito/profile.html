@@ -1,0 +1,27 @@
+{% extends 'cognito/base.html' %}
+
+{% block sidebar %}
+<ul>
+    <li><a href="{% url 'update-profile' %}">Update your Profile</a></li>
+</ul>
+
+{% endblock %}
+
+{% block main_content %}
+    <h1>{{ user.username }}</h1>
+    <a href="{% url 'update-profile' %}" class="btn btn-primary">Update your Profile</a>
+    <dl>
+        <dt>Name:</dt>
+        <dd>{{ user.name }}</dd>
+        <dt>Email:</dt>
+        <dd>{{ user.email }}</dd>
+        <dt>Address:</dt>
+        <dd>{{ user.address }}</dd>
+        <dt>Phone:</dt>
+        <dd>{{ user.phone_number }}</dd>
+        <dt>Gender:</dt>
+        <dd>{{ user.gender }}</dd>
+        <dt>Preferred Username:</dt>
+        <dd>{{ user.preferred_username }}</dd>
+    </dl>
+{% endblock main_content %}
