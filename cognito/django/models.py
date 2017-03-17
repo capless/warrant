@@ -19,7 +19,6 @@ class ApiKeyManager(models.Manager):
         if not existing_keys.exists():
             new_key = ApiKey.objects.create(apikey=apikey, user_id=user_id, active=True)
             return (new_key, True)
-
      
         if return_inactive and existing_keys.filter(apikey=apikey).exists():
             return (existing_keys.get(apikey=apikey), False)
@@ -40,7 +39,7 @@ class ApiKeyManager(models.Manager):
         
 
 class ApiKey(models.Model):
-    apikey = models.CharField(max_length=256, unique=True)
+    apikey = models.CharField(max_length=255, unique=True)
     user_id = models.IntegerField()
     active = models.BooleanField(default=False)
 

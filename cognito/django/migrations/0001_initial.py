@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='ApiKey',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('apikey', models.CharField(max_length=256, unique=True)),
+                ('apikey', models.CharField(max_length=255, unique=True)),
                 ('user_id', models.IntegerField()),
                 ('active', models.BooleanField(default=False)),
             ],
