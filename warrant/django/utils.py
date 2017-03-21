@@ -1,5 +1,5 @@
 from django.conf import settings
-from cognito import Cognito
+from warrant import Cognito
 
 
 def cognito_to_dict(attr_list,mapping):
