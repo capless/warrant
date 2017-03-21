@@ -1,13 +1,9 @@
-# Cognito
+# Warrant
 
 Python class to integrate Boto3's Cognito client with PySRP so it is easy to login users.
 Included is a Django authentication backend that uses the utility class to
 handle password verification and fetching of user attributes.
 
-
-=======
-# cognito
-Python class to integrate Boto3's Cognito client with PySRP so it is easy to login users.
 
 ## Create a Cognito Instance
 
