@@ -6,7 +6,7 @@ from envs import env
 from placebo.utils import placebo_session
 from botocore.exceptions import ClientError
 
-from cognito import Cognito,UserObj,attribute_dict
+from warrant import Cognito,UserObj,attribute_dict
 
 
 class UserObjTestCase(unittest.TestCase):

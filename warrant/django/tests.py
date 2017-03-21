@@ -10,8 +10,8 @@ from django.test import TestCase, TransactionTestCase
 from django.test.client import RequestFactory
 from django.utils.six import iteritems
 
-from cognito.django.backend import CognitoBackend
-from cognito import Cognito as CognitoUser
+from warrant.django.backend import CognitoBackend
+from warrant import Cognito as CognitoUser
 
 
 class AuthTests(TransactionTestCase):
