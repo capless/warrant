@@ -19,7 +19,7 @@ n_hex = 'FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1' + '29024E088A67CC7402
         'BBE117577A615D6C770988C0BAD946E208E24FA074E5AB31' + '43DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF'
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L49
 g_hex = '2'
-infoBits = bytearray('Caldera Derived Key', 'utf-8')
+info_bits = bytearray('Caldera Derived Key', 'utf-8')
 
 
 def hash_sha256(buf):
@@ -28,8 +28,8 @@ def hash_sha256(buf):
     return (64 - len(a)) * '0' + a
 
 
-def hexHash(hexStr):
-    return hash_sha256(bytearray.fromhex(hexStr))
+def hex_hash(hex_string):
+    return hash_sha256(bytearray.fromhex(hex_string))
 
 
 def hex_to_long(hex_string):
@@ -45,16 +45,16 @@ def get_random(nbytes):
     return hex_to_long(random_hex)
 
 
-def padHex(bigInt):
+def pad_hex(long_int):
     """
     Converts a Long integer (or hex string) to hex format padded with zeroes for hashing
-    :param {Long integer|String} bigInt Number or string to pad.
+    :param {Long integer|String} long_int Number or string to pad.
     :return {String} Padded hex string.
     """
-    if not isinstance(bigInt, six.string_types):
-        hashStr = long_to_hex(bigInt)
+    if not isinstance(long_int, six.string_types):
+        hashStr = long_to_hex(long_int)
     else:
-        hashStr = bigInt
+        hashStr = long_int
     if len(hashStr) % 2 == 1:
         hashStr = '0%s' % hashStr
     elif hashStr[0] in '89ABCDEFabcdef':
@@ -62,7 +62,7 @@ def padHex(bigInt):
     return hashStr
 
 
-def computehkdf(ikm, salt):
+def compute_hkdf(ikm, salt):
     """
     Standard hkdf algorithm
     :param {Buffer} ikm Input key material.
@@ -71,58 +71,56 @@ def computehkdf(ikm, salt):
     @private
     """
     prk = hmac.new(salt, ikm, hashlib.sha256).digest()
-    infoBitsUpdate = infoBits + bytearray(chr(1), 'utf-8')
-    hmac_hash = hmac.new(prk, infoBitsUpdate, hashlib.sha256).digest()
+    info_bits_update = info_bits + bytearray(chr(1), 'utf-8')
+    hmac_hash = hmac.new(prk, info_bits_update, hashlib.sha256).digest()
     return hmac_hash[:16]
 
 
-def calculateU(A, B):
+def calculate_u(A, B):
     """
     Calculate the client's value U which is the hash of A and B
     :param {Long integer} A Large A value.
     :param {Long integer} B Server B value.
     :return {Long integer} Computed U value.
     """
-    UHexHash = hexHash(padHex(A) + padHex(B))
-    finalU = hex_to_long(UHexHash)
-    return finalU
+    UHexHash = hex_hash(pad_hex(A) + pad_hex(B))
+    return hex_to_long(UHexHash)
 
 
-class AwsSrp:
+class AWSSRP:
 
     def __init__(self, username, password, pool_id):
         self.username = username
         self.password = password
         self.pool_id = pool_id
-        self.N = hex_to_long(n_hex)
+        self.big_n = hex_to_long(n_hex)
         self.g = hex_to_long(g_hex)
-        self.k = hex_to_long(hexHash('00' + n_hex + '0' + g_hex))
-        self.smallAValue = self.generateRandomSmallA()
-        self.largeAValue = self.calculateA()
+        self.k = hex_to_long(hex_hash('00' + n_hex + '0' + g_hex))
+        self.small_a_value = self.generate_random_small_a()
+        self.large_a_value = self.calculate_a()
 
-    def generateRandomSmallA(self):
+    def generate_random_small_a(self):
         """
         helper function to generate a random big integer
         :return {Long integer} a random value.
         """
-        randomBigInt = get_random(128)
-        smallABigInt = randomBigInt % self.N
-        return smallABigInt
+        random_long_int = get_random(128)
+        return random_long_int % self.big_n
 
-    def calculateA(self):
+    def calculate_a(self):
         """
         Calculate the client's public value A = g^a%N
         with the generated random number a
         :param {Long integer} a Randomly generated small A.
         :return {Long integer} Computed large A.
         """
-        A = pow(self.g, self.smallAValue, self.N)
+        big_a = pow(self.g, self.small_a_value, self.big_n)
         # safety check
-        if (A % self.N) == 0:
+        if (big_a % self.big_n) == 0:
             raise ValueError('Safety check for A failed')
-        return A
+        return big_a
 
-    def getPasswordAuthenticationKey(self, username, password, serverBValue, salt):
+    def get_password_authentication_key(self, username, password, serverBValue, salt):
         """
         Calculates the final hkdf based on computed S value, and computed U value and the key
         :param {String} username Username.
@@ -131,24 +129,23 @@ class AwsSrp:
         :param {Long integer} salt Generated salt.
         :return {Buffer} Computed HKDF value.
         """
-        UValue = calculateU(self.largeAValue, serverBValue)
-        if UValue == 0:
+        u_value = calculate_u(self.large_a_value, serverBValue)
+        if u_value == 0:
             raise ValueError('U cannot be zero.')
-        usernamePassword = '%s%s:%s' % (self.pool_id.split('_')[1], username, password)
-        usernamePasswordHash = hash_sha256(usernamePassword.encode('utf-8'))
+        username_password = '%s%s:%s' % (self.pool_id.split('_')[1], username, password)
+        username_password_hash = hash_sha256(username_password.encode('utf-8'))
 
-        xValue = hex_to_long(hexHash(padHex(salt) + usernamePasswordHash))
-        gModPowXN = pow(self.g, xValue, self.N)
-        intValue2 = serverBValue - self.k * gModPowXN
-        sValue = pow(intValue2, self.smallAValue + UValue * xValue, self.N)
-        hkdf = computehkdf(bytearray.fromhex(padHex(sValue)),
-                           bytearray.fromhex(padHex(long_to_hex(UValue))))
+        x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
+        g_mod_pow_xn = pow(self.g, x_value, self.big_n)
+        int_value2 = serverBValue - self.k * g_mod_pow_xn
+        s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
+        hkdf = compute_hkdf(bytearray.fromhex(pad_hex(s_value)),
+                           bytearray.fromhex(pad_hex(long_to_hex(u_value))))
         return hkdf
 
     def get_auth_params(self):
         return {'USERNAME': self.username,
-                'SRP_A': long_to_hex(self.largeAValue)
-                }
+                'SRP_A': long_to_hex(self.large_a_value)}
 
     def process_challenge(self, challenge_parameters):
         user_id_for_srp = challenge_parameters['USER_ID_FOR_SRP']
@@ -156,16 +153,15 @@ class AwsSrp:
         srp_b_hex = challenge_parameters['SRP_B']
         secret_block_b64 = challenge_parameters['SECRET_BLOCK']
         timestamp = datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
-        hkdf = self.getPasswordAuthenticationKey(user_id_for_srp, self.password, hex_to_long(srp_b_hex), salt_hex)
+        hkdf = self.get_password_authentication_key(user_id_for_srp,
+                                                    self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
         msg = bytearray(self.pool_id.split('_')[1], 'utf-8') + bytearray(user_id_for_srp, 'utf-8') + \
               bytearray(secret_block_bytes) + bytearray(timestamp, 'utf-8')
         hmac_obj = hmac.new(hkdf, msg, digestmod=hashlib.sha256)
-        signatureString = base64.standard_b64encode(hmac_obj.digest())
+        signature_string = base64.standard_b64encode(hmac_obj.digest())
 
-        return {
-                "TIMESTAMP": timestamp,
+        return {"TIMESTAMP": timestamp,
                 "USERNAME": user_id_for_srp,
                 "PASSWORD_CLAIM_SECRET_BLOCK": secret_block_b64,
-                "PASSWORD_CLAIM_SIGNATURE": signatureString.decode('utf-8')
-                }
+                "PASSWORD_CLAIM_SIGNATURE": signature_string.decode('utf-8')}

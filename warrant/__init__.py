@@ -3,7 +3,7 @@ import boto3
 import ast
 import jwt
 
-from .aws_srp import AwsSrp
+from .aws_srp import AWSSRP
 
 
 def attribute_dict(attributes):
@@ -187,7 +187,7 @@ class Cognito(object):
         :param password:
         :return:
         """
-        aws = AwsSrp(username=self.username, password=password, pool_id=self.user_pool_id)
+        aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id)
         auth_params = aws.get_auth_params()
         response = self.client.initiate_auth(
             AuthFlow='USER_SRP_AUTH',
