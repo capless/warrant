@@ -22,12 +22,14 @@ class CognitoUser(Cognito):
                                        'email': 'email',
                                        'given_name': 'first_name',
                                        'family_name': 'last_name',
+                                       'custom:api_key': 'api_key',
+                                       'custom:api_key_id': 'api_key_id'
                                    }
                                    )
 
     def get_user_obj(self,username=None,attribute_list=[],metadata={},
                      create_unknown_user=True):
-        user_attrs = cognito_to_dict(attribute_list,self.COGNITO_ATTR_MAPPING)
+        user_attrs = cognito_to_dict(attribute_list,CognitoUser.COGNITO_ATTR_MAPPING)
 
         if create_unknown_user:
             user, created = self.user_class.objects.update_or_create(

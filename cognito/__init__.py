@@ -172,12 +172,11 @@ class Cognito(object):
             AuthParameters=auth_params,
         )
 
-
-
         self.id_token = tokens['AuthenticationResult']['IdToken']
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.access_token = tokens['AuthenticationResult']['AccessToken']
         self.token_type = tokens['AuthenticationResult']['TokenType']
+
 
     def logout(self):
         """
@@ -217,7 +216,6 @@ class Cognito(object):
             'access_token': self.access_token,
             'refresh_token': self.refresh_token
         }
-
         return self.get_user_obj(username=self.username,
                                  attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata)
