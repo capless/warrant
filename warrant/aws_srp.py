@@ -1,4 +1,5 @@
 import base64
+import binascii
 import datetime
 import hashlib
 import hmac
@@ -28,7 +29,7 @@ def hash_sha256(buf):
 
 
 def hexHash(hexStr):
-    return hash_sha256(hexStr.decode('hex'))
+    return hash_sha256(bytearray.fromhex(hexStr))
 
 
 def hex_to_long(hex_string):
@@ -40,7 +41,7 @@ def long_to_hex(long_num):
 
 
 def get_random(nbytes):
-    random_hex = os.urandom(nbytes).encode('hex')
+    random_hex = binascii.hexlify(os.urandom(nbytes))
     return hex_to_long(random_hex)
 
 
@@ -70,7 +71,7 @@ def computehkdf(ikm, salt):
     @private
     """
     prk = hmac.new(salt, ikm, hashlib.sha256).digest()
-    infoBitsUpdate = infoBits + bytearray(chr(1))
+    infoBitsUpdate = infoBits + bytearray(chr(1), 'utf-8')
     hmac_hash = hmac.new(prk, infoBitsUpdate, hashlib.sha256).digest()
     return hmac_hash[:16]
 
@@ -134,13 +135,14 @@ class AwsSrp:
         if UValue == 0:
             raise ValueError('U cannot be zero.')
         usernamePassword = '%s%s:%s' % (self.pool_id.split('_')[1], username, password)
-        usernamePasswordHash = hash_sha256(usernamePassword)
+        usernamePasswordHash = hash_sha256(usernamePassword.encode('utf-8'))
 
         xValue = hex_to_long(hexHash(padHex(salt) + usernamePasswordHash))
         gModPowXN = pow(self.g, xValue, self.N)
         intValue2 = serverBValue - self.k * gModPowXN
         sValue = pow(intValue2, self.smallAValue + UValue * xValue, self.N)
-        hkdf = computehkdf(padHex(sValue).decode('hex'), padHex(long_to_hex(UValue)).decode('hex'))
+        hkdf = computehkdf(bytearray.fromhex(padHex(sValue)),
+                           bytearray.fromhex(padHex(long_to_hex(UValue))))
         return hkdf
 
     def get_auth_params(self):
@@ -153,11 +155,11 @@ class AwsSrp:
         salt_hex = challenge_parameters['SALT']
         srp_b_hex = challenge_parameters['SRP_B']
         secret_block_b64 = challenge_parameters['SECRET_BLOCK']
-        timestamp = unicode(datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"))
+        timestamp = datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
         hkdf = self.getPasswordAuthenticationKey(user_id_for_srp, self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
         msg = bytearray(self.pool_id.split('_')[1], 'utf-8') + bytearray(user_id_for_srp, 'utf-8') + \
-              bytearray(secret_block_bytes, 'base64') + bytearray(timestamp, 'utf-8')
+              bytearray(secret_block_bytes) + bytearray(timestamp, 'utf-8')
         hmac_obj = hmac.new(hkdf, msg, digestmod=hashlib.sha256)
         signatureString = base64.standard_b64encode(hmac_obj.digest())
 
@@ -165,5 +167,5 @@ class AwsSrp:
                 "TIMESTAMP": timestamp,
                 "USERNAME": user_id_for_srp,
                 "PASSWORD_CLAIM_SECRET_BLOCK": secret_block_b64,
-                "PASSWORD_CLAIM_SIGNATURE": signatureString
+                "PASSWORD_CLAIM_SIGNATURE": signatureString.decode('utf-8')
                 }
