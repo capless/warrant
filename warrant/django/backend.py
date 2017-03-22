@@ -9,7 +9,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
 from django.utils.six import iteritems
 
-from cognito import Cognito
+from warrant import Cognito
 from .utils import cognito_to_dict
 
 
@@ -74,11 +74,10 @@ class AbstractCognitoBackend(ModelBackend):
             return self.handle_error_response(e)
         user = cognito_user.get_user()
         if user:
-            setattr(user, 'access_token', cognito_user.access_token)
-            setattr(user, 'id_token', cognito_user.id_token)
-            setattr(user, 'refresh_token', cognito_user.refresh_token)
+            user.access_token = cognito_user.access_token
+            user.id_token =cognito_user.id_token
+            user.refresh_token = cognito_user.refresh_token
         return user
-
 
     def handle_error_response(self, error):
         error_code = error.response['Error']['Code']
