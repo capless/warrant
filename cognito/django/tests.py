@@ -11,7 +11,6 @@ from django.test.client import RequestFactory
 from django.utils.six import iteritems
 
 from cognito.django.backend import CognitoBackend
-from cognito.django.models import ApiKey
 from cognito import Cognito as CognitoUser
 
 
@@ -267,63 +266,3 @@ class MiddleWareTests(TestCase):
 
         # Now test with proper headers in place
         self.assertEqual(request.api_key, 'testapikey')
-
-
-class ApiKeyModelTestCase(TransactionTestCase):
-    def setUp(self):
-        User = get_user_model()
-        self.user = User.objects.create_user(username='testuser')
-
-    def test_get_existing_active_key(self):
-        # if we have an existing, active ApiKey for a user
-        active_key = ApiKey.objects.create(user_id=self.user.id, apikey='abcde', active=True)
-        inactive_key = ApiKey.objects.create(user_id=self.user.id, apikey='xyz', active=False)
-        # then when we call get_or_create_apikey
-        fetched_key, created = ApiKey.objects.get_or_create_apikey(self.user.id, active_key.apikey)
-        # we get back the same key
-        self.assertEqual(active_key.id, fetched_key.id)
-        self.assertFalse(created)
-
-    def test_get_existing_inactive_key(self):
-        # if we have an existing, inactive ApiKey for a user
-        inactive_key = ApiKey.objects.create(user_id=self.user.id, apikey='abcde', active=False)
-        active_key = ApiKey.objects.create(user_id=self.user.id, apikey='xyz', active=True)
-        # then when we call get_or_create_apikey with return_inactive=True
-        fetched_key, created = ApiKey.objects.get_or_create_apikey(self.user.id, inactive_key.apikey, return_inactive=True)
-        # we get back the same key
-        self.assertEqual(inactive_key.id, fetched_key.id)
-        self.assertFalse(created)
-
-    def test_new_key_created_existing_inactive(self):
-        # if there are existing apikeys but none of them are active
-        inactive_key = ApiKey.objects.create(user_id=self.user.id, apikey='cdef')
-        # when we call get_or_create_apikey
-        fetched_key, created = ApiKey.objects.get_or_create_apikey(self.user.id, 'abcde', return_inactive=True)
-        # a new key is created
-        self.assertNotEqual(inactive_key.id, fetched_key.id)
-        self.assertEqual(fetched_key.apikey, 'abcde') 
-        self.assertTrue(created)
-
-    def test_new_key_created_no_existing(self):
-        # if there are no existing apikeys for a user
-        # then when we call get_or_create_apikey
-        fetched_key, created = ApiKey.objects.get_or_create_apikey(self.user.id, 'abcde', return_inactive=True)
-        # we get a new key
-        self.assertEqual(fetched_key.apikey, 'abcde')
-        self.assertEqual(fetched_key.user_id, self.user.id)
-        self.assertTrue(fetched_key.active)
-        self.assertTrue(created)
-
-    def test_replace_existing_active_key(self):
-        # if there is an existing, active key
-        ApiKey.objects.create(user_id=self.user.id, apikey='abcde', active=True)
-        # if we pass a new apikey to get_or_create_apikey
-        fetched_key, created = ApiKey.objects.get_or_create_apikey(self.user.id, 'fghi')
-        # then the previous, active key is deactivated
-        old_key = ApiKey.objects.get(apikey='abcde')
-        self.assertFalse(old_key.active)
-        # and a new one has been created
-        self.assertNotEqual(old_key.id, fetched_key.id)
-        self.assertEqual(fetched_key.apikey, 'fghi')
-        self.assertTrue(fetched_key.active)
-        self.assertTrue(created)
