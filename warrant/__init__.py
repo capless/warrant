@@ -3,6 +3,8 @@ import boto3
 import ast
 import jwt
 
+from .aws_srp import AwsSrp
+
 
 def attribute_dict(attributes):
     """
@@ -173,6 +175,31 @@ class Cognito(object):
         )
 
 
+
+        self.id_token = tokens['AuthenticationResult']['IdToken']
+        self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
+        self.access_token = tokens['AuthenticationResult']['AccessToken']
+        self.token_type = tokens['AuthenticationResult']['TokenType']
+
+    def authenticate_user(self, password):
+        """
+        Authenticate the user.
+        :param password:
+        :return:
+        """
+        aws = AwsSrp(username=self.username, password=password, pool_id=self.user_pool_id)
+        auth_params = aws.get_auth_params()
+        response = self.client.initiate_auth(
+            AuthFlow='USER_SRP_AUTH',
+            AuthParameters=auth_params,
+            ClientId=self.client_id
+        )
+        challenge_response = aws.process_challenge(response['ChallengeParameters'])
+
+        tokens = self.client.respond_to_auth_challenge(
+            ClientId=self.client_id,
+            ChallengeName='PASSWORD_VERIFIER',
+            ChallengeResponses=challenge_response)
 
         self.id_token = tokens['AuthenticationResult']['IdToken']
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
