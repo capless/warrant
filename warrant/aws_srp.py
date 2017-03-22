@@ -4,9 +4,9 @@ import datetime
 import hashlib
 import hmac
 
+import boto3
 import os
 import six
-
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
 n_hex = 'FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1' + '29024E088A67CC74020BBEA63B139B22514A08798E3404DD' + \
@@ -87,12 +87,13 @@ def calculate_u(A, B):
     return hex_to_long(UHexHash)
 
 
-class AWSSRP:
+class AWSSRP(object):
 
-    def __init__(self, username, password, pool_id):
+    def __init__(self, username, password, pool_id, client_id):
         self.username = username
         self.password = password
         self.pool_id = pool_id
+        self.client_id = client_id
         self.big_n = hex_to_long(n_hex)
         self.g = hex_to_long(g_hex)
         self.k = hex_to_long(hex_hash('00' + n_hex + '0' + g_hex))
@@ -165,3 +166,19 @@ class AWSSRP:
                 "USERNAME": user_id_for_srp,
                 "PASSWORD_CLAIM_SECRET_BLOCK": secret_block_b64,
                 "PASSWORD_CLAIM_SIGNATURE": signature_string.decode('utf-8')}
+
+    def authenticate_user(self):
+        self.client = boto3.client('cognito-idp')
+        auth_params = self.get_auth_params()
+        response = self.client.initiate_auth(
+            AuthFlow='USER_SRP_AUTH',
+            AuthParameters=auth_params,
+            ClientId=self.client_id
+        )
+        challenge_response = self.process_challenge(response['ChallengeParameters'])
+        tokens = self.client.respond_to_auth_challenge(
+            ClientId=self.client_id,
+            ChallengeName='PASSWORD_VERIFIER',
+            ChallengeResponses=challenge_response)
+        return tokens
+
