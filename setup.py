@@ -18,7 +18,7 @@ setup(
     url='http://www.metametricsinc.com/',
     license='GPLv3',
     install_requires=[
-        'boto3>=1.4,<1.5',
+        'boto3>=1.4,<1.5','PyJWT==1.4.2','envs>=0.3.0'
     ],
     extras_require={
         'django': [
