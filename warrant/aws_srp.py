@@ -89,11 +89,12 @@ def calculate_u(A, B):
 
 class AWSSRP(object):
 
-    def __init__(self, username, password, pool_id, client_id):
+    def __init__(self, username, password, pool_id, client_id, client=None):
         self.username = username
         self.password = password
         self.pool_id = pool_id
         self.client_id = client_id
+        self.client = client if client else boto3.client('cognito-idp')
         self.big_n = hex_to_long(n_hex)
         self.g = hex_to_long(g_hex)
         self.k = hex_to_long(hex_hash('00' + n_hex + '0' + g_hex))
@@ -167,16 +168,16 @@ class AWSSRP(object):
                 "PASSWORD_CLAIM_SECRET_BLOCK": secret_block_b64,
                 "PASSWORD_CLAIM_SIGNATURE": signature_string.decode('utf-8')}
 
-    def authenticate_user(self):
-        self.client = boto3.client('cognito-idp')
+    def authenticate_user(self, client=None):
+        boto_client = self.client or client
         auth_params = self.get_auth_params()
-        response = self.client.initiate_auth(
+        response = boto_client.initiate_auth(
             AuthFlow='USER_SRP_AUTH',
             AuthParameters=auth_params,
             ClientId=self.client_id
         )
         challenge_response = self.process_challenge(response['ChallengeParameters'])
-        tokens = self.client.respond_to_auth_challenge(
+        tokens = boto_client.respond_to_auth_challenge(
             ClientId=self.client_id,
             ChallengeName='PASSWORD_VERIFIER',
             ChallengeResponses=challenge_response)
