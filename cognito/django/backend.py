@@ -21,13 +21,13 @@ class CognitoUser(Cognito):
                                        'email': 'email',
                                        'given_name': 'first_name',
                                        'family_name': 'last_name',
-                                       'custom:api_key': 'api_key',
-                                       'custom:api_key_id': 'api_key_id'
                                    }
                                    )
 
     def get_user_obj(self,username=None,attribute_list=[],metadata={}):
         user_attrs = cognito_to_dict(attribute_list,CognitoUser.COGNITO_ATTR_MAPPING)
+        api_key = user_attrs.pop('api_key', None)
+        api_key_id = user_attrs.pop('api_key_id', None)
         if getattr(settings, 'CREATE_UNKNOWN_USERS', True):
             user, created = self.user_class.objects.update_or_create(
                 username=username,
@@ -40,6 +40,9 @@ class CognitoUser(Cognito):
                 user.save()
             except self.user_class.DoesNotExist:
                 user = None
+        if user:
+            setattr(user, 'api_key', api_key)
+            setattr(user, 'api_key_id', api_key_id)
         return user
 
 

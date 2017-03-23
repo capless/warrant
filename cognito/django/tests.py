@@ -21,13 +21,13 @@ def set_tokens(cls, *args, **kwargs):
     cls.refresh_token = 'refreshtoken'
 
 def get_user(cls, *args, **kwargs):
-    user = MagicMock(
-        user_status=kwargs.pop('user_status', 'CONFIRMED'),
-        username=kwargs.pop('access_token', 'testuser'),
-        email=kwargs.pop('email', 'test@email.com'),
-        given_name=kwargs.pop('given_name', 'FirstName'),
-        family_name=kwargs.pop('family_name', 'LastName'),
-        UserAttributes = 
+    user = {
+        'user_status': kwargs.pop('user_status', 'CONFIRMED'),
+        'username': kwargs.pop('access_token', 'testuser'),
+        'email': kwargs.pop('email', 'test@email.com'),
+        'given_name': kwargs.pop('given_name', 'FirstName'),
+        'family_name': kwargs.pop('family_name', 'LastName'),
+        'UserAttributes': 
         [
             {
                 "Name": "sub", 
@@ -60,54 +60,31 @@ def get_user(cls, *args, **kwargs):
             {
                 "Name": "email", 
                 "Value": "test@email.com"
+            },
+            {
+                "Name": "custom:api_key",
+                "Value": "abcdefg"
+            },
+            {
+                "Name": "custom:api_key_id",
+                "Value": "ab-1234"
             }
         ]
-    )
+    }
     user_metadata = {
         'username': user.get('Username'),
         'id_token': cls.id_token,
         'access_token': cls.access_token,
-        'refresh_token': cls.refresh_token
+        'refresh_token': cls.refresh_token,
+        'api_key': user.get('custom:api_key', None),
+        'api_key_id': user.get('custom:api_key_id', None)
     }
-    return cls.get_user_obj(username=user.username,
-                             attribute_list=user.UserAttributes,
+
+    return cls.get_user_obj(username=cls.username,
+                             attribute_list=user.get('UserAttributes'),
                              metadata=user_metadata)
 
 class AuthTests(TransactionTestCase):
-    def set_tokens(cls, *args, **kwargs):
-        cls.access_token = 'accesstoken'
-        cls.id_token = 'idtoken'
-        cls.refresh_token = 'refreshtoken'
-
-    def create_mock_user_obj(self, **kwargs):
-        """
-        Create a mock UserObj
-        :param: kwargs containing desired attrs
-        :return: returns mock UserObj
-        """
-        mock_user_obj = MagicMock(
-            user_status=kwargs.pop('user_status', 'CONFIRMED'),
-            username=kwargs.pop('access_token', 'testuser'),
-            email=kwargs.pop('email', 'test@email.com'),
-            given_name=kwargs.pop('given_name', 'FirstName'),
-            family_name=kwargs.pop('family_name', 'LastName'),
-        )
-        for k, v in kwargs.iteritems():
-            setattr(mock_user_obj, k, v)
-
-        return mock_user_obj
-
-    def setup_mock_user(self, mock_cognito_user):
-        """
-        Configure mocked Cognito User
-        :param mock_cognito_user: mock Cognito User
-        """
-        mock_cognito_user.return_value = mock_cognito_user
-        self.set_tokens(mock_cognito_user)
-
-        mock_user_obj = self.create_mock_user_obj()
-        mock_cognito_user.get_user.return_value = mock_user_obj
-
     @patch.object(Cognito, 'authenticate')
     @patch.object(Cognito, 'get_user')
     def test_user_authentication(self, mock_get_user, mock_authenticate):
@@ -251,6 +228,8 @@ class AuthTests(TransactionTestCase):
         user.id_token = 'id_token_value'
         user.refresh_token = 'refresh_token_value'
         user.backend = 'cognito.django.backend.CognitoBackend'
+        user.api_key = 'abcdefg'
+        user.api_key_id = 'ab-1234'
 
         request = RequestFactory().get('/login')
         middleware = SessionMiddleware()
@@ -261,6 +240,8 @@ class AuthTests(TransactionTestCase):
         self.assertEqual(request.session['ACCESS_TOKEN'], 'access_token_value')
         self.assertEqual(request.session['ID_TOKEN'], 'id_token_value')
         self.assertEqual(request.session['REFRESH_TOKEN'], 'refresh_token_value')
+        self.assertEqual(request.session['API_KEY'], 'abcdefg')
+        self.assertEqual(request.session['API_KEY_ID'], 'ab-1234')
 
     def test_model_backend(self):
         """

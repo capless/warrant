@@ -210,11 +210,12 @@ class Cognito(object):
         user = self.client.get_user(
                 AccessToken=self.access_token
             )
+        
         user_metadata = {
             'username': user.get('Username'),
             'id_token': self.id_token,
             'access_token': self.access_token,
-            'refresh_token': self.refresh_token
+            'refresh_token': self.refresh_token,
         }
         return self.get_user_obj(username=self.username,
                                  attribute_list=user.get('UserAttributes'),
