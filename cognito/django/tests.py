@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from mock import patch, MagicMock
 from botocore.exceptions import ClientError
 from middleware import APIKeyMiddleware
@@ -11,14 +13,72 @@ from django.test.client import RequestFactory
 from django.utils.six import iteritems
 
 from cognito.django.backend import CognitoBackend
-from cognito import Cognito as CognitoUser
+from cognito import Cognito
 
+def set_tokens(cls, *args, **kwargs):
+    print 'set tokens'
+    cls.access_token = 'accesstoken'
+    cls.id_token = 'idtoken'
+    cls.refresh_token = 'refreshtoken'
+
+def get_user(cls, *args, **kwargs):
+    print 'custom get user'
+    user = MagicMock(
+        user_status=kwargs.pop('user_status', 'CONFIRMED'),
+        username=kwargs.pop('access_token', 'testuser'),
+        email=kwargs.pop('email', 'test@email.com'),
+        given_name=kwargs.pop('given_name', 'FirstName'),
+        family_name=kwargs.pop('family_name', 'LastName'),
+        UserAttributes = [
+        {
+            "Name": "sub", 
+            "Value": "c7d890f6-eb38-498d-8f85-7a6c4af33d7a"
+        }, 
+        {
+            "Name": "email_verified", 
+            "Value": "true"
+        }, 
+        {
+            "Name": "gender", 
+            "Value": "male"
+        }, 
+        {
+            "Name": "name", 
+            "Value": "FirstName LastName"
+        }, 
+        {
+            "Name": "preferred_username", 
+            "Value": "testuser"
+        }, 
+        {
+            "Name": "given_name", 
+            "Value": "FirstName"
+        }, 
+        {
+            "Name": "family_name", 
+            "Value": "LastName"
+        }, 
+        {
+            "Name": "email", 
+            "Value": "test@email.com"
+        }
+    ]
+    )
+    user_metadata = {
+        'username': user.get('Username'),
+        'id_token': cls.id_token,
+        'access_token': cls.access_token,
+        'refresh_token': cls.refresh_token
+    }
+    return cls.get_user_obj(username=user.username,
+                             attribute_list=user.UserAttributes,
+                             metadata=user_metadata)
 
 class AuthTests(TransactionTestCase):
-    def set_tokens(self, mock_cognito_user):
-        mock_cognito_user.access_token = 'accesstoken'
-        mock_cognito_user.id_token = 'idtoken'
-        mock_cognito_user.refresh_token = 'refreshtoken'
+    def set_tokens(cls, *args, **kwargs):
+        cls.access_token = 'accesstoken'
+        cls.id_token = 'idtoken'
+        cls.refresh_token = 'refreshtoken'
 
     def create_mock_user_obj(self, **kwargs):
         """
@@ -49,18 +109,20 @@ class AuthTests(TransactionTestCase):
         mock_user_obj = self.create_mock_user_obj()
         mock_cognito_user.get_user.return_value = mock_user_obj
 
-    @patch('cognito.django.backend.CognitoUser', autospec=True)
-    def test_user_authentication(self, mock_cognito_user):
-        self.setup_mock_user(mock_cognito_user)
+    @patch.object(Cognito, 'authenticate')
+    @patch.object(Cognito, 'get_user')
+    def test_user_authentication(self, mock_get_user, mock_authenticate):
+        Cognito.authenticate = set_tokens
+        Cognito.get_user = get_user
 
         user = authenticate(username='testuser',
                             password='password')
+
         self.assertIsNotNone(user)
 
-    @patch('cognito.django.backend.CognitoUser', autospec=True)
-    def test_user_authentication_wrong_password(self, mock_cognito_user):
-        mock_cognito_user.return_value = mock_cognito_user
-        mock_cognito_user.authenticate.side_effect = ClientError(
+    @patch.object(Cognito, 'authenticate')
+    def test_user_authentication_wrong_password(self, mock_authenticate):
+        Cognito.authenticate.side_effect = ClientError(
             {
                 'Error': 
                     {
@@ -73,10 +135,10 @@ class AuthTests(TransactionTestCase):
 
         self.assertIsNone(user)
 
-    @patch('cognito.django.backend.CognitoUser', autospec=True)
-    def test_user_authentication_wrong_username(self, mock_cognito_user):
-        mock_cognito_user.return_value = mock_cognito_user
-        mock_cognito_user.authenticate.side_effect = ClientError(
+
+    @patch.object(Cognito, 'authenticate')
+    def test_user_authentication_wrong_username(self, mock_authenticate):
+        Cognito.authenticate.side_effect = ClientError(
             {
                 'Error': 
                     {
@@ -89,22 +151,23 @@ class AuthTests(TransactionTestCase):
 
         self.assertIsNone(user)
 
-    @patch('cognito.django.backend.CognitoUser', autospec=True)
-    def test_client_login(self, mock_cognito_user):
-        self.setup_mock_user(mock_cognito_user)
+    @patch.object(Cognito, 'authenticate')
+    @patch.object(Cognito, 'get_user')
+    def test_client_login(self, mock_get_user, mock_authenticate):
+        Cognito.authenticate = set_tokens
+        Cognito.get_user = get_user
 
         user = self.client.login(username='testuser',
                                  password='password')
         self.assertTrue(user)
 
-    @patch('cognito.django.backend.CognitoUser', autospec=True)
-    def test_boto_error_raised(self, mock_cognito_user):
+    @patch.object(Cognito, 'authenticate')
+    def test_boto_error_raised(self, mock_authenticate):
         """
         Check that any error other than NotAuthorizedException is
         raised as an exception
         """
-        mock_cognito_user.return_value = mock_cognito_user
-        mock_cognito_user.authenticate.side_effect = ClientError(
+        Cognito.authenticate.side_effect = ClientError(
             {
                 'Error': 
                     {
@@ -117,9 +180,11 @@ class AuthTests(TransactionTestCase):
                                 password='password')
         self.assertEqual(error.exception.response['Error']['Code'], 'SomeError')
 
-    @patch('cognito.django.backend.CognitoUser', autospec=True)
-    def test_new_user_created(self, mock_cognito_user):
-        self.setup_mock_user(mock_cognito_user)
+    @patch.object(Cognito, 'authenticate')
+    @patch.object(Cognito, 'get_user')
+    def test_new_user_created(self, mock_get_user, mock_authenticate):
+        Cognito.authenticate = set_tokens
+        Cognito.get_user = get_user
 
         User = get_user_model()
         self.assertEqual(User.objects.count(), 0) 
@@ -130,9 +195,11 @@ class AuthTests(TransactionTestCase):
         self.assertEqual(User.objects.count(), 1) 
         self.assertEqual(user.username, 'testuser')
 
-    @patch('cognito.django.backend.CognitoUser', autospec=True)
-    def test_existing_user_updated(self, mock_cognito_user):
-        self.setup_mock_user(mock_cognito_user)
+    @patch.object(Cognito, 'authenticate')
+    @patch.object(Cognito, 'get_user')
+    def test_existing_user_updated(self, mock_get_user, mock_authenticate):
+        Cognito.authenticate = set_tokens
+        Cognito.get_user = get_user
 
         User = get_user_model()
         existing_user = User.objects.create(username='testuser', email='None')
@@ -146,12 +213,14 @@ class AuthTests(TransactionTestCase):
         self.assertEqual(updated_user.email, user.email)
         self.assertEqual(updated_user.id, user.id)
 
-    @patch('cognito.django.backend.CognitoUser', autospec=True)
-    def test_existing_user_updated_disabled_create_unknown_user(self, mock_cognito_user):
+    @patch.object(Cognito, 'authenticate')
+    @patch.object(Cognito, 'get_user') 
+    def test_existing_user_updated_disabled_create_unknown_user(self, mock_get_user, mock_authenticate):
         class AlternateCognitoBackend(CognitoBackend):
             create_unknown_user = False
 
-        self.setup_mock_user(mock_cognito_user)
+        Cognito.authenticate = set_tokens
+        Cognito.get_user = get_user
 
         User = get_user_model()
         existing_user = User.objects.create(username='testuser', email='None')
@@ -167,12 +236,14 @@ class AuthTests(TransactionTestCase):
         self.assertEqual(updated_user.email, user.email)
         self.assertEqual(updated_user.id, user.id)
 
-    @patch('cognito.django.backend.CognitoUser', autospec=True)
-    def test_user_not_found_disabled_create_unknown_user(self, mock_cognito_user):
+    @patch.object(Cognito, 'authenticate')
+    @patch.object(Cognito, 'get_user') 
+    def test_user_not_found_disabled_create_unknown_user(self, mock_get_user, mock_authenticate):
         class AlternateCognitoBackend(CognitoBackend):
             create_unknown_user = False
 
-        self.setup_mock_user(mock_cognito_user)
+        Cognito.authenticate = set_tokens
+        Cognito.get_user = get_user
 
         backend = AlternateCognitoBackend()
         user = backend.authenticate(username='testuser',
@@ -180,7 +251,7 @@ class AuthTests(TransactionTestCase):
 
         self.assertIsNone(user)
 
-    @patch('cognito.django.backend.CognitoUser')
+    @patch('cognito.django.backend.Cognito')
     def test_inactive_user(self, mock_cognito_user):
         """
         Check that inactive users cannot login.
@@ -238,10 +309,7 @@ class AuthTests(TransactionTestCase):
         middleware.process_request(request)
         request.session.save()
         signals.user_logged_in.send(sender=user.__class__, request=request, user=user)
-
-        self.assertEquals(str(em.exception), 'An error occurred (UserNotFoundException) '\
-                                             'when calling the AdminInitiateAuth '\
-                                             'operation: User does not exist.')
+        
 
 class MiddleWareTests(TestCase):
     def setUp(self):
