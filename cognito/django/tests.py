@@ -251,33 +251,6 @@ class AuthTests(TransactionTestCase):
 
         self.assertIsNone(user)
 
-    @patch('cognito.django.backend.Cognito')
-    def test_inactive_user(self, mock_cognito_user):
-        """
-        Check that inactive users cannot login.
-        In our case, a user is considered inactive if their
-        user status in Cognito is 'ARCHIVED' or 'COMPROMISED' or 'UNKNOWN'
-        """
-        mock_cognito_user.return_value = mock_cognito_user
-        mock_user_obj = MagicMock()
-        mock_user_obj.user_status = 'COMPROMISED'
-        mock_cognito_user.get_user.return_value = mock_user_obj
-        user = authenticate(username=settings.COGNITO_TEST_USERNAME,
-                            password=settings.COGNITO_TEST_PASSWORD)
-        self.assertIsNone(user)
-
-        mock_user_obj.user_status = 'ARCHIVED'
-        mock_cognito_user.get_user.return_value = mock_user_obj
-        user = authenticate(username=settings.COGNITO_TEST_USERNAME,
-                            password=settings.COGNITO_TEST_PASSWORD)
-        self.assertIsNone(user)
-
-        mock_user_obj.user_status = 'UNKNOWN'
-        mock_cognito_user.get_user.return_value = mock_user_obj
-        user = authenticate(username=settings.COGNITO_TEST_USERNAME,
-                            password=settings.COGNITO_TEST_PASSWORD)
-        self.assertIsNone(user)
-
     def test_add_user_tokens(self):
         User = get_user_model()
         user = User.objects.create(username=settings.COGNITO_TEST_USERNAME)
