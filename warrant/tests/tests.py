@@ -124,13 +124,13 @@ class CognitoTestCase(unittest.TestCase):
         self.assertNotEquals(og_acc_token,self.user.access_token)
 
 
-    @patch('cognito.Cognito', autospec=True)
+    @patch('warrant.Cognito', autospec=True)
     def test_validate_verification(self,cognito_user):
         u = cognito_user(self.cognito_user_pool_id,self.app_id,
                      username=self.username)
         u.validate_verification('4321')
 
-    @patch('cognito.Cognito', autospec=True)
+    @patch('warrant.Cognito', autospec=True)
     def test_confirm_forgot_password(self,cognito_user):
         u = cognito_user(self.cognito_user_pool_id, self.app_id,
                          username=self.username)
@@ -222,3 +222,7 @@ class AWSSRPTestCase(unittest.TestCase):
             self.const_username, self.const_password, hex_to_long(self.
             test_data['server_b_value']), self.test_data['server_b_value'])
         self.assertEqual(hkdf, 'm??\x06\x9f8\xbe)\x88K\xf4\xa4y\x06?e')
+
+
+if __name__ == '__main__':
+    unittest.main()
