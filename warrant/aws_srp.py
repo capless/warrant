@@ -76,15 +76,15 @@ def compute_hkdf(ikm, salt):
     return hmac_hash[:16]
 
 
-def calculate_u(A, B):
+def calculate_u(big_a, big_b):
     """
     Calculate the client's value U which is the hash of A and B
-    :param {Long integer} A Large A value.
-    :param {Long integer} B Server B value.
+    :param {Long integer} big_a Large A value.
+    :param {Long integer} big_b Server B value.
     :return {Long integer} Computed U value.
     """
-    UHexHash = hex_hash(pad_hex(A) + pad_hex(B))
-    return hex_to_long(UHexHash)
+    u_hex_hash = hex_hash(pad_hex(big_a) + pad_hex(big_b))
+    return hex_to_long(u_hex_hash)
 
 
 class AWSSRP(object):
@@ -122,16 +122,16 @@ class AWSSRP(object):
             raise ValueError('Safety check for A failed')
         return big_a
 
-    def get_password_authentication_key(self, username, password, serverBValue, salt):
+    def get_password_authentication_key(self, username, password, server_b_value, salt):
         """
         Calculates the final hkdf based on computed S value, and computed U value and the key
         :param {String} username Username.
         :param {String} password Password.
-        :param {Long integer} serverBValue Server B value.
+        :param {Long integer} server_b_value Server B value.
         :param {Long integer} salt Generated salt.
         :return {Buffer} Computed HKDF value.
         """
-        u_value = calculate_u(self.large_a_value, serverBValue)
+        u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError('U cannot be zero.')
         username_password = '%s%s:%s' % (self.pool_id.split('_')[1], username, password)
@@ -139,7 +139,7 @@ class AWSSRP(object):
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
         g_mod_pow_xn = pow(self.g, x_value, self.big_n)
-        int_value2 = serverBValue - self.k * g_mod_pow_xn
+        int_value2 = server_b_value - self.k * g_mod_pow_xn
         s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
         hkdf = compute_hkdf(bytearray.fromhex(pad_hex(s_value)),
                            bytearray.fromhex(pad_hex(long_to_hex(u_value))))
@@ -149,12 +149,13 @@ class AWSSRP(object):
         return {'USERNAME': self.username,
                 'SRP_A': long_to_hex(self.large_a_value)}
 
-    def process_challenge(self, challenge_parameters):
+    def process_challenge(self, challenge_parameters, test_timestamp=None):
         user_id_for_srp = challenge_parameters['USER_ID_FOR_SRP']
         salt_hex = challenge_parameters['SALT']
         srp_b_hex = challenge_parameters['SRP_B']
         secret_block_b64 = challenge_parameters['SECRET_BLOCK']
-        timestamp = datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
+        timestamp = test_timestamp or \
+                    datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
         hkdf = self.get_password_authentication_key(user_id_for_srp,
                                                     self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
@@ -176,10 +177,13 @@ class AWSSRP(object):
             AuthParameters=auth_params,
             ClientId=self.client_id
         )
-        challenge_response = self.process_challenge(response['ChallengeParameters'])
-        tokens = boto_client.respond_to_auth_challenge(
-            ClientId=self.client_id,
-            ChallengeName='PASSWORD_VERIFIER',
-            ChallengeResponses=challenge_response)
+        if response['ChallengeName'] == 'PASSWORD_VERIFIER':
+            challenge_response = self.process_challenge(response['ChallengeParameters'])
+            tokens = boto_client.respond_to_auth_challenge(
+                ClientId=self.client_id,
+                ChallengeName='PASSWORD_VERIFIER',
+                ChallengeResponses=challenge_response)
+        else:
+            raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
         return tokens
 

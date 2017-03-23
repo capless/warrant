@@ -188,7 +188,7 @@ class Cognito(object):
         :return:
         """
         aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
-                     client_id=self.client_id)
+                     client_id=self.client_id, client=self.client)
         tokens = aws.authenticate_user()
         self.id_token = tokens['AuthenticationResult']['IdToken']
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
