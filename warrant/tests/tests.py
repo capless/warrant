@@ -118,13 +118,13 @@ class CognitoTestCase(unittest.TestCase):
         self.assertNotEquals(og_acc_token,self.user.access_token)
 
 
-    @patch('cognito.Cognito', autospec=True)
+    @patch('warrant.Cognito', autospec=True)
     def test_validate_verification(self,cognito_user):
         u = cognito_user(self.cognito_user_pool_id,self.app_id,
                      username=self.username)
         u.validate_verification('4321')
 
-    @patch('cognito.Cognito', autospec=True)
+    @patch('warrant.Cognito', autospec=True)
     def test_confirm_forgot_password(self,cognito_user):
         u = cognito_user(self.cognito_user_pool_id, self.app_id,
                          username=self.username)
@@ -154,3 +154,6 @@ class CognitoTestCase(unittest.TestCase):
         )
         self.assertEquals(u.somerandom,'attribute')
 
+
+if __name__ == '__main__':
+    unittest.main()
