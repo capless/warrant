@@ -4,10 +4,10 @@ from setuptools import find_packages, setup
 
 README = open(os.path.join(os.path.dirname(__file__), 'README.md')).read()
 
-packages = find_packages(exclude=['tests*', 'tests', 'cognito/tests*', 'cdu*', 'cdu'])
+packages = find_packages(exclude=['tests*', 'tests', 'warrant/tests*', 'cdu*', 'cdu'])
 
 setup(
-    name='cognito',
+    name='warrant',
     version='0.1',
     packages=packages,
     include_package_data=True,
