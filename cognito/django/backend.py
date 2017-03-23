@@ -15,7 +15,6 @@ from .utils import cognito_to_dict
 
 class CognitoUser(Cognito):
     user_class = get_user_model()
-
     # Mapping of Cognito User attribute name to Django User attribute name
     COGNITO_ATTR_MAPPING = getattr(settings, 'COGNITO_ATTR_MAPPING',
                                    {
@@ -27,10 +26,9 @@ class CognitoUser(Cognito):
                                    }
                                    )
 
-    def get_user_obj(self,username=None,attribute_list=[],metadata={},
-                     create_unknown_user=True):
+    def get_user_obj(self,username=None,attribute_list=[],metadata={}):
         user_attrs = cognito_to_dict(attribute_list,CognitoUser.COGNITO_ATTR_MAPPING)
-        if create_unknown_user:
+        if getattr(settings, 'CREATE_UNKNOWN_USERS', True):
             user, created = self.user_class.objects.update_or_create(
                 username=username,
                 defaults=user_attrs)
@@ -48,8 +46,6 @@ class CognitoUser(Cognito):
 class AbstractCognitoBackend(ModelBackend):
     __metaclass__ = abc.ABCMeta
 
-    create_unknown_user = True
-
     supports_inactive_user = False
 
     INACTIVE_USER_STATUS = ['ARCHIVED', 'COMPROMISED', 'UNKNOWN']
@@ -57,6 +53,8 @@ class AbstractCognitoBackend(ModelBackend):
     UNAUTHORIZED_ERROR_CODE = 'NotAuthorizedException'
 
     USER_NOT_FOUND_ERROR_CODE = 'UserNotFoundException'
+
+    COGNITO_USER_CLASS = CognitoUser
 
     @abc.abstractmethod
     def authenticate(self, username=None, password=None):

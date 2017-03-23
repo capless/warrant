@@ -8,61 +8,60 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, signals
 from django.contrib.sessions.middleware import SessionMiddleware
-from django.test import TestCase, TransactionTestCase
+from django.test import override_settings, TestCase, TransactionTestCase
 from django.test.client import RequestFactory
 from django.utils.six import iteritems
 
-from cognito.django.backend import CognitoBackend
+from cognito.django.backend import CognitoBackend, CognitoUser
 from cognito import Cognito
 
 def set_tokens(cls, *args, **kwargs):
-    print 'set tokens'
     cls.access_token = 'accesstoken'
     cls.id_token = 'idtoken'
     cls.refresh_token = 'refreshtoken'
 
 def get_user(cls, *args, **kwargs):
-    print 'custom get user'
     user = MagicMock(
         user_status=kwargs.pop('user_status', 'CONFIRMED'),
         username=kwargs.pop('access_token', 'testuser'),
         email=kwargs.pop('email', 'test@email.com'),
         given_name=kwargs.pop('given_name', 'FirstName'),
         family_name=kwargs.pop('family_name', 'LastName'),
-        UserAttributes = [
-        {
-            "Name": "sub", 
-            "Value": "c7d890f6-eb38-498d-8f85-7a6c4af33d7a"
-        }, 
-        {
-            "Name": "email_verified", 
-            "Value": "true"
-        }, 
-        {
-            "Name": "gender", 
-            "Value": "male"
-        }, 
-        {
-            "Name": "name", 
-            "Value": "FirstName LastName"
-        }, 
-        {
-            "Name": "preferred_username", 
-            "Value": "testuser"
-        }, 
-        {
-            "Name": "given_name", 
-            "Value": "FirstName"
-        }, 
-        {
-            "Name": "family_name", 
-            "Value": "LastName"
-        }, 
-        {
-            "Name": "email", 
-            "Value": "test@email.com"
-        }
-    ]
+        UserAttributes = 
+        [
+            {
+                "Name": "sub", 
+                "Value": "c7d890f6-eb38-498d-8f85-7a6c4af33d7a"
+            }, 
+            {
+                "Name": "email_verified", 
+                "Value": "true"
+            }, 
+            {
+                "Name": "gender", 
+                "Value": "male"
+            }, 
+            {
+                "Name": "name", 
+                "Value": "FirstName LastName"
+            }, 
+            {
+                "Name": "preferred_username", 
+                "Value": "testuser"
+            }, 
+            {
+                "Name": "given_name", 
+                "Value": "FirstName"
+            }, 
+            {
+                "Name": "family_name", 
+                "Value": "LastName"
+            }, 
+            {
+                "Name": "email", 
+                "Value": "test@email.com"
+            }
+        ]
     )
     user_metadata = {
         'username': user.get('Username'),
@@ -213,20 +212,17 @@ class AuthTests(TransactionTestCase):
         self.assertEqual(updated_user.email, user.email)
         self.assertEqual(updated_user.id, user.id)
 
+    @override_settings(CREATE_UNKNOWN_USERS=False)
     @patch.object(Cognito, 'authenticate')
     @patch.object(Cognito, 'get_user') 
     def test_existing_user_updated_disabled_create_unknown_user(self, mock_get_user, mock_authenticate):
-        class AlternateCognitoBackend(CognitoBackend):
-            create_unknown_user = False
-
         Cognito.authenticate = set_tokens
         Cognito.get_user = get_user
 
         User = get_user_model()
         existing_user = User.objects.create(username='testuser', email='None')
 
-        backend = AlternateCognitoBackend()
-        user = backend.authenticate(username='testuser',
+        user = authenticate(username='testuser',
                             password='password')
         self.assertEqual(user.id, existing_user.id)
         self.assertNotEqual(user.email, existing_user)
@@ -236,17 +232,14 @@ class AuthTests(TransactionTestCase):
         self.assertEqual(updated_user.email, user.email)
         self.assertEqual(updated_user.id, user.id)
 
+    @override_settings(CREATE_UNKNOWN_USERS=False)
     @patch.object(Cognito, 'authenticate')
     @patch.object(Cognito, 'get_user') 
     def test_user_not_found_disabled_create_unknown_user(self, mock_get_user, mock_authenticate):
-        class AlternateCognitoBackend(CognitoBackend):
-            create_unknown_user = False
-
         Cognito.authenticate = set_tokens
         Cognito.get_user = get_user
 
-        backend = AlternateCognitoBackend()
-        user = backend.authenticate(username='testuser',
+        user = authenticate(username='testuser',
                             password='password')
 
         self.assertIsNone(user)
