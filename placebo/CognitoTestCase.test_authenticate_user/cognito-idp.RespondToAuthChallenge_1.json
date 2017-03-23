@@ -1,0 +1,25 @@
+{
+    "status_code": 200, 
+    "data": {
+        "AuthenticationResult": {
+            "ExpiresIn": 3600, 
+            "IdToken": "eyJraWQiOiJhcDFCSmQrV1N4SnBqNmI2bURPdnVJZGtjNWlJYzhJR3Fodmh6a1JyeWZBPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJkYjFlNGMxMS0wNGNiLTQ0MDYtYTE0NC1lMzI2YzA0NzE3ZjUiLCJhdWQiOiIxMmhjczM3MmF0ZHM3ampobGphbjdtODZubiIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTQ5MDI4Mzg1MSwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfc2p2akpjZDVJIiwiY29nbml0bzp1c2VybmFtZSI6ImFybWljcm9uIiwiZXhwIjoxNDkwMjg3NDUxLCJpYXQiOjE0OTAyODM4NTEsImVtYWlsIjoiYXJtaWNyb25AeWFuZGV4LnJ1In0.jPzmTasSXEqSo9RVwYNXCaeCFqhdWa48KVT2Yj7RIcO1K9a6FGVdKhJfQhOUCnmPokLvWuZNHkEuVDvg83dLWVBbV3fr7f_OaxYWCRXK7TYh9RPUwZyyjappo6Z7EhD8ApdvC8Tg8NjTfpNXY2gRBtFv-0_l8li5E3mqd7N0uY17vp1oTCssoXJ7Fs6Dtd3GN71vO8s05V3XpC8bQ-xQSVaNolrTz7TqXj1MjKSySY3yqgVovMin1F4XBbJU-9_3x7KHTD84H-hK1B42swIoIgBe2efJbCMvozKuw4skPzNL0nDfw39k7TIfedZ_A3B6CFSPb4s2QHmH1qOrix2lMQ", 
+            "RefreshToken": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.oZhjYxQ0WvtQlGBvDiCSv0yOivguCz8GlKF2J_9m8iAvQ1IuT1Sab2_HA_Y-my91iMso9RciFwTdiBXREYB1Dy_daojHyfxm538SNyIxCAb95XEbfqQGuc_3prs3IxMoeZa5DOTkMlDLrZTflLJFCJfykxPaxS9dB5_opGpa3YvHrLhvhyGlwnM5WyKx9W0x1WcSWE1gdi7AtadfQZ5AJ0sJ0eQzoiPV0IHHm6g-8Gg06TZqxmQm5s2j6UKmbdAFGz8MxSEcNiK1wbC5DQAeFrbcBMo0pEk5nUMnfZ0Qb_fQqLGS9tcao-hMSnfzZgHJUBVeeP5UIj57CvtW869vTQ.g5A3-az29k9EcduM.ZRHuroQsYa7NMOBreDmo4vlgph7o3ihtukBWuM-to40qdh1ac833NRYOlQLbzBBYzzSttR3vHSCYBNtYURMcf5RE4cBOOoSeaAohTfQN0TL14UDu2KDA0FinNIS0cabsUxiHrY2CbXCTyJbJFsfAL39EadY8HCcavvUE8uGAES928BBXhWEQ9Cy_npypOyo9tLdYCV--Js6dss581GqgK566t1wbjT88xuxerTg7AZuMCOWlqh8H1akLPuvpahXPSozzALD6bORQzbNzDAO0B3yAXsjol6Uk5gAbjzS0y8WQsfqoPJ-ZF5wndvon3uFPWvvk2laLB223fTDuTTEJXT-wlK4vLCVqpwLiFwT__x8nFAKFDqJg2TNqG-OfSH-BxBNj3QvKTXx7XxvCWbAO2CgvTlWYa9FWDmBXm9lTbh4dhXl8j18h2zu1JGMuQrAsQx1eh522DXF0QVEKib8eFE1t7ihuIyqYf9W2J4h37CxrHpYJFHuQe4vDa_xPZDEM9NjRbhUAZYYT213bKZg4k0GazFXeI6JHKV2ranxXjvmNebW24yEV6SyIhq0ICaWWvzGZQK2MaeSBARgTTTm7j5zzl2rcL3ZgARV3DBYMjmXDLRDIVJr6Ix6-6BuAGKjuGQvH5FwkSC74wMcoXzl9BFxEWBr14E6N-HB8oWLaEMLSlu8SVEdfIl4UrtuVDYcdbEf4IQWqBKLxymTDX7GA44MlN-arwbQXbDSq0n4FLLx0OV8dj_j_BsQsSGO95NcUrPUaWwSlnAV0THi-rjflQIe8Hzy73vVeSh6DmPtjwSGrtmurEh08xRtGSoi7oXhnW7quDHyWSIbHxxVvi2bZSI-OJWUUE7qVwXlnt637fAVvpqaucA6SNLqLq524VRp16bBWnADlPpGK5FijP1e9OEh0oTdYZIuO9urdYG1xvObXFbjCtC8QL9IiQ-EC7mR9JXzVwG7USkBFF0DjWX8WZGuU1ZErYij7EZo3N25VlIMbus36NlfBFHWPQjruU8Ad9syrYAImIfr0Jj-zBhuj8juDMhRq0vT1qWri0hVx1rtWN_Gz4mp_noYdW2vCKck3TmZAExEhRCrw7shZhSLqP547huBgsZtESrhUdkw3SJXJwFeRZgX8FSYsl-ZyxE3TXyBlROs.4J9hLSGaEgypAdRd39FPnw", 
+            "TokenType": "Bearer", 
+            "AccessToken": "eyJraWQiOiJZTlBpeG9DYk8wWXJIUlQyNVptVDM2UUNVWFExdWFlVGhIOW1kVGFob2FvPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJkYjFlNGMxMS0wNGNiLTQ0MDYtYTE0NC1lMzI2YzA0NzE3ZjUiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6ImF3cy5jb2duaXRvLnNpZ25pbi51c2VyLmFkbWluIiwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfc2p2akpjZDVJIiwiZXhwIjoxNDkwMjg3NDUxLCJpYXQiOjE0OTAyODM4NTEsImp0aSI6IjA2YWFjZDZkLWJkNzItNDhjNC04YjUyLWU2YTNkMTk5Njc1MCIsImNsaWVudF9pZCI6IjEyaGNzMzcyYXRkczdqamhsamFuN204Nm5uIiwidXNlcm5hbWUiOiJhcm1pY3JvbiJ9.GDlo5tMF0301nGCHihHdsLT4yErUkLv49tzjEbPWeUM-cqiRx6Z5ayiL5SZAMuJPncRTYYo-B0o5ZuhXc8tnQn0GluIYhptAj0Md2LdD9JugoSFlVaF5r-w-IvZug1Q41W508xN89dY1vNes5A-1fUNV220VJKpVesA550bgLJiDGO_PL8yPYcQ9FpRXajoZa_i7D7kSiTBwmsO__rJa2XrN_txRM2zUtkRfeI1V7JxNAvEyoJPYAHG1_W7McOiJ5aoA-hJYR8TqX3yFYeKoe-g7YRi3GpNuKtwmEZOH07gGIQ0ZCwl2WEJgUSi85OtD2lbzhn_y1JcJ-YzJJsrJKg"
+        }, 
+        "ChallengeParameters": {}, 
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "8f43d3e1-0fdf-11e7-837a-4758886fbf75", 
+            "HTTPHeaders": {
+                "date": "Thu, 23 Mar 2017 15:44:11 GMT", 
+                "x-amzn-requestid": "8f43d3e1-0fdf-11e7-837a-4758886fbf75", 
+                "content-length": "3459", 
+                "content-type": "application/x-amz-json-1.1", 
+                "connection": "keep-alive"
+            }
+        }
+    }
+}

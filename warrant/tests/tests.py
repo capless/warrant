@@ -1,3 +1,5 @@
+import os
+import json
 import unittest
 import datetime
 
@@ -7,6 +9,10 @@ from placebo.utils import placebo_session
 from botocore.exceptions import ClientError
 
 from warrant import Cognito,UserObj,attribute_dict
+from warrant.aws_srp import AWSSRP, long_to_hex, hex_to_long
+
+
+AWSSRP_TEST_FILE = 'awssrp_test_variables.json'
 
 
 class UserObjTestCase(unittest.TestCase):
@@ -154,3 +160,65 @@ class CognitoTestCase(unittest.TestCase):
         )
         self.assertEquals(u.somerandom,'attribute')
 
+    @placebo_session
+    def test_authenticate_user(self, session):
+        self.user.switch_session(session)
+        self.user.authenticate_user(self.password)
+        self.assertNotEqual(self.user.access_token,None)
+        self.assertNotEqual(self.user.id_token, None)
+        self.assertNotEqual(self.user.refresh_token, None)
+
+
+class AWSSRPTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
+        self.app_id = env('COGNITO_APP_ID')
+        self.username = env('COGNITO_TEST_USERNAME')
+        self.password = env('COGNITO_TEST_PASSWORD')
+        self.const_username = 'bjones'
+        self.const_password = 'ooV8chahghai6uo2uvag'
+        self.const_timestamp = 'Thu Mar 23 19:17:44 UTC 2017'
+        self.aws = AWSSRP(username=self.username, password=self.password,
+                          pool_id=self.cognito_user_pool_id,
+                          client_id=self.app_id)
+        cur_path = os.path.dirname(__file__)
+        file_path = os.path.abspath(os.path.join(cur_path, AWSSRP_TEST_FILE))
+        self.test_data = json.load(open(file_path, 'r'))
+
+    def tearDown(self):
+        del self.aws
+
+    def test_k_value(self):
+        self.assertEqual(
+            long_to_hex(self.aws.k),
+            '538282c4354742d7cbbde2359fcf67f9f5b3a6b08791e5011b43b8a5b66d9ee6')
+
+    def test_calculate_a(self):
+        self.aws.small_a_value = hex_to_long(self.test_data['small_a_value'])
+        self.assertEqual(long_to_hex(self.aws.calculate_a()),
+                         self.test_data['large_a_value'])
+
+    def test_process_challenge(self):
+        self.aws.small_a_value = hex_to_long(self.test_data['small_a_value'])
+        self.aws.large_a_value = hex_to_long(self.test_data['large_a_value'])
+        challenge = {'SALT': self.test_data['salt'],
+                     'SRP_B': self.test_data['server_b_value'],
+                     'USER_ID_FOR_SRP': self.const_username,
+                     'SECRET_BLOCK': self.test_data['secret_block']}
+        response = self.aws.process_challenge(
+            challenge, test_timestamp=self.const_timestamp)
+        self.assertEqual(response['USERNAME'], self.const_username)
+        self.assertEqual(response['PASSWORD_CLAIM_SECRET_BLOCK'],
+                         self.test_data['secret_block'])
+        self.assertEqual(response['PASSWORD_CLAIM_SIGNATURE'],
+                         'RKh3PCqUQNXk0E0SBzCYvIBrfhJOQAYSHccPHL9M2f8=')
+        self.assertEqual(response['TIMESTAMP'], self.const_timestamp)
+
+    def test_get_password_authentication_key(self):
+        self.aws.small_a_value = hex_to_long(self.test_data['small_a_value'])
+        self.aws.large_a_value = hex_to_long(self.test_data['large_a_value'])
+        hkdf = self.aws.get_password_authentication_key(
+            self.const_username, self.const_password, hex_to_long(self.
+            test_data['server_b_value']), self.test_data['server_b_value'])
+        self.assertEqual(hkdf, 'm??\x06\x9f8\xbe)\x88K\xf4\xa4y\x06?e')
