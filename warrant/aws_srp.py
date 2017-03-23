@@ -176,10 +176,13 @@ class AWSSRP(object):
             AuthParameters=auth_params,
             ClientId=self.client_id
         )
-        challenge_response = self.process_challenge(response['ChallengeParameters'])
-        tokens = boto_client.respond_to_auth_challenge(
-            ClientId=self.client_id,
-            ChallengeName='PASSWORD_VERIFIER',
-            ChallengeResponses=challenge_response)
+        if response['ChallengeName'] == 'PASSWORD_VERIFIER':
+            challenge_response = self.process_challenge(response['ChallengeParameters'])
+            tokens = boto_client.respond_to_auth_challenge(
+                ClientId=self.client_id,
+                ChallengeName='PASSWORD_VERIFIER',
+                ChallengeResponses=challenge_response)
+        else:
+            raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
         return tokens
 
