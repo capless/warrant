@@ -23,7 +23,7 @@ class GetUserMixin(object):
         return c.get_user()
 
 class ProfileView(LoginRequiredMixin,TokenMixin,GetUserMixin,TemplateView):
-    template_name = 'cognito/profile.html'
+    template_name = 'warrant/profile.html'
 
     def get_context_data(self, **kwargs):
         context = super(ProfileView, self).get_context_data(**kwargs)
@@ -32,7 +32,7 @@ class ProfileView(LoginRequiredMixin,TokenMixin,GetUserMixin,TemplateView):
 
 
 class UpdateProfileView(LoginRequiredMixin,TokenMixin,GetUserMixin,FormView):
-    template_name = 'cognito/update-profile.html'
+    template_name = 'warrant/update-profile.html'
     form_class = ProfileForm
 
     def get_success_url(self):
