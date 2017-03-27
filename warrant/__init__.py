@@ -3,6 +3,8 @@ import boto3
 import ast
 import jwt
 
+from .aws_srp import AWSSRP
+
 
 def attribute_dict(attributes):
     """
@@ -177,6 +179,19 @@ class Cognito(object):
         self.access_token = tokens['AuthenticationResult']['AccessToken']
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
+    def authenticate_user(self, password):
+        """
+        Authenticate the user.
+        :param password:
+        :return:
+        """
+        aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
+                     client_id=self.client_id, client=self.client)
+        tokens = aws.authenticate_user()
+        self.id_token = tokens['AuthenticationResult']['IdToken']
+        self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
+        self.access_token = tokens['AuthenticationResult']['AccessToken']
+        self.token_type = tokens['AuthenticationResult']['TokenType']
 
     def logout(self):
         """

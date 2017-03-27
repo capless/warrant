@@ -1,17 +1,12 @@
-# Cognito
+# Warrant
 
 Python class to integrate Boto3's Cognito client with PySRP so it is easy to login users.
 Included is a Django authentication backend that uses the utility class to
 handle password verification and fetching of user attributes.
 
+## Create a Cognito Instance ##
 
-=======
-# cognito
-Python class to integrate Boto3's Cognito client with PySRP so it is easy to login users.
-
-## Create a Cognito Instance
-
-###Example with All Arguments
+### Example with All Arguments ###
 ```python
 from cognito import Cognito
 
@@ -26,16 +21,16 @@ u = Cognito('your-user-pool-id','your-client-id',
         )
 ```
 
-###Examples with Realistic Arguments
+### Examples with Realistic Arguments ###
 
-####User Pool Id and Client ID Only
+#### User Pool Id and Client ID Only ####
 ```python
 from cognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 ```
 
-####Username/Password
+#### Username/Password ####
 ```python
 from cognito import Cognito
 
@@ -45,7 +40,7 @@ u = Cognito('your-user-pool-id','your-client-id',
         )
 ```
 
-####Tokens
+#### Tokens ####
 
 ```python
 from cognito import Cognito
@@ -57,9 +52,9 @@ u = Cognito('your-user-pool-id','your-client-id',
 )
 ```
 
-##Cognito Methods
+## Cognito Methods ##
 
-####Register
+#### Register ####
 
 Register a user to the user pool
 
@@ -74,10 +69,10 @@ u = Cognito('your-user-pool-id','your-client-id')
 u.register('username','password',email='opt')
 ```
 
-####Authenticate
+#### Authenticate ####
 
 Authenticates a user
- 
+
 If this method call succeeds the instance will have the following attributes **id_token**, **refresh_token**, **access_token**, **expires_in**, **expires_datetime**, and **token_type**.
 
 ```python
@@ -89,14 +84,14 @@ u = Cognito('your-user-pool-id','your-client-id',
 u.authenticate()
 ```
 
-####Change Password
+#### Change Password ####
 
 Changes the user's password
 
 ```python
 from cognito import Cognito
 
-#If you don't use your tokens then you will need to 
+#If you don't use your tokens then you will need to
 #use your username and password and call the authenticate method
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='id-token',refresh_token='refresh-token',
@@ -105,7 +100,7 @@ u = Cognito('your-user-pool-id','your-client-id',
 u.change_password('previous-password','proposed-password')
 ```
 
-####Confirm Sign Up
+#### Confirm Sign Up ####
 
 Use the confirmation code that is sent via email or text to confirm the user's account
 
@@ -117,7 +112,7 @@ u = Cognito('your-user-pool-id','your-client-id')
 u.confirm_sign_up('users-conf-code',username='bob')
 ```
 
-####Update Profile
+#### Update Profile ####
 
 Update the user's profile
 
@@ -131,7 +126,7 @@ u = Cognito('your-user-pool-id','your-client-id',
 u.update_profile({'given_name':'Edward','family_name':'Smith',})
 ```
 
-####Send Verification
+#### Send Verification ####
 
 Send verification email or text for either the email or phone attributes.
 
@@ -146,7 +141,7 @@ u.send_verification(attribute='email')
 ```
 
 
-####Get User
+#### Get User ####
 
 Get all of the user's attributes
 
@@ -161,14 +156,14 @@ u = Cognito('your-user-pool-id','your-client-id',
 user = u.get_user()
 ```
 
-####Logout
+#### Logout ####
 
 Logs the user out of all clients. Erases the access token.
 
 ```python
 from cognito import Cognito
 
-#If you don't use your tokens then you will need to 
+#If you don't use your tokens then you will need to
 #use your username and password and call the authenticate method
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='id-token',refresh_token='refresh-token',
@@ -178,7 +173,7 @@ u.logout()
 ```
 
 
-## Using the CognitoBackend
+## Using the CognitoBackend ##
 1. In your Django project settings file, add the dotted path of
 `CognitoBackend` to your list of `AUTHENTICATION_BACKENDS`.
 Keep in mind that Django will attempt to authenticate a user using
@@ -204,7 +199,7 @@ Cognito attribute name to a Django User attribute name. Defaults to:
     }
     ```
 
-### CognitoBackend Behavior
+### CognitoBackend Behavior ###
 Since the username of a Cognito User can never change,
 this is used by the backend to match a Cognito User with a local Django
 User.
@@ -220,7 +215,7 @@ session.
 Check the cdu/demo directory for an example project with a login and
 user details page.
 
-### Customizing CognitoBackend Behavior
+### Customizing CognitoBackend Behavior ###
 Create your own backend class that inhereits from `CognitoBackend`.
 
 Setting the class variable `create_unknown_user` to `False` prevents the backend

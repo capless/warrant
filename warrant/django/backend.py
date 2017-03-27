@@ -9,7 +9,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
 from django.utils.six import iteritems
 
-from cognito import Cognito
+from warrant import Cognito
 from .utils import cognito_to_dict
 
 

@@ -12,8 +12,8 @@ from django.test import override_settings, TestCase, TransactionTestCase
 from django.test.client import RequestFactory
 from django.utils.six import iteritems
 
-from cognito.django.backend import CognitoBackend, CognitoUser
-from cognito import Cognito
+from warrant.django.backend import CognitoBackend, CognitoUser
+from warrant import Cognito
 
 def set_tokens(cls, *args, **kwargs):
     cls.access_token = 'accesstoken'
@@ -83,6 +83,7 @@ def get_user(cls, *args, **kwargs):
     return cls.get_user_obj(username=cls.username,
                              attribute_list=user.get('UserAttributes'),
                              metadata=user_metadata)
+
 
 class AuthTests(TransactionTestCase):
     @patch.object(Cognito, 'authenticate')
@@ -227,7 +228,7 @@ class AuthTests(TransactionTestCase):
         user.access_token = 'access_token_value'
         user.id_token = 'id_token_value'
         user.refresh_token = 'refresh_token_value'
-        user.backend = 'cognito.django.backend.CognitoBackend'
+        user.backend = 'warrant.django.backend.CognitoBackend'
         user.api_key = 'abcdefg'
         user.api_key_id = 'ab-1234'
 
