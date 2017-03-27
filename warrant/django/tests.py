@@ -10,9 +10,9 @@ from django.test import TestCase, TransactionTestCase
 from django.test.client import RequestFactory
 from django.utils.six import iteritems
 
-from cognito.django.backend import CognitoBackend
-from cognito.django.models import ApiKey
-from cognito import Cognito as CognitoUser
+from warrant.django.models import ApiKey
+from warrant.django.backend import CognitoBackend
+from warrant import Cognito as CognitoUser
 
 
 class AuthTests(TransactionTestCase):
@@ -301,7 +301,7 @@ class ApiKeyModelTestCase(TransactionTestCase):
         fetched_key, created = ApiKey.objects.get_or_create_apikey(self.user.id, 'abcde', return_inactive=True)
         # a new key is created
         self.assertNotEqual(inactive_key.id, fetched_key.id)
-        self.assertEqual(fetched_key.apikey, 'abcde') 
+        self.assertEqual(fetched_key.apikey, 'abcde')
         self.assertTrue(created)
 
     def test_new_key_created_no_existing(self):

@@ -1,6 +1,6 @@
 import boto3
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils.module_loading import import_string
 from django.views.generic import FormView
 from django.views.generic.list import MultipleObjectMixin
@@ -24,13 +24,17 @@ class MySubsriptions(LoginRequiredMixin,MultipleObjectMixin,FormView):
         return u
 
     def get_queryset(self):
-        self.get_user_object()
-        all_plans = self.client.get_usage_plans()
-        my_plans = self.client.get_usage_plans()
+        u = self.get_user_object()
+
+        my_plans = self.client.get_usage_plans(keyId=u.api_key_id)
+        return my_plans.get('items',[])
 
 
 
+class AdminSubscriptions(UserPassesTestMixin,MySubsriptions):
 
+    def test_func(self):
+        pass
 
 
 

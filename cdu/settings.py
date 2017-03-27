@@ -29,7 +29,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 AUTHENTICATION_BACKENDS = [
-    'cognito.django.backend.CognitoBackend'
+    'warrant.django.backend.CognitoBackend'
 ]
 
 COGNITO_TEST_USERNAME = env('COGNITO_TEST_USERNAME')
@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cdu.demo',
-    'cognito.django',
+    'warrant.django',
     'crispy_forms',
     'django_extensions'
 ]

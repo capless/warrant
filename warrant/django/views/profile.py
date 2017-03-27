@@ -1,10 +1,11 @@
+from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
 from django.urls import reverse_lazy
 from django.views.generic import FormView, TemplateView
 from django.contrib import messages
-from braces.views._access import AccessMixin,LoginRequiredMixin
 
-from .utils import get_cognito
-from .forms import ProfileForm
+
+from warrant.django.utils import get_cognito
+from warrant.django.forms import ProfileForm
 
 
 class TokenMixin(AccessMixin):
