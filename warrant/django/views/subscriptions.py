@@ -47,4 +47,5 @@ class AdminSubscriptions(UserPassesTestMixin,GetCognitoUserMixin,
         return context
 
     def form_valid(self, form):
+        
         super(AdminSubscriptions, self).form_valid(form)
