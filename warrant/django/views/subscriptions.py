@@ -26,13 +26,13 @@ class GetCognitoUserMixin(object):
 
 
 class MySubsriptions(LoginRequiredMixin,GetCognitoUserMixin,ListView):
-    template_name = 'warrant/account/subscriptions.html'
+    template_name = 'warrant/subscriptions.html'
     client = boto3.client('apigateway')
 
 
 class AdminSubscriptions(UserPassesTestMixin,GetCognitoUserMixin,
                          MultipleObjectMixin,FormView):
-    template_name = 'warrant/account/admin-subscriptions.html'
+    template_name = 'warrant/admin-subscriptions.html'
 
 
     def test_func(self):

@@ -1,0 +1,9 @@
+{% extends 'warrant/base.html' %}
+
+{% block main_content %}
+    <ul>
+    {% for obj in object_list %}
+        <li>{{ obj.name }} - {{ obj.description }}</li>
+    {% endfor %}
+    </ul>
+{% endblock %}
