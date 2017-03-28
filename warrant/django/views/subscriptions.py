@@ -1,5 +1,4 @@
 import boto3
-from django.contrib.auth import get_user_model
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils.module_loading import import_string
@@ -14,9 +13,9 @@ class GetCognitoUserMixin(object):
 
     def get_user_object(self):
         cog_client = boto3.client('cognito-idp')
-        user = cog_client.get_user(AccessToken=self.request.user.access_token)
-        u = UserObj(username=user.get('UserAttributes').get('username'),
-                    attribute_list=user.get('UserAttributes'))
+        user = cog_client.get_user(AccessToken=self.request.session['ACCESS_TOKEN'])
+        u = UserObj(username=user.get('UserAttributes')[0].get('username'),
+                    attribute_list=user.get('UserAttributes'),attr_map=settings.COGNITO_ATTR_MAPPING)
         return u
 
     def get_queryset(self):

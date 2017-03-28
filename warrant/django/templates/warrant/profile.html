@@ -1,11 +1,5 @@
 {% extends 'warrant/base.html' %}
 
-{% block sidebar %}
-<ul>
-    <li><a href="{% url 'update-profile' %}">Update your Profile</a></li>
-</ul>
-
-{% endblock %}
 
 {% block main_content %}
     <h1>{{ user.username }}</h1>
@@ -23,5 +17,9 @@
         <dd>{{ user.gender }}</dd>
         <dt>Preferred Username:</dt>
         <dd>{{ user.preferred_username }}</dd>
+        <dt>API Key</dt>
+        <dd>{{ user.api_key }}</dd>
+        <dt>API Key Id</dt>
+        <dd>{{ user.api_key_id }}</dd>
     </dl>
 {% endblock main_content %}

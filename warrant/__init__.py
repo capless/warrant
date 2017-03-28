@@ -6,17 +6,32 @@ import jwt
 from .aws_srp import AWSSRP
 
 
-def attribute_dict(attributes):
+def cognito_to_dict(attr_list,attr_map=dict()):
+    attr_dict = dict()
+    for a in attr_list:
+        name = a.get('Name')
+        value = a.get('Value')
+        if value in ['true', 'false']:
+            value = ast.literal_eval(value.capitalize())
+        name = attr_map.get(name,name)
+        attr_dict[name] = value
+    return attr_dict
+
+def dict_to_cognito(attributes,attr_map=dict()):
     """
     :param attributes: Dictionary of User Pool attribute names/values
     :return: list of User Pool attribute formatted dicts: {'Name': <attr_name>, 'Value': <attr_value>}
     """
+    for k,v in attr_map.items():
+        if v in attributes.keys():
+            attributes[k] = attributes.pop(v)
+
     return [{'Name': key, 'Value': value} for key, value in attributes.items()]
 
 
 class UserObj(object):
 
-    def __init__(self, username, attribute_list, metadata={}):
+    def __init__(self, username, attribute_list, metadata=dict(),attr_map=dict()):
         """
         :param username:
         :param attribute_list:
@@ -24,12 +39,8 @@ class UserObj(object):
         """
         self.username = username
         self.pk = username
-        for a in attribute_list:
-            name = a.get('Name')
-            value = a.get('Value')
-            if value in ['true','false']:
-                value = ast.literal_eval(value.capitalize())
-            setattr(self, name, value)
+        for k,v in cognito_to_dict(attribute_list,attr_map).items():
+            setattr(self, k, v)
         for key, value in metadata.items():
             setattr(self, key.lower(), value)
 
@@ -74,9 +85,9 @@ class Cognito(object):
         else:
             self.client = boto3.client('cognito-idp')
 
-    def get_user_obj(self,username=None,attribute_list=[],metadata={}):
+    def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map=dict()):
         return self.user_class(username=username,attribute_list=attribute_list,
-                               metadata=metadata)
+                               metadata=metadata,attr_map=attr_map)
 
     def switch_session(self,session):
         """
@@ -103,7 +114,7 @@ class Cognito(object):
             return True
         return False
 
-    def register(self, username, password, **kwargs):
+    def register(self, username, password,attr_map=dict(),**kwargs):
         """
         Register the user. Other base attributes from AWS Cognito User Pools
         are  address, birthdate, email, family_name (last name), gender,
@@ -130,7 +141,7 @@ class Cognito(object):
             ClientId=self.client_id,
             Username=username,
             Password=password,
-            UserAttributes=attribute_dict(kwargs)
+            UserAttributes=dict_to_cognito(kwargs,attr_map)
         )
         kwargs.update(username=username, password=password)
         self._set_attributes(response, kwargs)
@@ -211,18 +222,18 @@ class Cognito(object):
         self.access_token = None
         self.token_type = None
 
-    def update_profile(self, attrs):
+    def update_profile(self, attrs,attr_map=dict()):
         """
         Updates User attributes
         :parm attrs: Dictionary of attribute name, values
         """
-        user_attrs = attribute_dict(attrs)
+        user_attrs = dict_to_cognito(attrs,attr_map)
         response = self.client.update_user_attributes(
             UserAttributes=user_attrs,
             AccessToken=self.access_token
         )
 
-    def get_user(self):
+    def get_user(self,attr_map=dict()):
         # self.check_token()
         user = self.client.get_user(
                 AccessToken=self.access_token
@@ -236,7 +247,7 @@ class Cognito(object):
 
         return self.get_user_obj(username=self.username,
                                  attribute_list=user.get('UserAttributes'),
-                                 metadata=user_metadata)
+                                 metadata=user_metadata,attr_map=attr_map)
 
     def admin_get_user(self):
         """

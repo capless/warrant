@@ -1,9 +1,16 @@
 {% extends 'warrant/base.html' %}
 
 {% block main_content %}
-    <ul>
+    <table class="table">
+        <tr>
+            <th>Plan Name</th>
+            <th>Description</th>
+        </tr>
     {% for obj in object_list %}
-        <li>{{ obj.name }} - {{ obj.description }}</li>
+        <tr>
+            <td>{{ obj.name }}</td>
+            <td>{{ obj.description }}</td>
+        </tr>
     {% endfor %}
-    </ul>
+    </table>
 {% endblock %}

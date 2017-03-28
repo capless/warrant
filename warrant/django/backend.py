@@ -28,7 +28,6 @@ class CognitoUser(Cognito):
     def get_user_obj(self,username=None,attribute_list=[],metadata={},
                      create_unknown_user=True):
         user_attrs = cognito_to_dict(attribute_list,self.COGNITO_ATTR_MAPPING)
-
         if create_unknown_user:
             user, created = self.user_class.objects.update_or_create(
                 username=username,
@@ -69,14 +68,15 @@ class AbstractCognitoBackend(ModelBackend):
             settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
             username=username)
         try:
-            cognito_user.authenticate(password)
+            cognito_user.authenticate_user(password)
         except (Boto3Error, ClientError) as e:
             return self.handle_error_response(e)
         user = cognito_user.get_user()
         if user:
             user.access_token = cognito_user.access_token
-            user.id_token =cognito_user.id_token
+            user.id_token = cognito_user.id_token
             user.refresh_token = cognito_user.refresh_token
+
         return user
 
     def handle_error_response(self, error):
