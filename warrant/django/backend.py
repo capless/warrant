@@ -26,23 +26,26 @@ class CognitoUser(Cognito):
 
     def get_user_obj(self,username=None,attribute_list=[],metadata={}):
         user_attrs = cognito_to_dict(attribute_list,CognitoUser.COGNITO_ATTR_MAPPING)
-        api_key = user_attrs.pop('api_key', None)
-        api_key_id = user_attrs.pop('api_key_id', None)
+        django_fields = [f.name for f in CognitoUser.user_class._meta.get_fields()]
+        extra_attrs = {}
+        for k, v in user_attrs.items():
+            if k not in django_fields:
+                extra_attrs.update({k: user_attrs.pop(k, None)})
         if getattr(settings, 'CREATE_UNKNOWN_USERS', True):
-            user, created = self.user_class.objects.update_or_create(
+            user, created = CognitoUser.user_class.objects.update_or_create(
                 username=username,
                 defaults=user_attrs)
         else:
             try:
-                user = self.user_class.objects.get(username=username)
+                user = CognitoUser.user_class.objects.get(username=username)
                 for k, v in iteritems(user_attrs):
                     setattr(user, k, v)
                 user.save()
-            except self.user_class.DoesNotExist:
-                user = None
+            except CognitoUser.user_class.DoesNotExist:
+                    user = None
         if user:
-            setattr(user, 'api_key', api_key)
-            setattr(user, 'api_key_id', api_key_id)
+            for k, v in extra_attrs.items():
+                setattr(user, k, v)
         return user
 
 
