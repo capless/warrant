@@ -154,7 +154,7 @@ class Cognito(object):
             ConfirmationCode=confirmation_code
         )
 
-    def authenticate(self, password):
+    def admin_authenticate(self, password):
         """
         Authenticate the user.
         :param user_pool_id: User Pool Id found in Cognito User Pool
@@ -179,7 +179,7 @@ class Cognito(object):
         self.access_token = tokens['AuthenticationResult']['AccessToken']
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
-    def authenticate_user(self, password):
+    def authenticate(self, password):
         """
         Authenticate the user.
         :param password:
