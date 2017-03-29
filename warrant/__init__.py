@@ -249,6 +249,16 @@ class Cognito(object):
                                  attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata,attr_map=attr_map)
 
+    def get_users(self,attr_map=dict()):
+        kwargs = {"UserPoolId":self.user_pool_id}
+
+        response = self.client.list_users(**kwargs)
+        return [self.get_user_obj(user.get('Username'),
+                                  attribute_list=user.get('Attributes'),
+                                  metadata={'username':user.get('Username')},
+                                  attr_map=attr_map)
+                for user in response.get('Users')]
+
     def admin_get_user(self):
         """
         Get the user's details

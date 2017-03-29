@@ -26,7 +26,7 @@ class CognitoUser(Cognito):
                                    )
 
     def get_user_obj(self,username=None,attribute_list=[],metadata={},
-                     create_unknown_user=True):
+                     create_unknown_user=True,attr_map=dict()):
         user_attrs = cognito_to_dict(attribute_list,self.COGNITO_ATTR_MAPPING)
         if create_unknown_user:
             user, created = self.user_class.objects.update_or_create(

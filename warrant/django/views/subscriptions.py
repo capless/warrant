@@ -1,21 +1,25 @@
 import boto3
 
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, \
+    UserPassesTestMixin
 from django.utils.module_loading import import_string
 from django.views.generic import FormView
 from django.views.generic.list import MultipleObjectMixin, ListView
 
 from django.conf import settings
-from warrant import UserObj
+from warrant import UserObj, Cognito
 
 
 class GetCognitoUserMixin(object):
+    client = boto3.client('apigateway')
 
     def get_user_object(self):
         cog_client = boto3.client('cognito-idp')
-        user = cog_client.get_user(AccessToken=self.request.session['ACCESS_TOKEN'])
+        user = cog_client.get_user(
+            AccessToken=self.request.session['ACCESS_TOKEN'])
         u = UserObj(username=user.get('UserAttributes')[0].get('username'),
-                    attribute_list=user.get('UserAttributes'),attr_map=settings.COGNITO_ATTR_MAPPING)
+                    attribute_list=user.get('UserAttributes'),
+                    attr_map=settings.COGNITO_ATTR_MAPPING)
         return u
 
     def get_queryset(self):
@@ -26,7 +30,18 @@ class GetCognitoUserMixin(object):
 
 class MySubsriptions(LoginRequiredMixin,GetCognitoUserMixin,ListView):
     template_name = 'warrant/subscriptions.html'
-    client = boto3.client('apigateway')
+
+
+class AdminListUsers(UserPassesTestMixin,ListView):
+    template_name = 'warrant/admin-list-users.html'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        response = Cognito(settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID)\
+            .get_users(attr_map=settings.COGNITO_ATTR_MAPPING)
+        return response
 
 
 class AdminSubscriptions(UserPassesTestMixin,GetCognitoUserMixin,

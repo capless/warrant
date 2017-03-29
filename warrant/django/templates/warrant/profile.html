@@ -5,8 +5,10 @@
     <h1>{{ user.username }}</h1>
     <a href="{% url 'update-profile' %}" class="btn btn-primary">Update your Profile</a>
     <dl>
-        <dt>Name:</dt>
-        <dd>{{ user.name }}</dd>
+        <dt>First Name:</dt>
+        <dd>{{ user.first_name }}</dd>
+        <dt>Last Name:</dt>
+        <dd>{{ user.last_name }}</dd>
         <dt>Email:</dt>
         <dd>{{ user.email }}</dd>
         <dt>Address:</dt>
