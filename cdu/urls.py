@@ -23,5 +23,5 @@ urlpatterns = [
     url(r'^accounts/logout/$', auth_views.logout, {'template_name': 'logout.html'}, name='logout'),
     url(r'^user_info/$', UserView.as_view(), name='user_view'),
     url(r'^admin/', admin.site.urls),
-    url(r'^accounts/', include('cognito.django.urls'))
+    url(r'^accounts/', include('warrant.django.urls'))
 ]

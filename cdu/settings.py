@@ -40,7 +40,16 @@ COGNITO_USER_POOL_ID = env('COGNITO_USER_POOL_ID')
 
 COGNITO_APP_ID = env('COGNITO_APP_ID')
 
-COGNITO_ATTR_MAPPING = env('COGNITO_ATTR_MAPPING',{},var_type='dict')
+COGNITO_ATTR_MAPPING = env(
+    'COGNITO_ATTR_MAPPING',
+    {
+        'email': 'email',
+        'given_name': 'first_name',
+        'family_name': 'last_name',
+        'custom:api_key': 'api_key',
+        'custom:api_key_id': 'api_key_id'
+    },
+    var_type='dict')
 
 # Application definition
 
