@@ -155,7 +155,7 @@ class AWSSRP(object):
         srp_b_hex = challenge_parameters['SRP_B']
         secret_block_b64 = challenge_parameters['SECRET_BLOCK']
         timestamp = test_timestamp or \
-                    datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
+                    datetime.datetime.utcnow().strftime("%a %b %-d %H:%M:%S UTC %Y")
         hkdf = self.get_password_authentication_key(user_id_for_srp,
                                                     self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
