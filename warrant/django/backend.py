@@ -74,7 +74,7 @@ class AbstractCognitoBackend(ModelBackend):
             settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
             username=username)
         try:
-            cognito_user.authenticate(password)
+            cognito_user.admin_authenticate(password)
         except (Boto3Error, ClientError) as e:
             return self.handle_error_response(e)
         user = cognito_user.get_user()
