@@ -10,6 +10,11 @@ from django.conf import settings
 from warrant import UserObj, Cognito
 
 
+class Plan(object):
+
+    def __init__(self,attr_list):
+        pass
+
 class GetCognitoUserMixin(object):
     client = boto3.client('apigateway')
 
@@ -51,9 +56,6 @@ class AdminSubscriptions(UserPassesTestMixin,GetCognitoUserMixin,
 
     def test_func(self):
         return self.request.user.has_perm('can_edit')
-
-    def get_form_class(self):
-        return import_string(settings.WARRANT_SUBSCRIPTION_FORM)
 
     def get_context_data(self, **kwargs):
         kwargs['object_list'] = self.object_list = self.get_queryset()

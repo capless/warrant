@@ -13,3 +13,10 @@ class ProfileForm(forms.Form):
     api_key_id = forms.CharField(max_length=200, required=False)
 
 
+class APIKeySubscriptionForm(forms.Form):
+
+    def __init__(self, plans, user, *args, **kwargs):
+        super(APIKeySubscriptionForm, self).__init__(*args, **kwargs)
+        self.fields['plan'] = forms.ChoiceField(required=True,
+            choices=[(p.id,p.name) for p in plans]
+        )
