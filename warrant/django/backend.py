@@ -24,7 +24,7 @@ class CognitoUser(Cognito):
                                    }
                                    )
 
-    def get_user_obj(self,username=None,attribute_list=[],metadata={}):
+    def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map={}):
         user_attrs = cognito_to_dict(attribute_list,CognitoUser.COGNITO_ATTR_MAPPING)
         django_fields = [f.name for f in CognitoUser.user_class._meta.get_fields()]
         extra_attrs = {}

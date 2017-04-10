@@ -1,18 +1,18 @@
 {% extends 'warrant/base.html' %}
 
 {% block main_content %}
-    <a href="#" class="btn btn-success">Subscribe to New Plan</a>
+
     <table class="table">
         <tr>
             <th>Plan Name</th>
             <th>Description</th>
-            <th></th>
+
         </tr>
     {% for obj in object_list %}
         <tr>
             <td>{{ obj.name }}</td>
             <td>{{ obj.description }}</td>
-            <td><a href="#" class="btn btn-danger">Unsubscribe</a></td>
+
         </tr>
     {% endfor %}
     </table>

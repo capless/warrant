@@ -11,8 +11,8 @@ from warrant.django.forms import ProfileForm
 class TokenMixin(AccessMixin):
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.session['REFRESH_TOKEN']:
-            return self.handle_no_permission(request)
+        if not request.session.get('REFRESH_TOKEN'):
+            return self.handle_no_permission()
         return super(TokenMixin, self).dispatch(
             request, *args, **kwargs)
 
