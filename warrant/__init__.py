@@ -166,7 +166,7 @@ class Cognito(object):
             ConfirmationCode=confirmation_code
         )
 
-    def authenticate(self, password):
+    def admin_authenticate(self, password):
         """
         Authenticate the user.
         :param user_pool_id: User Pool Id found in Cognito User Pool
@@ -186,14 +186,12 @@ class Cognito(object):
             AuthParameters=auth_params,
         )
 
-
-
         self.id_token = tokens['AuthenticationResult']['IdToken']
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.access_token = tokens['AuthenticationResult']['AccessToken']
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
-    def authenticate_user(self, password):
+    def authenticate(self, password):
         """
         Authenticate the user.
         :param password:
@@ -239,13 +237,13 @@ class Cognito(object):
         user = self.client.get_user(
                 AccessToken=self.access_token
             )
+        
         user_metadata = {
             'username': user.get('Username'),
             'id_token': self.id_token,
             'access_token': self.access_token,
-            'refresh_token': self.refresh_token
+            'refresh_token': self.refresh_token,
         }
-
         return self.get_user_obj(username=self.username,
                                  attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata,attr_map=attr_map)

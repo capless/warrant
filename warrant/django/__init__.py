@@ -11,6 +11,8 @@ def add_user_tokens(sender, user, **kwargs):
         request.session['ACCESS_TOKEN'] = user.access_token
         request.session['ID_TOKEN'] = user.id_token
         request.session['REFRESH_TOKEN'] = user.refresh_token
+        request.session['API_KEY'] = getattr(user, 'api_key', None)
+        request.session['API_KEY_ID'] = getattr(user, 'api_key_id', None)
         request.session.save()
 
 # If using Django 1.11 or higher, CognitoUserPoolAuthBackend

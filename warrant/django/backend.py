@@ -15,7 +15,6 @@ from .utils import cognito_to_dict
 
 class CognitoUser(Cognito):
     user_class = get_user_model()
-
     # Mapping of Cognito User attribute name to Django User attribute name
     COGNITO_ATTR_MAPPING = getattr(settings, 'COGNITO_ATTR_MAPPING',
                                    {
@@ -25,28 +24,33 @@ class CognitoUser(Cognito):
                                    }
                                    )
 
-    def get_user_obj(self,username=None,attribute_list=[],metadata={},
-                     create_unknown_user=True,attr_map=dict()):
-        user_attrs = cognito_to_dict(attribute_list,self.COGNITO_ATTR_MAPPING)
-        if create_unknown_user:
-            user, created = self.user_class.objects.update_or_create(
+    def get_user_obj(self,username=None,attribute_list=[],metadata={}):
+        user_attrs = cognito_to_dict(attribute_list,CognitoUser.COGNITO_ATTR_MAPPING)
+        django_fields = [f.name for f in CognitoUser.user_class._meta.get_fields()]
+        extra_attrs = {}
+        for k, v in user_attrs.items():
+            if k not in django_fields:
+                extra_attrs.update({k: user_attrs.pop(k, None)})
+        if getattr(settings, 'CREATE_UNKNOWN_USERS', True):
+            user, created = CognitoUser.user_class.objects.update_or_create(
                 username=username,
                 defaults=user_attrs)
         else:
             try:
-                user = self.user_class.objects.get(username=username)
+                user = CognitoUser.user_class.objects.get(username=username)
                 for k, v in iteritems(user_attrs):
                     setattr(user, k, v)
                 user.save()
-            except self.user_class.DoesNotExist:
-                user = None
+            except CognitoUser.user_class.DoesNotExist:
+                    user = None
+        if user:
+            for k, v in extra_attrs.items():
+                setattr(user, k, v)
         return user
 
 
 class AbstractCognitoBackend(ModelBackend):
     __metaclass__ = abc.ABCMeta
-
-    create_unknown_user = True
 
     supports_inactive_user = False
 
@@ -55,6 +59,8 @@ class AbstractCognitoBackend(ModelBackend):
     UNAUTHORIZED_ERROR_CODE = 'NotAuthorizedException'
 
     USER_NOT_FOUND_ERROR_CODE = 'UserNotFoundException'
+
+    COGNITO_USER_CLASS = CognitoUser
 
     @abc.abstractmethod
     def authenticate(self, username=None, password=None):
@@ -68,7 +74,7 @@ class AbstractCognitoBackend(ModelBackend):
             settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
             username=username)
         try:
-            cognito_user.authenticate_user(password)
+            cognito_user.authenticate(password)
         except (Boto3Error, ClientError) as e:
             return self.handle_error_response(e)
         user = cognito_user.get_user()
