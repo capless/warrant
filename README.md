@@ -9,7 +9,10 @@ Makes working with AWS Cognito easier for Python developers.
 - [Cognito Utility Class](#cognito-utility-class) `warrant.Cognito`
 - [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
 - [Django Utilities](#django-utilities)
-    - [Auth Backend](#django-auth-backends)
+    - [Auth Backend](#django-auth-backend)
+        - [Using the CognitoBackend](#using-the-cognitobackend)
+        - [CognitoBackend Behavior](#cognitobackend-behavior)
+        - [Customizing CognitoBackend Behavior](#customizing-cognitobackend-behavior)
     - [Profile Views](#profile-views)
     - [API Gateway Integration](#api-gateway-integration)
 
@@ -196,7 +199,8 @@ u.logout()
 ```
 
 ## Django Utilities
-### Using the CognitoBackend
+### Django Auth Backend
+#### Using the CognitoBackend
 1. In your Django project settings file, add the dotted path of
 `CognitoBackend` to your list of `AUTHENTICATION_BACKENDS`.
 Keep in mind that Django will attempt to authenticate a user using
@@ -204,7 +208,7 @@ each backend listed, in the order listed until successful.
 
     ```python
     AUTHENTICATION_BACKENDS = [
-        'cognito.django.backend.CognitoBackend',
+        'warrant.django.backend.CognitoBackend',
         ...
     ]
     ```
@@ -213,7 +217,11 @@ Your User Pool ID can be found in the Pool Details tab in the AWS console.
 Your App ID is found in the Apps tab, listed as "App client id".
 
 3. Set `COGNITO_ATTR_MAPPING` in your settings file to a dictionary mapping a
-Cognito attribute name to a Django User attribute name. Defaults to:
+Cognito attribute name to a Django User attribute name.  
+If your Cognito User Pool has any custom attributes, it is automatically  
+prefixed with `custom:`. Therefore, you will want to add a mapping to your  
+mapping dictionary as such `{'custom:custom_attr': 'custom_attr'}`.  
+Defaults to:
     ```python
     {
         'email': 'email',
@@ -221,28 +229,36 @@ Cognito attribute name to a Django User attribute name. Defaults to:
         'family_name': 'last_name',
     }
     ```
+4. Optional - Set `CREATE_UNKNOWN_USERS` to `True` or `False`, depending on if  
+you wish local Django users to be created upon successful login. If set to `False`,  
+only existing local Django users are updated.  
+Defaults to `True`.
 
-### CognitoBackend Behavior ###
+#### CognitoBackend Behavior
 Since the username of a Cognito User can never change,
 this is used by the backend to match a Cognito User with a local Django
 User.
 
 If a Django user is not found, one is created using the attributes
 fetched from Cognito. If an existing Django user is found, their
-attributes are updated.
+attributes are updated.  
+
+If the boto3 client comes back with either a `NotAuthorizedException` or  
+`UserNotFoundException`, then `None` is returned instead of a User.  
+Otherwise, the exception is raised.
 
 Upon successful login, the three identity tokens returned from Cognito
 (ID token, Refresh token, Access token) are stored in the user's request
-session.
+session. In Django >= 1.11, this is done directly in the backend class. 
+Otherwise, this is done via the `user_logged_in` signal.
 
-Check the cdu/demo directory for an example project with a login and
+Check the django/demo directory for an example app with a login and
 user details page.
 
-### Customizing CognitoBackend Behavior ###
-Create your own backend class that inhereits from `CognitoBackend`.
+#### Customizing CognitoBackend Behavior
+Setting the Django setting `CREATE_UNKNOWN_USERS` to `False` prevents the backend
+from creating a new local Django user and only updates existing users.  
 
-Setting the class variable `create_unknown_user` to `False` prevents the backend
-from creating a new local Django user and only updates existing users.
-
-Setting the class variable `supports_inactive_user` to `True` allows
-Cognito Users with a status listed in `INACTIVE_USER_STATUS` to authenticate.
+If you create your own backend class that inhereits from `CognitoBackend`, you may  
+want to also create your own custom `user_logged_in` so that it checks  
+for the name of your custom class.

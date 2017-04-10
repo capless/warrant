@@ -52,10 +52,6 @@ class CognitoUser(Cognito):
 class AbstractCognitoBackend(ModelBackend):
     __metaclass__ = abc.ABCMeta
 
-    supports_inactive_user = False
-
-    INACTIVE_USER_STATUS = ['ARCHIVED', 'COMPROMISED', 'UNKNOWN']
-
     UNAUTHORIZED_ERROR_CODE = 'NotAuthorizedException'
 
     USER_NOT_FOUND_ERROR_CODE = 'UserNotFoundException'
