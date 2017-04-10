@@ -24,7 +24,7 @@ class CognitoUser(Cognito):
                                    }
                                    )
 
-    def get_user_obj(self,username=None,attribute_list=[],metadata={}):
+    def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map={}):
         user_attrs = cognito_to_dict(attribute_list,CognitoUser.COGNITO_ATTR_MAPPING)
         django_fields = [f.name for f in CognitoUser.user_class._meta.get_fields()]
         extra_attrs = {}
@@ -79,11 +79,11 @@ class AbstractCognitoBackend(ModelBackend):
             return self.handle_error_response(e)
         user = cognito_user.get_user()
         if user:
-            setattr(user, 'access_token', cognito_user.access_token)
-            setattr(user, 'id_token', cognito_user.id_token)
-            setattr(user, 'refresh_token', cognito_user.refresh_token)
-        return user
+            user.access_token = cognito_user.access_token
+            user.id_token = cognito_user.id_token
+            user.refresh_token = cognito_user.refresh_token
 
+        return user
 
     def handle_error_response(self, error):
         error_code = error.response['Error']['Code']

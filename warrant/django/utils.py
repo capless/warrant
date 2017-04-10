@@ -20,7 +20,6 @@ def user_obj_to_django(user_obj):
             user_attrs[dk] = v
     return user_attrs
 
-
 def get_cognito(request):
 
     c = Cognito(settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,

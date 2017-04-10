@@ -1,18 +1,14 @@
-{% extends 'cognito/base.html' %}
+{% extends 'warrant/base.html' %}
 
-{% block sidebar %}
-<ul>
-    <li><a href="{% url 'update-profile' %}">Update your Profile</a></li>
-</ul>
-
-{% endblock %}
 
 {% block main_content %}
     <h1>{{ user.username }}</h1>
     <a href="{% url 'update-profile' %}" class="btn btn-primary">Update your Profile</a>
     <dl>
-        <dt>Name:</dt>
-        <dd>{{ user.name }}</dd>
+        <dt>First Name:</dt>
+        <dd>{{ user.first_name }}</dd>
+        <dt>Last Name:</dt>
+        <dd>{{ user.last_name }}</dd>
         <dt>Email:</dt>
         <dd>{{ user.email }}</dd>
         <dt>Address:</dt>
@@ -23,5 +19,9 @@
         <dd>{{ user.gender }}</dd>
         <dt>Preferred Username:</dt>
         <dd>{{ user.preferred_username }}</dd>
+        <dt>API Key</dt>
+        <dd>{{ user.api_key }}</dd>
+        <dt>API Key Id</dt>
+        <dd>{{ user.api_key_id }}</dd>
     </dl>
 {% endblock main_content %}

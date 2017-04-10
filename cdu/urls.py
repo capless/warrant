@@ -15,13 +15,9 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
-from demo.views import UserView
 
 urlpatterns = [
-    url(r'^accounts/login/$', auth_views.login, {'template_name': 'login.html'}, name='login'),
-    url(r'^accounts/logout/$', auth_views.logout, {'template_name': 'logout.html'}, name='logout'),
-    url(r'^user_info/$', UserView.as_view(), name='user_view'),
+    url(r'^accounts/', include('warrant.django.demo.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^accounts/', include('warrant.django.urls'))
 ]

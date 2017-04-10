@@ -4,5 +4,5 @@ from django.urls import reverse
 
 
 class UserView(TemplateView):
-    template_name = 'user_info.html'
+    template_name = 'warrant/user_info.html'
     

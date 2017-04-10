@@ -192,6 +192,5 @@ class AWSSRPTestCase(unittest.TestCase):
         self.assertTrue(tokens['AuthenticationResult'].has_key('AccessToken'))
         self.assertTrue(tokens['AuthenticationResult'].has_key('RefreshToken'))
 
-
 if __name__ == '__main__':
     unittest.main()

@@ -29,7 +29,8 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 AUTHENTICATION_BACKENDS = [
-    'warrant.django.backend.CognitoBackend'
+    'warrant.django.backend.CognitoBackend',
+    'django.contrib.auth.backends.ModelBackend'
 ]
 
 COGNITO_TEST_USERNAME = env('COGNITO_TEST_USERNAME')
@@ -60,8 +61,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cdu.demo',
     'warrant.django',
+    'warrant.django.demo',
     'crispy_forms',
     'django_extensions'
 ]
@@ -128,7 +129,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LOGIN_REDIRECT_URL = '/user_info'
+LOGIN_REDIRECT_URL = '/accounts/user_info'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
