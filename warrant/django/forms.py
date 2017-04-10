@@ -14,9 +14,8 @@ class ProfileForm(forms.Form):
 
 
 class APIKeySubscriptionForm(forms.Form):
+    plan = forms.ChoiceField(required=True)
 
-    def __init__(self, plans, user, *args, **kwargs):
+    def __init__(self, plans=[], users_plans=[], *args, **kwargs):
+        self.base_fields['plan'].choices = [(p.get('id'),p.get('name')) for p in plans if not p.get('id') in users_plans]
         super(APIKeySubscriptionForm, self).__init__(*args, **kwargs)
-        self.fields['plan'] = forms.ChoiceField(required=True,
-            choices=[(p.id,p.name) for p in plans]
-        )

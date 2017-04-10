@@ -46,6 +46,7 @@ class UserObj(object):
 
 
 
+
 class Cognito(object):
 
     user_class = UserObj
@@ -259,7 +260,7 @@ class Cognito(object):
                                   attr_map=attr_map)
                 for user in response.get('Users')]
 
-    def admin_get_user(self):
+    def admin_get_user(self,attr_map=dict()):
         """
         Get the user's details
         :param user_pool_id: The Cognito User Pool Id
@@ -277,7 +278,7 @@ class Cognito(object):
         }
         return self.get_user_obj(username=self.username,
                                  attribute_list=user.get('UserAttributes'),
-                                 metadata=user_metadata)
+                                 metadata=user_metadata,attr_map=attr_map)
 
 
     def send_verification(self, attribute='email'):
