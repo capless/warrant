@@ -1,38 +1,61 @@
 # Warrant
 
-Python class to integrate Boto3's Cognito client with PySRP so it is easy to login users.
-Included is a Django authentication backend that uses the utility class to
-handle password verification and fetching of user attributes.
+Makes working with AWS Cognito easier for Python developers.
+
+[![Build Status](https://travis-ci.org/capless/warrant.svg?branch=master)](https://travis-ci.org/capless/warrant)
+
+## Getting Started
+
+- [Cognito Utility Class](#cognito-utility-class) `warrant.Cognito`
+- [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
+- [Django Utilities](#django-utilities)
+    - [Auth Backend](#django-auth-backends)
+    - [Profile Views](#profile-views)
+    - [API Gateway Integration](#api-gateway-integration)
 
 ## Create a Cognito Instance ##
 
 ### Example with All Arguments ###
+
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
         username='optional-username',
-        password='optional-password',
         id_token='optional-id-token',
         refresh_token='optional-refresh-token',
         access_token='optional-access-token',
-        expires_datetime='optional-expires-datetime',
-        access_key='optional-access-key',secret_key='optional-secret-key'
+        access_key='optional-access-key',
+        secret_key='optional-secret-key'
         )
+
+        
 ```
+
+#### Arguments
+
+- **user_pool_id:** Cognito User Pool ID
+- **client_id:** Cognito User Pool Application client ID
+- **username:** User Pool username
+- **id_token:** ID Token returned by authentication
+- **refresh_token:** Refresh Token returned by authentication
+- **access_token:** Access Token returned by authentication
+- **access_key:** AWS IAM access key
+- **secret_key:** AWS IAM secret key
+       
 
 ### Examples with Realistic Arguments ###
 
 #### User Pool Id and Client ID Only ####
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 ```
 
 #### Username/Password ####
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
         username='bob',
@@ -43,7 +66,7 @@ u = Cognito('your-user-pool-id','your-client-id',
 #### Tokens ####
 
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='your-id-token',
@@ -62,7 +85,7 @@ Register a user to the user pool
 
 
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 
@@ -76,7 +99,7 @@ Authenticates a user
 If this method call succeeds the instance will have the following attributes **id_token**, **refresh_token**, **access_token**, **expires_in**, **expires_datetime**, and **token_type**.
 
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     username='bob',password='bobs-password')
@@ -89,7 +112,7 @@ u.authenticate()
 Changes the user's password
 
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 #If you don't use your tokens then you will need to
 #use your username and password and call the authenticate method
@@ -105,7 +128,7 @@ u.change_password('previous-password','proposed-password')
 Use the confirmation code that is sent via email or text to confirm the user's account
 
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 
@@ -117,7 +140,7 @@ u.confirm_sign_up('users-conf-code',username='bob')
 Update the user's profile
 
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='id-token',refresh_token='refresh-token',
@@ -131,7 +154,7 @@ u.update_profile({'given_name':'Edward','family_name':'Smith',})
 Send verification email or text for either the email or phone attributes.
 
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='id-token',refresh_token='refresh-token',
@@ -148,7 +171,7 @@ Get all of the user's attributes
 **Important:** Returns a UserObj project
 
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     username='bob')
@@ -161,7 +184,7 @@ user = u.get_user()
 Logs the user out of all clients. Erases the access token.
 
 ```python
-from cognito import Cognito
+from warrant import Cognito
 
 #If you don't use your tokens then you will need to
 #use your username and password and call the authenticate method
@@ -172,8 +195,8 @@ u = Cognito('your-user-pool-id','your-client-id',
 u.logout()
 ```
 
-
-## Using the CognitoBackend ##
+## Django Utilities
+### Using the CognitoBackend
 1. In your Django project settings file, add the dotted path of
 `CognitoBackend` to your list of `AUTHENTICATION_BACKENDS`.
 Keep in mind that Django will attempt to authenticate a user using
