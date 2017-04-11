@@ -90,7 +90,8 @@ class Cognito(object):
         """
         Returns the specified 
         :param username: Username of the user 
-        :param attribute_list: List of tuples that represent the user's attributes
+        :param attribute_list: List of tuples that represent the user's 
+            attributes as returned by the admin_get_user or get_user boto3 methods
         :param metadata: Metadata about the user
         :param attr_map: Dictionary that maps the Cognito attribute names to 
         what we'd like to display to the users

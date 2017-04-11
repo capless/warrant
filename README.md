@@ -163,6 +163,27 @@ u = Cognito('your-user-pool-id','your-client-id',
 u.send_verification(attribute='email')
 ```
 
+#### Get User Object
+
+Returns an instance of the specified user_class.
+ 
+```python
+u = Cognito('your-user-pool-id','your-client-id',
+    id_token='id-token',refresh_token='refresh-token',
+    access_token='access-token')
+
+u.get_user_obj(username='bjones',
+    attribute_list=[{'Name': 'string','Value': 'string'},],
+    metadata={},
+    attr_map={"given_name":"first_name","family_name":"last_name"}
+    )
+```
+##### Arguments
+- **username:** Username of the user 
+- **attribute_list:** List of tuples that represent the user's attributes as returned by the admin_get_user or get_user boto3 methods
+- **metadata: (optional)** Metadata about the user
+- **attr_map: (optional)** Dictionary that maps the Cognito attribute names to what we'd like to display to the users
+        
 
 #### Get User ####
 
