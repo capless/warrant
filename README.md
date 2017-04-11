@@ -28,8 +28,6 @@ u = Cognito('your-user-pool-id','your-client-id',
         access_key='optional-access-key',
         secret_key='optional-secret-key'
         )
-
-        
 ```
 
 #### Arguments
@@ -53,13 +51,12 @@ from warrant import Cognito
 u = Cognito('your-user-pool-id','your-client-id')
 ```
 
-#### Username/Password ####
+#### Username####
 ```python
 from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
         username='bob',
-        password='bos-password'
         )
 ```
 
@@ -89,7 +86,7 @@ from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 
-u.register('username','password',email='opt')
+u.register('username','password',email='you@you.com',some_random_attr='random value') #**kwargs are the other attributes that should be set ex. email, given_name, family_name
 ```
 
 #### Authenticate ####
