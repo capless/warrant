@@ -99,6 +99,13 @@ u = Cognito('your-user-pool-id','your-client-id')
 
 u.register('username','password',email='you@you.com',some_random_attr='random value') #**kwargs are the other attributes that should be set ex. email, given_name, family_name
 ```
+##### Arguments
+
+- **username:** User Pool username
+- **password:** User Pool password
+- **attr_map:** Attribute map to Cognito's attributes
+- **kwargs:** Additional User Pool attributes ex. **{'email':'you@you.com'}
+
 
 #### Authenticate ####
 
@@ -219,6 +226,9 @@ u = Cognito('your-user-pool-id','your-client-id',
     
 u.check_token()
 ```
+##### Arguments
+
+No arguments for check_token
 
 #### Logout ####
 

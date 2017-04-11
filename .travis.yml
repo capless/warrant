@@ -9,5 +9,6 @@ python:
 # command to install dependencies
 install: "pip install nose coverage"
 install: "pip install -r requirements.txt"
+install: "pip install -r django-requirements.txt"
 # command to run tests
 script: nosetests
