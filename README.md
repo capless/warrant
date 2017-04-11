@@ -141,6 +141,39 @@ u.admin_authenticate(password='bobs-password')
 
 - **password:** User's password
 
+#### Initiate Forgot Password
+
+Sends a verification code to the user to use to change their password.
+
+```python
+u = Cognito('your-user-pool-id','your-client-id',
+    username='bob')
+    
+u.initiate_forgot_password()    
+```
+
+##### Arguments
+
+No arguments
+
+#### Confirm Forgot Password
+
+Allows a user to enter a code provided when they reset their password
+to update their password.
+
+```python
+u = Cognito('your-user-pool-id','your-client-id',
+    username='bob')
+
+u.confirm_forgot_password('your-confirmation-code','your-new-password')
+```
+
+##### Arguments
+
+- **confirmation_code:** The confirmation code sent by a user's request
+to retrieve a forgotten password
+- **password:** New password
+        
 #### Change Password ####
 
 Changes the user's password
