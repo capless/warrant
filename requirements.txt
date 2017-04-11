@@ -1,5 +1,4 @@
 boto3>=1.4.3
 envs>=0.3.0
 mock>=2.0.0
-placebo>=0.8.1
 PyJWT>=1.4.2

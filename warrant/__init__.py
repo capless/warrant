@@ -332,8 +332,7 @@ class Cognito(object):
         """
         Sets a new access token on the User using the refresh token.
         """
-        refresh_response = self.client.admin_initiate_auth(
-            UserPoolId=self.user_pool_id,
+        refresh_response = self.client.initiate_auth(
             ClientId=self.client_id,
             AuthFlow='REFRESH_TOKEN',
             AuthParameters={
