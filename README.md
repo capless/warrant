@@ -50,13 +50,17 @@ u = Cognito('your-user-pool-id','your-client-id',
 ### Examples with Realistic Arguments ###
 
 #### User Pool Id and Client ID Only ####
+
+Used when you only need information about the user pool (ex. list users in the user pool)
 ```python
 from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 ```
 
-#### Username####
+#### Username
+
+Used when the user has not logged in yet. Start with these arguments when you plan to authenticate with either SRP (authenticate) or admin_authenticate (admin_initiate_auth).
 ```python
 from warrant import Cognito
 
@@ -66,6 +70,8 @@ u = Cognito('your-user-pool-id','your-client-id',
 ```
 
 #### Tokens ####
+
+Used after the user has already authenticated and you need to build a new Cognito instance (ex. for use in a view).
 
 ```python
 from warrant import Cognito
@@ -200,6 +206,18 @@ u = Cognito('your-user-pool-id','your-client-id',
     username='bob')
 
 user = u.get_user()
+```
+
+#### Check Token
+
+Checks the exp attribute of the access_token and either refreshes the tokens by calling the renew_access_tokens method or does nothing. **IMPORTANT:** Access token is required 
+
+```python
+u = Cognito('your-user-pool-id','your-client-id',
+    id_token='id-token',refresh_token='refresh-token',
+    access_token='access-token')
+    
+u.check_token()
 ```
 
 #### Logout ####
