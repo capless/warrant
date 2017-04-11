@@ -8,13 +8,15 @@ Makes working with AWS Cognito easier for Python developers.
 
 - [Cognito Utility Class](#cognito-utility-class) `warrant.Cognito`
 - [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
+    - [Using AWSSRP](#using-awssrp)
 - [Django Utilities](#django-utilities)
-    - [Auth Backend](#django-auth-backend)
+    - [Auth Backend](#django-auth-backend) `warrant.django.backend.CognitoBackend`
         - [Using the CognitoBackend](#using-the-cognitobackend)
         - [CognitoBackend Behavior](#cognitobackend-behavior)
         - [Customizing CognitoBackend Behavior](#customizing-cognitobackend-behavior)
     - [Profile Views](#profile-views)
     - [API Gateway Integration](#api-gateway-integration)
+        - [API Key Middleware](#api-key-middleware) `warrant.django.middleware.APIKeyMiddleware`
 
 ## Create a Cognito Instance ##
 
@@ -216,6 +218,27 @@ u = Cognito('your-user-pool-id','your-client-id',
 u.logout()
 ```
 
+## Cognito SRP Utility
+The `AWSSRP` class is used to perform [SRP(Secure Remote Password protocol)](https://www.ietf.org/rfc/rfc2945.txt) authentication.  
+This is the preferred method of user authentication with AWS Cognito.  
+The process involves a series of authentication challenges and responses, which if successful,  
+results in a final response that contains ID, access and refresh tokens.
+
+### Using AWSSRP
+The `AWSSRP` class takes a username, password, cognito user pool id, cognito app id, and an optional  
+`boto3` client. Afterwards, the `authenticate_user` class method is used for SRP authentication.
+
+
+```python
+import boto3
+from warrant.aws_srp import AWSSRP
+
+client = boto3('cognito-idp')
+aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
+             client_id='client_id', client=client)
+tokens = aws.authenticate_user()
+```
+
 ## Django Utilities
 ### Django Auth Backend
 #### Using the CognitoBackend
@@ -280,3 +303,10 @@ from creating a new local Django user and only updates existing users.
 If you create your own backend class that inhereits from `CognitoBackend`, you may  
 want to also create your own custom `user_logged_in` so that it checks  
 for the name of your custom class.
+
+### API Gateway Integration
+
+#### API Key Middleware
+The `APIKeyMiddleware` checks for a `HTTP_AUTHORIZATION_ID` header  
+in the request and attaches it to the request object as `api_key`.
+
