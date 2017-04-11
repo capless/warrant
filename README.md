@@ -117,10 +117,29 @@ If this method call succeeds the instance will have the following attributes **i
 from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
-    username='bob',password='bobs-password')
+    username='bob')
 
-u.authenticate()
+u.authenticate(password='bobs-password')
 ```
+
+##### Arguments
+
+- **password:** - User's password
+
+#### Admin Authenticate
+
+Authenticate the user using admin super privileges
+
+```python
+from warrant import Cognito
+
+u = Cognito('your-user-pool-id','your-client-id',
+    username='bob')
+
+u.admin_authenticate(password='bobs-password')
+```
+
+- **password:** User's password
 
 #### Change Password ####
 
@@ -138,6 +157,11 @@ u = Cognito('your-user-pool-id','your-client-id',
 u.change_password('previous-password','proposed-password')
 ```
 
+##### Arguments
+
+- **previous_password:** - User's previous password
+- **proposed_password:** - The password that the user wants to change to.
+
 #### Confirm Sign Up ####
 
 Use the confirmation code that is sent via email or text to confirm the user's account
@@ -150,6 +174,11 @@ u = Cognito('your-user-pool-id','your-client-id')
 u.confirm_sign_up('users-conf-code',username='bob')
 ```
 
+##### Arguments 
+
+- **confirmation_code:** Confirmation code sent via text or email
+- **username:** User's username
+
 #### Update Profile ####
 
 Update the user's profile
@@ -161,9 +190,14 @@ u = Cognito('your-user-pool-id','your-client-id',
     id_token='id-token',refresh_token='refresh-token',
     access_token='access-token')
 
-u.update_profile({'given_name':'Edward','family_name':'Smith',})
+u.update_profile({'given_name':'Edward','family_name':'Smith',},attr_map=dict())
 ```
 
+##### Arguments 
+
+- **attrs:** Dictionary of attribute name, values
+- **attr_map:** Dictionary map from Cognito attributes to attribute names we would like to show to our users
+        
 #### Send Verification ####
 
 Send verification email or text for either the email or phone attributes.
@@ -177,6 +211,10 @@ u = Cognito('your-user-pool-id','your-client-id',
 
 u.send_verification(attribute='email')
 ```
+
+##### Arguments
+
+- **attribute:** - The attribute (email or phone) that needs to be verified
 
 #### Get User Object
 
@@ -200,11 +238,9 @@ u.get_user_obj(username='bjones',
 - **attr_map: (optional)** Dictionary that maps the Cognito attribute names to what we'd like to display to the users
         
 
-#### Get User ####
+#### Get User 
 
-Get all of the user's attributes
-
-**Important:** Returns a UserObj project
+Get all of the user's attributes. Gets the user's attributes using Boto3 and uses that info to create an instance of the user_class
 
 ```python
 from warrant import Cognito
@@ -212,8 +248,28 @@ from warrant import Cognito
 u = Cognito('your-user-pool-id','your-client-id',
     username='bob')
 
-user = u.get_user()
+user = u.get_user(attr_map={"given_name":"first_name","family_name":"last_name"})
 ```
+
+##### Arguments 
+- **attr_map:** Dictionary map from Cognito attributes to attribute names we would like to show to our users
+
+#### Get Users 
+
+Get a list of the user in the user pool.
+
+
+```python
+from warrant import Cognito
+
+u = Cognito('your-user-pool-id','your-client-id')
+
+user = u.get_users(attr_map={"given_name":"first_name","family_name":"last_name"})
+```
+
+##### Arguments 
+- **attr_map:** Dictionary map from Cognito attributes to attribute names we would like to show to our users
+
 
 #### Check Token
 
@@ -232,7 +288,7 @@ No arguments for check_token
 
 #### Logout ####
 
-Logs the user out of all clients. Erases the access token.
+Logs the user out of all clients and removes the expires_in, expires_datetime, id_token, refresh_token, access_token, and token_type attributes.
 
 ```python
 from warrant import Cognito
@@ -245,6 +301,9 @@ u = Cognito('your-user-pool-id','your-client-id',
 
 u.logout()
 ```
+##### Arguments
+
+No arguments for check_token
 
 ## Cognito SRP Utility
 The `AWSSRP` class is used to perform [SRP(Secure Remote Password protocol)](https://www.ietf.org/rfc/rfc2945.txt) authentication.  

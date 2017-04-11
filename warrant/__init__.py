@@ -234,7 +234,9 @@ class Cognito(object):
     def update_profile(self, attrs,attr_map=dict()):
         """
         Updates User attributes
-        :parm attrs: Dictionary of attribute name, values
+        :param attrs: Dictionary of attribute name, values
+        :param attr_map: Dictionary map from Cognito attributes to attribute 
+        names we would like to show to our users
         """
         user_attrs = dict_to_cognito(attrs,attr_map)
         response = self.client.update_user_attributes(
