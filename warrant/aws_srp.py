@@ -1,3 +1,4 @@
+import logging
 import base64
 import binascii
 import datetime
@@ -149,25 +150,50 @@ class AWSSRP(object):
         return {'USERNAME': self.username,
                 'SRP_A': long_to_hex(self.large_a_value)}
 
-    def process_challenge(self, challenge_parameters, test_timestamp=None):
-        user_id_for_srp = challenge_parameters['USER_ID_FOR_SRP']
-        salt_hex = challenge_parameters['SALT']
-        srp_b_hex = challenge_parameters['SRP_B']
-        secret_block_b64 = challenge_parameters['SECRET_BLOCK']
-        timestamp = test_timestamp or \
-                    datetime.datetime.utcnow().strftime("%a %b %-d %H:%M:%S UTC %Y")
-        hkdf = self.get_password_authentication_key(user_id_for_srp,
-                                                    self.password, hex_to_long(srp_b_hex), salt_hex)
-        secret_block_bytes = base64.standard_b64decode(secret_block_b64)
-        msg = bytearray(self.pool_id.split('_')[1], 'utf-8') + bytearray(user_id_for_srp, 'utf-8') + \
-              bytearray(secret_block_bytes) + bytearray(timestamp, 'utf-8')
-        hmac_obj = hmac.new(hkdf, msg, digestmod=hashlib.sha256)
-        signature_string = base64.standard_b64encode(hmac_obj.digest())
+    def process_challenge(self, challenge_parameters, challenge_type, test_timestamp=None):
+        logging.debug('Type: %s, Params: %s', challenge_type, challenge_parameters)
+        resp_data = {}
+        # https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_InitiateAuth.html
+        # SMS_MFA | PASSWORD_VERIFIER | CUSTOM_CHALLENGE | DEVICE_SRP_AUTH | DEVICE_PASSWORD_VERIFIER | ADMIN_NO_SRP_AUTH | NEW_PASSWORD_REQUIRED
+        if challenge_type == 'PASSWORD_VERIFIER':
+            resp_data['USERNAME'] = user_id_for_srp = challenge_parameters['USER_ID_FOR_SRP']
 
-        return {"TIMESTAMP": timestamp,
-                "USERNAME": user_id_for_srp,
-                "PASSWORD_CLAIM_SECRET_BLOCK": secret_block_b64,
-                "PASSWORD_CLAIM_SIGNATURE": signature_string.decode('utf-8')}
+            salt_hex = challenge_parameters['SALT']
+            srp_b_hex = challenge_parameters['SRP_B']
+            resp_data['PASSWORD_CLAIM_SECRET_BLOCK'] = secret_block_b64 = challenge_parameters['SECRET_BLOCK']
+            resp_data['TIMESTAMP'] = timestamp = test_timestamp or \
+                        datetime.datetime.utcnow().strftime("%a %b %-d %H:%M:%S UTC %Y")
+            hkdf = self.get_password_authentication_key(user_id_for_srp,
+                                                        self.password, hex_to_long(srp_b_hex), salt_hex)
+            secret_block_bytes = base64.standard_b64decode(secret_block_b64)
+            msg = bytearray(self.pool_id.split('_')[1], 'utf-8') + bytearray(user_id_for_srp, 'utf-8') + \
+                  bytearray(secret_block_bytes) + bytearray(timestamp, 'utf-8')
+            hmac_obj = hmac.new(hkdf, msg, digestmod=hashlib.sha256)
+            signature_string = base64.standard_b64encode(hmac_obj.digest())
+            resp_data['PASSWORD_CLAIM_SIGNATURE'] = signature_string.decode('utf-8')
+
+        elif challenge_type == 'NEW_PASSWORD_REQUIRED':
+            resp_data['USERNAME'] = self.username
+            try:
+                import getpass
+            except ImportError as error:
+                logging.critical('Unable to import getpass. Module is required to change password')
+                raise
+            print('New password required.')
+            resp_data['NEW_PASSWORD'] = getpass.getpass('New Password:')
+        else:
+            raise NotImplementedError('The %s challenge is not supported' % challenge_type)
+
+        return resp_data
+
+    def process_challenges(self, boto_client, response):
+        while 'ChallengeName' in response:
+            challenge_response = self.process_challenge(response['ChallengeParameters'], response['ChallengeName'])
+            response = boto_client.respond_to_auth_challenge(
+                ClientId=self.client_id,
+                ChallengeName=response['ChallengeName'],
+                ChallengeResponses=challenge_response)
+        return response
 
     def authenticate_user(self, client=None):
         boto_client = self.client or client
@@ -177,13 +203,6 @@ class AWSSRP(object):
             AuthParameters=auth_params,
             ClientId=self.client_id
         )
-        if response['ChallengeName'] == 'PASSWORD_VERIFIER':
-            challenge_response = self.process_challenge(response['ChallengeParameters'])
-            tokens = boto_client.respond_to_auth_challenge(
-                ClientId=self.client_id,
-                ChallengeName='PASSWORD_VERIFIER',
-                ChallengeResponses=challenge_response)
-        else:
-            raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
+        tokens = self.process_challenges(boto_client, response)
         return tokens
 
