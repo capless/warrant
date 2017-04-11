@@ -1,15 +1,11 @@
-import os
-import json
 import unittest
-import datetime
 
 from mock import patch
 from envs import env
-from placebo.utils import placebo_session
 from botocore.exceptions import ClientError
 
 from warrant import Cognito,UserObj
-from warrant.aws_srp import AWSSRP, long_to_hex, hex_to_long
+from warrant.aws_srp import AWSSRP
 
 
 AWSSRP_TEST_FILE = 'awssrp_test_variables.json'
@@ -35,17 +31,7 @@ class UserObjTestCase(unittest.TestCase):
         self.assertEqual(u.user_status,self.user_metadata.get('user_status'))
 
 
-class AttributeDictTestCase(unittest.TestCase):
-
-    def test_func(self):
-        ad = attribute_dict({'username':'bjones','email':'bjones@example.com'})
-        self.assertEqual([
-            {'Name':'username','Value':'bjones'},
-            {'Name':'email','Value':'bjones@example.com'}
-        ],ad)
-
-
-class CognitoTestCase(unittest.TestCase):
+class CognitoAuthTestCase(unittest.TestCase):
 
     def setUp(self):
         self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
@@ -55,27 +41,24 @@ class CognitoTestCase(unittest.TestCase):
         self.user = Cognito(self.cognito_user_pool_id,self.app_id,
                          self.username)
 
-    @placebo_session
-    def test_authenticate(self,session):
-        self.user.switch_session(session)
+    def test_authenticate(self):
         self.user.authenticate(self.password)
         self.assertNotEqual(self.user.access_token,None)
         self.assertNotEqual(self.user.id_token, None)
         self.assertNotEqual(self.user.refresh_token, None)
 
-    @placebo_session
-    def test_logout(self,session):
-        self.user.switch_session(session)
+    def test_logout(self):
         self.user.authenticate(self.password)
         self.user.logout()
         self.assertEqual(self.user.id_token,None)
         self.assertEqual(self.user.refresh_token,None)
         self.assertEqual(self.user.access_token,None)
 
-    @placebo_session
-    def test_register(self,session):
-        self.user.switch_session(session)
-        res = self.user.register('sampleuser','sample4#Password',
+    @patch('warrant.Cognito', autospec=True)
+    def test_register(self,cognito_user):
+        u = cognito_user(self.cognito_user_pool_id, self.app_id,
+                         username=self.username)
+        res = u.register('sampleuser','sample4#Password',
                 given_name='Brian',family_name='Jones',
                 name='Brian Jones',
                 email='bjones39@capless.io',
@@ -84,44 +67,36 @@ class CognitoTestCase(unittest.TestCase):
         #TODO: Write assumptions
 
 
-    @placebo_session
-    def test_renew_tokens(self,session):
-        self.user.switch_session(session)
+    def test_renew_tokens(self):
         self.user.authenticate(self.password)
         acc_token = self.user.access_token
         self.user.renew_access_token()
         acc_token_b = self.user.access_token
         self.assertNotEqual(acc_token,acc_token_b)
 
-    @placebo_session
-    def test_update_profile(self,session):
-        self.user.switch_session(session)
+    def test_update_profile(self):
         self.user.authenticate(self.password)
         self.user.update_profile({'given_name':'Jenkins'})
-        u = self.user.admin_get_user()
+        u = self.user.get_user()
         self.assertEquals(u.given_name,'Jenkins')
 
-    @placebo_session
-    def test_admin_get_user(self,session):
-        self.user.switch_session(session)
+    def test_admin_get_user(self):
         u = self.user.admin_get_user()
         self.assertEqual(u.pk,self.username)
 
-    @placebo_session
-    def test_send_verification(self,session):
-        self.user.switch_session(session)
-        self.user.authenticate(self.password)
-        self.user.send_verification()
+    @patch('warrant.Cognito', autospec=True)
+    def test_send_verification(self,cognito_user):
+        u = cognito_user(self.cognito_user_pool_id, self.app_id,
+                         username=self.username)
+        u.authenticate(self.password)
+        u.send_verification()
         with self.assertRaises(ClientError) as vm:
-            self.user.send_verification(attribute='randomattribute')
+            u.send_verification()
 
-    @placebo_session
-    def test_check_token(self,session):
-        self.user.switch_session(session)
+    
+    def test_check_token(self):
         self.user.authenticate(self.password)
-        og_acc_token = self.user.access_token
-        self.user.check_token()
-        self.assertNotEquals(og_acc_token,self.user.access_token)
+        self.assertFalse(self.user.check_token())
 
 
     @patch('warrant.Cognito', autospec=True)
@@ -138,11 +113,12 @@ class CognitoTestCase(unittest.TestCase):
         with self.assertRaises(TypeError) as vm:
             u.confirm_forgot_password(self.password)
 
-    @placebo_session
-    def test_change_password(self,session):
-        self.user.switch_session(session)
-        self.user.authenticate(self.password)
-        self.user.change_password(self.password,'crazypassword$45DOG')
+    @patch('warrant.Cognito', autospec=True)
+    def test_change_password(self,cognito_user):
+        u = cognito_user(self.cognito_user_pool_id, self.app_id,
+                         username=self.username)
+        u.authenticate(self.password)
+        u.change_password(self.password,'crazypassword$45DOG')
 
         with self.assertRaises(TypeError) as vm:
             self.user.change_password(self.password)
@@ -160,10 +136,10 @@ class CognitoTestCase(unittest.TestCase):
         )
         self.assertEquals(u.somerandom,'attribute')
 
-    @placebo_session
-    def test_authenticate_user(self, session):
-        self.user.switch_session(session)
-        self.user.authenticate_user(self.password)
+    
+    def test_admin_authenticate(self):
+        
+        self.user.admin_authenticate(self.password)
         self.assertNotEqual(self.user.access_token,None)
         self.assertNotEqual(self.user.id_token, None)
         self.assertNotEqual(self.user.refresh_token, None)
@@ -180,8 +156,6 @@ class AWSSRPTestCase(unittest.TestCase):
         self.aws = AWSSRP(username=self.username, password=self.password,
                           pool_id=self.cognito_user_pool_id,
                           client_id=self.app_id)
-
-
 
     def tearDown(self):
         del self.aws
