@@ -8,7 +8,7 @@ from envs import env
 from placebo.utils import placebo_session
 from botocore.exceptions import ClientError
 
-from warrant import Cognito,UserObj,attribute_dict
+from warrant import Cognito,UserObj
 from warrant.aws_srp import AWSSRP, long_to_hex, hex_to_long
 
 
