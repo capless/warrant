@@ -7,6 +7,21 @@ Makes working with AWS Cognito easier for Python developers.
 ## Getting Started
 
 - [Cognito Utility Class](#cognito-utility-class) `warrant.Cognito`
+    - [Cognito Methods](#cognito-methods)
+        - [Register](#register)
+        - [Authenticate](#authenticate)
+        - [Admin Authenticate](#admin-authenticate)
+        - [Initiate Forgot Password](#initiate-forgot-password)
+        - [Confirm Forgot Password](#confirm-forgot-password)
+        - [Change Password](#change-password)
+        - [Confirm Sign Up](#confirm-sign-up)
+        - [Update Profile](#update-profile)
+        - [Send Verification](#send-verification)
+        - [Get User Object](#get-user-object)
+        - [Get User](#get-user)
+        - [Get Users](#get-users)
+        - [Check Token](#check-token)
+        - [Logout](#logout)
 - [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
     - [Using AWSSRP](#using-awssrp)
 - [Django Utilities](#django-utilities)
