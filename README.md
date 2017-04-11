@@ -18,7 +18,7 @@ Makes working with AWS Cognito easier for Python developers.
     - [API Gateway Integration](#api-gateway-integration)
         - [API Key Middleware](#api-key-middleware) `warrant.django.middleware.APIKeyMiddleware`
 
-## Create a Cognito Instance ##
+## Cognito Utility Class
 
 ### Example with All Arguments ###
 
