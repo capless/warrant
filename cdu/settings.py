@@ -29,7 +29,8 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 AUTHENTICATION_BACKENDS = [
-    'warrant.django.backend.CognitoBackend'
+    'warrant.django.backend.CognitoBackend',
+    'django.contrib.auth.backends.ModelBackend'
 ]
 
 COGNITO_TEST_USERNAME = env('COGNITO_TEST_USERNAME')
@@ -40,7 +41,16 @@ COGNITO_USER_POOL_ID = env('COGNITO_USER_POOL_ID')
 
 COGNITO_APP_ID = env('COGNITO_APP_ID')
 
-COGNITO_ATTR_MAPPING = env('COGNITO_ATTR_MAPPING',{},var_type='dict')
+COGNITO_ATTR_MAPPING = env(
+    'COGNITO_ATTR_MAPPING',
+    {
+        'email': 'email',
+        'given_name': 'first_name',
+        'family_name': 'last_name',
+        'custom:api_key': 'api_key',
+        'custom:api_key_id': 'api_key_id'
+    },
+    var_type='dict')
 
 # Application definition
 
@@ -51,8 +61,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cdu.demo',
     'warrant.django',
+    'warrant.django.demo',
     'crispy_forms',
     'django_extensions'
 ]
@@ -119,7 +129,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LOGIN_REDIRECT_URL = '/user_info'
+LOGIN_REDIRECT_URL = '/accounts/user_info'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/

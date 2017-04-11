@@ -1,0 +1,29 @@
+{% extends 'warrant/base.html' %}
+
+{% block main_content %}
+    <h2>Current Subscriptions</h2>
+    <table class="table">
+        <tr>
+            <th>Plan Name</th>
+            <th>Description</th>
+
+        </tr>
+    {% for obj in object_list %}
+        <tr>
+            <td>{{ obj.name }}</td>
+            <td>{{ obj.description }}</td>
+
+        </tr>
+    {% endfor %}
+    </table>
+
+    <h2>Add User to New Plan</h2>
+    <form method='post' class="form">
+  {% csrf_token %}
+    <table class="table">
+        {{ form.errors }}
+  {{ form.as_table }}
+        </table>
+  <input type='submit' value='submit' />
+</form>
+{% endblock %}

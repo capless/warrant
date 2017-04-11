@@ -1,3 +1,5 @@
+import os
+import json
 import unittest
 import datetime
 
@@ -6,7 +8,11 @@ from envs import env
 from placebo.utils import placebo_session
 from botocore.exceptions import ClientError
 
-from warrant import Cognito,UserObj,attribute_dict
+from warrant import Cognito,UserObj
+from warrant.aws_srp import AWSSRP, long_to_hex, hex_to_long
+
+
+AWSSRP_TEST_FILE = 'awssrp_test_variables.json'
 
 
 class UserObjTestCase(unittest.TestCase):
@@ -118,13 +124,13 @@ class CognitoTestCase(unittest.TestCase):
         self.assertNotEquals(og_acc_token,self.user.access_token)
 
 
-    @patch('cognito.Cognito', autospec=True)
+    @patch('warrant.Cognito', autospec=True)
     def test_validate_verification(self,cognito_user):
         u = cognito_user(self.cognito_user_pool_id,self.app_id,
                      username=self.username)
         u.validate_verification('4321')
 
-    @patch('cognito.Cognito', autospec=True)
+    @patch('warrant.Cognito', autospec=True)
     def test_confirm_forgot_password(self,cognito_user):
         u = cognito_user(self.cognito_user_pool_id, self.app_id,
                          username=self.username)
@@ -154,3 +160,37 @@ class CognitoTestCase(unittest.TestCase):
         )
         self.assertEquals(u.somerandom,'attribute')
 
+    @placebo_session
+    def test_authenticate_user(self, session):
+        self.user.switch_session(session)
+        self.user.authenticate_user(self.password)
+        self.assertNotEqual(self.user.access_token,None)
+        self.assertNotEqual(self.user.id_token, None)
+        self.assertNotEqual(self.user.refresh_token, None)
+
+
+class AWSSRPTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
+        self.app_id = env('COGNITO_APP_ID')
+        self.username = env('COGNITO_TEST_USERNAME')
+        self.password = env('COGNITO_TEST_PASSWORD')
+
+        self.aws = AWSSRP(username=self.username, password=self.password,
+                          pool_id=self.cognito_user_pool_id,
+                          client_id=self.app_id)
+
+
+
+    def tearDown(self):
+        del self.aws
+
+    def test_authenticate_user(self):
+        tokens = self.aws.authenticate_user()
+        self.assertTrue(tokens['AuthenticationResult'].has_key('IdToken'))
+        self.assertTrue(tokens['AuthenticationResult'].has_key('AccessToken'))
+        self.assertTrue(tokens['AuthenticationResult'].has_key('RefreshToken'))
+
+if __name__ == '__main__':
+    unittest.main()

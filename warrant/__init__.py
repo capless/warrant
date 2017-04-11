@@ -3,18 +3,35 @@ import boto3
 import ast
 import jwt
 
+from .aws_srp import AWSSRP
 
-def attribute_dict(attributes):
+
+def cognito_to_dict(attr_list,attr_map=dict()):
+    attr_dict = dict()
+    for a in attr_list:
+        name = a.get('Name')
+        value = a.get('Value')
+        if value in ['true', 'false']:
+            value = ast.literal_eval(value.capitalize())
+        name = attr_map.get(name,name)
+        attr_dict[name] = value
+    return attr_dict
+
+def dict_to_cognito(attributes,attr_map=dict()):
     """
     :param attributes: Dictionary of User Pool attribute names/values
     :return: list of User Pool attribute formatted dicts: {'Name': <attr_name>, 'Value': <attr_value>}
     """
+    for k,v in attr_map.items():
+        if v in attributes.keys():
+            attributes[k] = attributes.pop(v)
+
     return [{'Name': key, 'Value': value} for key, value in attributes.items()]
 
 
 class UserObj(object):
 
-    def __init__(self, username, attribute_list, metadata={}):
+    def __init__(self, username, attribute_list, metadata=dict(),attr_map=dict()):
         """
         :param username:
         :param attribute_list:
@@ -22,14 +39,11 @@ class UserObj(object):
         """
         self.username = username
         self.pk = username
-        for a in attribute_list:
-            name = a.get('Name')
-            value = a.get('Value')
-            if value in ['true','false']:
-                value = ast.literal_eval(value.capitalize())
-            setattr(self, name, value)
+        for k,v in cognito_to_dict(attribute_list,attr_map).items():
+            setattr(self, k, v)
         for key, value in metadata.items():
             setattr(self, key.lower(), value)
+
 
 
 
@@ -72,9 +86,19 @@ class Cognito(object):
         else:
             self.client = boto3.client('cognito-idp')
 
-    def get_user_obj(self,username=None,attribute_list=[],metadata={}):
+    def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map=dict()):
+        """
+        Returns the specified 
+        :param username: Username of the user 
+        :param attribute_list: List of tuples that represent the user's 
+            attributes as returned by the admin_get_user or get_user boto3 methods
+        :param metadata: Metadata about the user
+        :param attr_map: Dictionary that maps the Cognito attribute names to 
+        what we'd like to display to the users
+        :return: 
+        """
         return self.user_class(username=username,attribute_list=attribute_list,
-                               metadata=metadata)
+                               metadata=metadata,attr_map=attr_map)
 
     def switch_session(self,session):
         """
@@ -101,7 +125,7 @@ class Cognito(object):
             return True
         return False
 
-    def register(self, username, password, **kwargs):
+    def register(self, username, password,attr_map=dict(),**kwargs):
         """
         Register the user. Other base attributes from AWS Cognito User Pools
         are  address, birthdate, email, family_name (last name), gender,
@@ -110,6 +134,7 @@ class Cognito(object):
         updated at, website
         :param username: User Pool username
         :param password: User Pool password
+        :param attr_map: Attribute map to Cognito's attributes
         :param kwargs: Additional User Pool attributes
         :return response: Response from Cognito
 
@@ -128,7 +153,7 @@ class Cognito(object):
             ClientId=self.client_id,
             Username=username,
             Password=password,
-            UserAttributes=attribute_dict(kwargs)
+            UserAttributes=dict_to_cognito(kwargs,attr_map)
         )
         kwargs.update(username=username, password=password)
         self._set_attributes(response, kwargs)
@@ -152,11 +177,10 @@ class Cognito(object):
             ConfirmationCode=confirmation_code
         )
 
-    def authenticate(self, password):
+    def admin_authenticate(self, password):
         """
-        Authenticate the user.
-        :param user_pool_id: User Pool Id found in Cognito User Pool
-        :param client_id: App Client ID found in the Apps section of the Cognito User Pool
+        Authenticate the user using admin super privileges
+        :param password: User's password
         :return:
         """
         auth_params = {
@@ -172,8 +196,20 @@ class Cognito(object):
             AuthParameters=auth_params,
         )
 
+        self.id_token = tokens['AuthenticationResult']['IdToken']
+        self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
+        self.access_token = tokens['AuthenticationResult']['AccessToken']
+        self.token_type = tokens['AuthenticationResult']['TokenType']
 
-
+    def authenticate(self, password):
+        """
+        Authenticate the user using the SRP protocol
+        :param password: The user's passsword
+        :return:
+        """
+        aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
+                     client_id=self.client_id, client=self.client)
+        tokens = aws.authenticate_user()
         self.id_token = tokens['AuthenticationResult']['IdToken']
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.access_token = tokens['AuthenticationResult']['AccessToken']
@@ -195,37 +231,62 @@ class Cognito(object):
         self.access_token = None
         self.token_type = None
 
-    def update_profile(self, attrs):
+    def update_profile(self, attrs,attr_map=dict()):
         """
         Updates User attributes
-        :parm attrs: Dictionary of attribute name, values
+        :param attrs: Dictionary of attribute name, values
+        :param attr_map: Dictionary map from Cognito attributes to attribute 
+        names we would like to show to our users
         """
-        user_attrs = attribute_dict(attrs)
+        user_attrs = dict_to_cognito(attrs,attr_map)
         response = self.client.update_user_attributes(
             UserAttributes=user_attrs,
             AccessToken=self.access_token
         )
 
-    def get_user(self):
-        # self.check_token()
+    def get_user(self,attr_map=dict()):
+        """
+        Returns a UserObj (or whatever the self.user_class is) by using the 
+        user's access token.
+        :param attr_map: Dictionary map from Cognito attributes to attribute 
+        names we would like to show to our users
+        :return: 
+        """
         user = self.client.get_user(
                 AccessToken=self.access_token
             )
+        
         user_metadata = {
             'username': user.get('Username'),
             'id_token': self.id_token,
             'access_token': self.access_token,
-            'refresh_token': self.refresh_token
+            'refresh_token': self.refresh_token,
         }
-
         return self.get_user_obj(username=self.username,
                                  attribute_list=user.get('UserAttributes'),
-                                 metadata=user_metadata)
+                                 metadata=user_metadata,attr_map=attr_map)
 
-    def admin_get_user(self):
+    def get_users(self,attr_map=dict()):
         """
-        Get the user's details
-        :param user_pool_id: The Cognito User Pool Id
+        Returns all users for a user pool. Returns instances of the 
+        self.user_class.
+        :param attr_map: 
+        :return: 
+        """
+        kwargs = {"UserPoolId":self.user_pool_id}
+
+        response = self.client.list_users(**kwargs)
+        return [self.get_user_obj(user.get('Username'),
+                                  attribute_list=user.get('Attributes'),
+                                  metadata={'username':user.get('Username')},
+                                  attr_map=attr_map)
+                for user in response.get('Users')]
+
+    def admin_get_user(self,attr_map=dict()):
+        """
+        Get the user's details using admin super privileges.
+        :param attr_map: Dictionary map from Cognito attributes to attribute 
+        names we would like to show to our users
         :return: UserObj object
         """
         user = self.client.admin_get_user(
@@ -240,7 +301,7 @@ class Cognito(object):
         }
         return self.get_user_obj(username=self.username,
                                  attribute_list=user.get('UserAttributes'),
-                                 metadata=user_metadata)
+                                 metadata=user_metadata,attr_map=attr_map)
 
 
     def send_verification(self, attribute='email'):
