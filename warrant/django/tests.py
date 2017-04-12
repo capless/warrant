@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 from mock import patch, MagicMock
 from botocore.exceptions import ClientError
-from middleware import APIKeyMiddleware
 from importlib import import_module
 from unittest import skipIf
 
@@ -17,6 +16,7 @@ from django.test.client import RequestFactory
 from django.utils.six import iteritems
 
 from warrant.django.backend import CognitoBackend, CognitoUser
+from warrant.django.middleware import APIKeyMiddleware
 from warrant import Cognito
 
 def set_tokens(cls, *args, **kwargs):
