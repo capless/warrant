@@ -83,16 +83,6 @@ class CognitoAuthTestCase(unittest.TestCase):
     def test_admin_get_user(self):
         u = self.user.admin_get_user()
         self.assertEqual(u.pk,self.username)
-
-    @patch('warrant.Cognito', autospec=True)
-    def test_send_verification(self,cognito_user):
-        u = cognito_user(self.cognito_user_pool_id, self.app_id,
-                         username=self.username)
-        u.authenticate(self.password)
-        u.send_verification()
-        with self.assertRaises(ClientError) as vm:
-            u.send_verification()
-
     
     def test_check_token(self):
         self.user.authenticate(self.password)
