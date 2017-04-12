@@ -13,4 +13,4 @@ install:
   - "pip install -r django-requirements.txt"
 # command to run tests
 before_script: cd cdu
-script: python manage.py warrant
+script: python manage.py test warrant
