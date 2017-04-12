@@ -6,6 +6,7 @@ def add_user_tokens(sender, user, **kwargs):
     """
     Add Cognito tokens to the session upon login
     """
+    print 'ADD USER TOKENS SIGNAL'
     if user.backend == 'warrant.django.backend.CognitoBackend':
         request = kwargs['request']
         request.session['ACCESS_TOKEN'] = user.access_token

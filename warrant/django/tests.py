@@ -3,11 +3,15 @@ from __future__ import unicode_literals
 from mock import patch, MagicMock
 from botocore.exceptions import ClientError
 from middleware import APIKeyMiddleware
+from importlib import import_module
+from unittest import skipIf
 
+from django import VERSION as DJANGO_VERSION
 from django.contrib.auth.models import AnonymousUser, User
 from django.conf import settings
-from django.contrib.auth import authenticate, get_user_model, signals
+from django.contrib.auth import get_user_model, signals, authenticate as django_authenticate
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.http import HttpRequest
 from django.test import override_settings, TestCase, TransactionTestCase
 from django.test.client import RequestFactory
 from django.utils.six import iteritems
@@ -85,13 +89,38 @@ def get_user(cls, *args, **kwargs):
                              metadata=user_metadata)
 
 
+def create_request():
+    request = HttpRequest()
+    engine = import_module(settings.SESSION_ENGINE)
+    session = engine.SessionStore()
+    session.save()
+    request.session = session
+
+    return request
+
+
+def authenticate(username, password):
+    if DJANGO_VERSION[1] > 10:
+        request = create_request()
+        return django_authenticate(request=request, username=username, password=password)
+    else:
+        return django_authenticate(username=username, password=password)
+
+
+def login(client, username, password):
+    if DJANGO_VERSION[1] > 10:
+        request = create_request()
+        return client.login(request=request, username=username, password=password)
+    else:
+        return client.login(username=username, password=password)
+
+
 class AuthTests(TransactionTestCase):
     @patch.object(Cognito, 'authenticate')
     @patch.object(Cognito, 'get_user')
     def test_user_authentication(self, mock_get_user, mock_authenticate):
         Cognito.authenticate = set_tokens
         Cognito.get_user = get_user
-
         user = authenticate(username='testuser',
                             password='password')
 
@@ -133,8 +162,7 @@ class AuthTests(TransactionTestCase):
     def test_client_login(self, mock_get_user, mock_authenticate):
         Cognito.authenticate = set_tokens
         Cognito.get_user = get_user
-
-        user = self.client.login(username='testuser',
+        user = login(self.client, username='testuser',
                                  password='password')
         self.assertTrue(user)
 
@@ -165,7 +193,6 @@ class AuthTests(TransactionTestCase):
 
         User = get_user_model()
         self.assertEqual(User.objects.count(), 0) 
-
         user = authenticate(username='testuser',
                             password='password')
 
@@ -222,7 +249,8 @@ class AuthTests(TransactionTestCase):
 
         self.assertIsNone(user)
 
-    def test_add_user_tokens(self):
+    @skipIf(DJANGO_VERSION[1] > 10, "Signal not used if Django>1.10")
+    def test_add_user_tokens_signal(self):
         User = get_user_model()
         user = User.objects.create(username=settings.COGNITO_TEST_USERNAME)
         user.access_token = 'access_token_value'
