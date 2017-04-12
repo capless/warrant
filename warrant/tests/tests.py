@@ -153,9 +153,9 @@ class AWSSRPTestCase(unittest.TestCase):
 
     def test_authenticate_user(self):
         tokens = self.aws.authenticate_user()
-        self.assertTrue(tokens['AuthenticationResult'].has_key('IdToken'))
-        self.assertTrue(tokens['AuthenticationResult'].has_key('AccessToken'))
-        self.assertTrue(tokens['AuthenticationResult'].has_key('RefreshToken'))
+        self.assertTrue('IdToken' in tokens['AuthenticationResult'])
+        self.assertTrue('AccessToken' in tokens['AuthenticationResult'])
+        self.assertTrue('RefreshToken' in tokens['AuthenticationResult'])
 
 if __name__ == '__main__':
     unittest.main()
