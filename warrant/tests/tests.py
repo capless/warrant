@@ -41,6 +41,9 @@ class CognitoAuthTestCase(unittest.TestCase):
         self.user = Cognito(self.cognito_user_pool_id,self.app_id,
                          self.username)
 
+    def tearDown(self):
+        del self.user
+
     def test_authenticate(self):
         self.user.authenticate(self.password)
         self.assertNotEqual(self.user.access_token,None)
@@ -69,10 +72,8 @@ class CognitoAuthTestCase(unittest.TestCase):
 
     def test_renew_tokens(self):
         self.user.authenticate(self.password)
-        acc_token = self.user.access_token
         self.user.renew_access_token()
-        acc_token_b = self.user.access_token
-        self.assertNotEqual(acc_token,acc_token_b)
+        
 
     def test_update_profile(self):
         self.user.authenticate(self.password)
