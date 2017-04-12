@@ -6,6 +6,7 @@ Makes working with AWS Cognito easier for Python developers.
 
 ## Getting Started
 
+- [Install](#install)
 - [Cognito Utility Class](#cognito-utility-class) `warrant.Cognito`
     - [Cognito Methods](#cognito-methods)
         - [Register](#register)
@@ -32,6 +33,10 @@ Makes working with AWS Cognito easier for Python developers.
     - [Profile Views](#profile-views)
     - [API Gateway Integration](#api-gateway-integration)
         - [API Key Middleware](#api-key-middleware) `warrant.django.middleware.APIKeyMiddleware`
+
+## Install
+
+`pip install warrant`
 
 ## Cognito Utility Class
 
