@@ -1,3 +1,5 @@
+![alt text](https://s3.amazonaws.com/capless/images/warrant-small.png "Warrant - Serverless Authentication")
+
 # Warrant
 
 Makes working with AWS Cognito easier for Python developers.
