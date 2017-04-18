@@ -1,4 +1,5 @@
 boto3>=1.4.3
 envs>=0.3.0
+flask-security>=1.7.5
 mock>=2.0.0
 PyJWT>=1.4.2

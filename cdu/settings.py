@@ -61,8 +61,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'warrant.django',
-    'warrant.django.demo',
+    'warrant.ext.django',
+    'warrant.ext.django.demo',
     'crispy_forms',
     'django_extensions'
 ]
