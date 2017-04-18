@@ -53,8 +53,7 @@ u = Cognito('your-user-pool-id','your-client-id',
     refresh_token='optional-refresh-token',
     access_token='optional-access-token',
     access_key='optional-access-key',
-    secret_key='optional-secret-key'
-)
+    secret_key='optional-secret-key')
 ```
 
 #### Arguments
@@ -87,8 +86,7 @@ Used when the user has not logged in yet. Start with these arguments when you pl
 from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
-    username='bob',
-)
+    username='bob')
 ```
 
 #### Tokens ####
@@ -101,8 +99,7 @@ from warrant import Cognito
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='your-id-token',
     refresh_token='your-refresh-token',
-    access_token='your-access-token'
-)
+    access_token='your-access-token')
 ```
 
 ## Cognito Methods ##
