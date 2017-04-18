@@ -42,7 +42,7 @@ class UserObj(object):
         self._cognito = cognito_obj
         self._attr_map = attr_map
         self._data = cognito_to_dict(attribute_list,self._attr_map)
-        self.sub = self._data.pop('sub')
+        self.sub = self._data.pop('sub',None)
         self.email_verified = self._data.pop('email_verified',None)
         self.phone_number_verified = self._data.pop('phone_number_verified',None)
         self._metadata = metadata
