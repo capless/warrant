@@ -29,7 +29,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 AUTHENTICATION_BACKENDS = [
-    'warrant.django.backend.CognitoBackend',
+    'warrant.ext.django.backend.CognitoBackend',
     'django.contrib.auth.backends.ModelBackend'
 ]
 
