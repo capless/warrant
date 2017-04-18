@@ -31,7 +31,7 @@ class CognitoUser(Cognito):
         for k, v in user_attrs.items():
             if k not in django_fields:
                 extra_attrs.update({k: user_attrs.pop(k, None)})
-        if getattr(settings, 'CREATE_UNKNOWN_USERS', True):
+        if getattr(settings, 'COGNITO_CREATE_UNKNOWN_USERS', True):
             user, created = CognitoUser.user_class.objects.update_or_create(
                 username=username,
                 defaults=user_attrs)
@@ -95,7 +95,7 @@ if DJANGO_VERSION[1] > 10:
     class CognitoBackend(AbstractCognitoBackend):
         def authenticate(self, request, username=None, password=None):
             """
-            Authenticate a Cognito User and store an access, ID and 
+            Authenticate a Cognito User and store an access, ID and
             refresh token in the session.
             """
             user = super(CognitoBackend, self).authenticate(
