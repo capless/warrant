@@ -88,14 +88,14 @@ class Cognito(object):
 
     def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map=dict()):
         """
-        Returns the specified 
-        :param username: Username of the user 
-        :param attribute_list: List of tuples that represent the user's 
+        Returns the specified
+        :param username: Username of the user
+        :param attribute_list: List of tuples that represent the user's
             attributes as returned by the admin_get_user or get_user boto3 methods
         :param metadata: Metadata about the user
-        :param attr_map: Dictionary that maps the Cognito attribute names to 
+        :param attr_map: Dictionary that maps the Cognito attribute names to
         what we'd like to display to the users
-        :return: 
+        :return:
         """
         return self.user_class(username=username,attribute_list=attribute_list,
                                metadata=metadata,attr_map=attr_map)
@@ -235,7 +235,7 @@ class Cognito(object):
         """
         Updates User attributes
         :param attrs: Dictionary of attribute name, values
-        :param attr_map: Dictionary map from Cognito attributes to attribute 
+        :param attr_map: Dictionary map from Cognito attributes to attribute
         names we would like to show to our users
         """
         user_attrs = dict_to_cognito(attrs,attr_map)
@@ -246,16 +246,16 @@ class Cognito(object):
 
     def get_user(self,attr_map=dict()):
         """
-        Returns a UserObj (or whatever the self.user_class is) by using the 
+        Returns a UserObj (or whatever the self.user_class is) by using the
         user's access token.
-        :param attr_map: Dictionary map from Cognito attributes to attribute 
+        :param attr_map: Dictionary map from Cognito attributes to attribute
         names we would like to show to our users
-        :return: 
+        :return:
         """
         user = self.client.get_user(
                 AccessToken=self.access_token
             )
-        
+
         user_metadata = {
             'username': user.get('Username'),
             'id_token': self.id_token,
@@ -268,10 +268,10 @@ class Cognito(object):
 
     def get_users(self,attr_map=dict()):
         """
-        Returns all users for a user pool. Returns instances of the 
+        Returns all users for a user pool. Returns instances of the
         self.user_class.
-        :param attr_map: 
-        :return: 
+        :param attr_map:
+        :return:
         """
         kwargs = {"UserPoolId":self.user_pool_id}
 
@@ -285,7 +285,7 @@ class Cognito(object):
     def admin_get_user(self,attr_map=dict()):
         """
         Get the user's details using admin super privileges.
-        :param attr_map: Dictionary map from Cognito attributes to attribute 
+        :param attr_map: Dictionary map from Cognito attributes to attribute
         names we would like to show to our users
         :return: UserObj object
         """
@@ -303,6 +303,27 @@ class Cognito(object):
                                  attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata,attr_map=attr_map)
 
+    def admin_create_user(self, username, temporary_password='', attr_map=dict(), **kwargs):
+        """
+        Create a user using admin super privileges.
+        :param username: User Pool username
+        :param temporary_password: The temporary password to give the user.
+        Leave blank to make Cognito generate a temporary password for the user.
+        :param attr_map: Attribute map to Cognito's attributes
+        :param kwargs: Additional User Pool attributes
+        :return response: Response from Cognito
+        """
+        response = self.client.admin_create_user(
+            UserPoolId=self.user_pool_id,
+            Username=username,
+            UserAttributes=dict_to_cognito(kwargs, attr_map),
+            TemporaryPassword=temporary_password,
+        )
+        kwargs.update(username=username)
+        self._set_attributes(response, kwargs)
+
+        response.pop('ResponseMetadata')
+        return response
 
     def send_verification(self, attribute='email'):
         """
