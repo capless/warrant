@@ -452,3 +452,13 @@ for the name of your custom class.
 The `APIKeyMiddleware` checks for a `HTTP_AUTHORIZATION_ID` header
 in the request and attaches it to the request object as `api_key`.
 
+
+## Authors
+
+### Brian Jinwright
+**Twitter:** [@brianjinwright](https://www.twitter.com/brianjinwright)
+**GitHub:** [@bjinwright](https://www.github.com/bjinwright/)
+
+### Eric Petway
+**GitHub:** [@ebpetway](https://www.github.com/ebpetway)
+**GitHub** [
