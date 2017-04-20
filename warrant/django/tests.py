@@ -31,38 +31,38 @@ def get_user(cls, *args, **kwargs):
         'email': kwargs.pop('email', 'test@email.com'),
         'given_name': kwargs.pop('given_name', 'FirstName'),
         'family_name': kwargs.pop('family_name', 'LastName'),
-        'UserAttributes': 
+        'UserAttributes':
         [
             {
-                "Name": "sub", 
+                "Name": "sub",
                 "Value": "c7d890f6-eb38-498d-8f85-7a6c4af33d7a"
-            }, 
+            },
             {
-                "Name": "email_verified", 
+                "Name": "email_verified",
                 "Value": "true"
-            }, 
+            },
             {
-                "Name": "gender", 
+                "Name": "gender",
                 "Value": "male"
-            }, 
+            },
             {
-                "Name": "name", 
+                "Name": "name",
                 "Value": "FirstName LastName"
-            }, 
+            },
             {
-                "Name": "preferred_username", 
+                "Name": "preferred_username",
                 "Value": "testuser"
-            }, 
+            },
             {
-                "Name": "given_name", 
+                "Name": "given_name",
                 "Value": "FirstName"
-            }, 
+            },
             {
-                "Name": "family_name", 
+                "Name": "family_name",
                 "Value": "LastName"
-            }, 
+            },
             {
-                "Name": "email", 
+                "Name": "email",
                 "Value": "test@email.com"
             },
             {
@@ -130,7 +130,7 @@ class AuthTests(TransactionTestCase):
     def test_user_authentication_wrong_password(self, mock_authenticate):
         Cognito.authenticate.side_effect = ClientError(
             {
-                'Error': 
+                'Error':
                     {
                         'Message': 'Incorrect username or password.', 'Code': 'NotAuthorizedException'
                     }
@@ -146,7 +146,7 @@ class AuthTests(TransactionTestCase):
     def test_user_authentication_wrong_username(self, mock_authenticate):
         Cognito.authenticate.side_effect = ClientError(
             {
-                'Error': 
+                'Error':
                     {
                         'Message': 'Incorrect username or password.', 'Code': 'NotAuthorizedException'
                     }
@@ -174,7 +174,7 @@ class AuthTests(TransactionTestCase):
         """
         Cognito.authenticate.side_effect = ClientError(
             {
-                'Error': 
+                'Error':
                     {
                         'Message': 'Generic Error Message.', 'Code': 'SomeError'
                     }
@@ -192,11 +192,11 @@ class AuthTests(TransactionTestCase):
         Cognito.get_user = get_user
 
         User = get_user_model()
-        self.assertEqual(User.objects.count(), 0) 
+        self.assertEqual(User.objects.count(), 0)
         user = authenticate(username='testuser',
                             password='password')
 
-        self.assertEqual(User.objects.count(), 1) 
+        self.assertEqual(User.objects.count(), 1)
         self.assertEqual(user.username, 'testuser')
 
     @patch.object(Cognito, 'authenticate')
@@ -217,9 +217,9 @@ class AuthTests(TransactionTestCase):
         self.assertEqual(updated_user.email, user.email)
         self.assertEqual(updated_user.id, user.id)
 
-    @override_settings(CREATE_UNKNOWN_USERS=False)
+    @override_settings(COGNITO_CREATE_UNKNOWN_USERS=False)
     @patch.object(Cognito, 'authenticate')
-    @patch.object(Cognito, 'get_user') 
+    @patch.object(Cognito, 'get_user')
     def test_existing_user_updated_disabled_create_unknown_user(self, mock_get_user, mock_authenticate):
         Cognito.authenticate = set_tokens
         Cognito.get_user = get_user
@@ -237,9 +237,9 @@ class AuthTests(TransactionTestCase):
         self.assertEqual(updated_user.email, user.email)
         self.assertEqual(updated_user.id, user.id)
 
-    @override_settings(CREATE_UNKNOWN_USERS=False)
+    @override_settings(COGNITO_CREATE_UNKNOWN_USERS=False)
     @patch.object(Cognito, 'authenticate')
-    @patch.object(Cognito, 'get_user') 
+    @patch.object(Cognito, 'get_user')
     def test_user_not_found_disabled_create_unknown_user(self, mock_get_user, mock_authenticate):
         Cognito.authenticate = set_tokens
         Cognito.get_user = get_user
@@ -285,7 +285,7 @@ class AuthTests(TransactionTestCase):
         middleware.process_request(request)
         request.session.save()
         signals.user_logged_in.send(sender=user.__class__, request=request, user=user)
-        
+
 
 class MiddleWareTests(TestCase):
     def setUp(self):
