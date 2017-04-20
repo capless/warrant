@@ -67,7 +67,7 @@ u = Cognito('your-user-pool-id','your-client-id',
 - **access_token:** Access Token returned by authentication
 - **access_key:** AWS IAM access key
 - **secret_key:** AWS IAM secret key
-       
+
 
 ### Examples with Realistic Arguments ###
 
@@ -170,8 +170,8 @@ Sends a verification code to the user to use to change their password.
 ```python
 u = Cognito('your-user-pool-id','your-client-id',
     username='bob')
-    
-u.initiate_forgot_password()    
+
+u.initiate_forgot_password()
 ```
 
 ##### Arguments
@@ -195,7 +195,7 @@ u.confirm_forgot_password('your-confirmation-code','your-new-password')
 - **confirmation_code:** The confirmation code sent by a user's request
 to retrieve a forgotten password
 - **password:** New password
-        
+
 #### Change Password ####
 
 Changes the user's password
@@ -229,7 +229,7 @@ u = Cognito('your-user-pool-id','your-client-id')
 u.confirm_sign_up('users-conf-code',username='bob')
 ```
 
-##### Arguments 
+##### Arguments
 
 - **confirmation_code:** Confirmation code sent via text or email
 - **username:** User's username
@@ -248,11 +248,11 @@ u = Cognito('your-user-pool-id','your-client-id',
 u.update_profile({'given_name':'Edward','family_name':'Smith',},attr_map=dict())
 ```
 
-##### Arguments 
+##### Arguments
 
 - **attrs:** Dictionary of attribute name, values
 - **attr_map:** Dictionary map from Cognito attributes to attribute names we would like to show to our users
-        
+
 #### Send Verification ####
 
 Send verification email or text for either the email or phone attributes.
@@ -274,7 +274,7 @@ u.send_verification(attribute='email')
 #### Get User Object
 
 Returns an instance of the specified user_class.
- 
+
 ```python
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='id-token',refresh_token='refresh-token',
@@ -287,13 +287,13 @@ u.get_user_obj(username='bjones',
     )
 ```
 ##### Arguments
-- **username:** Username of the user 
+- **username:** Username of the user
 - **attribute_list:** List of tuples that represent the user's attributes as returned by the admin_get_user or get_user boto3 methods
 - **metadata: (optional)** Metadata about the user
 - **attr_map: (optional)** Dictionary that maps the Cognito attribute names to what we'd like to display to the users
-        
 
-#### Get User 
+
+#### Get User
 
 Get all of the user's attributes. Gets the user's attributes using Boto3 and uses that info to create an instance of the user_class
 
@@ -306,10 +306,10 @@ u = Cognito('your-user-pool-id','your-client-id',
 user = u.get_user(attr_map={"given_name":"first_name","family_name":"last_name"})
 ```
 
-##### Arguments 
+##### Arguments
 - **attr_map:** Dictionary map from Cognito attributes to attribute names we would like to show to our users
 
-#### Get Users 
+#### Get Users
 
 Get a list of the user in the user pool.
 
@@ -322,19 +322,19 @@ u = Cognito('your-user-pool-id','your-client-id')
 user = u.get_users(attr_map={"given_name":"first_name","family_name":"last_name"})
 ```
 
-##### Arguments 
+##### Arguments
 - **attr_map:** Dictionary map from Cognito attributes to attribute names we would like to show to our users
 
 
 #### Check Token
 
-Checks the exp attribute of the access_token and either refreshes the tokens by calling the renew_access_tokens method or does nothing. **IMPORTANT:** Access token is required 
+Checks the exp attribute of the access_token and either refreshes the tokens by calling the renew_access_tokens method or does nothing. **IMPORTANT:** Access token is required
 
 ```python
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='id-token',refresh_token='refresh-token',
     access_token='access-token')
-    
+
 u.check_token()
 ```
 ##### Arguments
@@ -361,13 +361,13 @@ u.logout()
 No arguments for check_token
 
 ## Cognito SRP Utility
-The `AWSSRP` class is used to perform [SRP(Secure Remote Password protocol)](https://www.ietf.org/rfc/rfc2945.txt) authentication.  
-This is the preferred method of user authentication with AWS Cognito.  
-The process involves a series of authentication challenges and responses, which if successful,  
+The `AWSSRP` class is used to perform [SRP(Secure Remote Password protocol)](https://www.ietf.org/rfc/rfc2945.txt) authentication.
+This is the preferred method of user authentication with AWS Cognito.
+The process involves a series of authentication challenges and responses, which if successful,
 results in a final response that contains ID, access and refresh tokens.
 
 ### Using AWSSRP
-The `AWSSRP` class takes a username, password, cognito user pool id, cognito app id, and an optional  
+The `AWSSRP` class takes a username, password, cognito user pool id, cognito app id, and an optional
 `boto3` client. Afterwards, the `authenticate_user` class method is used for SRP authentication.
 
 
@@ -400,10 +400,10 @@ Your User Pool ID can be found in the Pool Details tab in the AWS console.
 Your App ID is found in the Apps tab, listed as "App client id".
 
 3. Set `COGNITO_ATTR_MAPPING` in your settings file to a dictionary mapping a
-Cognito attribute name to a Django User attribute name.  
-If your Cognito User Pool has any custom attributes, it is automatically  
-prefixed with `custom:`. Therefore, you will want to add a mapping to your  
-mapping dictionary as such `{'custom:custom_attr': 'custom_attr'}`.  
+Cognito attribute name to a Django User attribute name.
+If your Cognito User Pool has any custom attributes, it is automatically
+prefixed with `custom:`. Therefore, you will want to add a mapping to your
+mapping dictionary as such `{'custom:custom_attr': 'custom_attr'}`.
 Defaults to:
     ```python
     {
@@ -412,9 +412,9 @@ Defaults to:
         'family_name': 'last_name',
     }
     ```
-4. Optional - Set `CREATE_UNKNOWN_USERS` to `True` or `False`, depending on if  
-you wish local Django users to be created upon successful login. If set to `False`,  
-only existing local Django users are updated.  
+4. Optional - Set `COGNITO_CREATE_UNKNOWN_USERS` to `True` or `False`, depending on if
+you wish local Django users to be created upon successful login. If set to `False`,
+only existing local Django users are updated.
 Defaults to `True`.
 
 #### CognitoBackend Behavior
@@ -424,31 +424,31 @@ User.
 
 If a Django user is not found, one is created using the attributes
 fetched from Cognito. If an existing Django user is found, their
-attributes are updated.  
+attributes are updated.
 
-If the boto3 client comes back with either a `NotAuthorizedException` or  
-`UserNotFoundException`, then `None` is returned instead of a User.  
+If the boto3 client comes back with either a `NotAuthorizedException` or
+`UserNotFoundException`, then `None` is returned instead of a User.
 Otherwise, the exception is raised.
 
 Upon successful login, the three identity tokens returned from Cognito
 (ID token, Refresh token, Access token) are stored in the user's request
-session. In Django >= 1.11, this is done directly in the backend class. 
+session. In Django >= 1.11, this is done directly in the backend class.
 Otherwise, this is done via the `user_logged_in` signal.
 
 Check the django/demo directory for an example app with a login and
 user details page.
 
 #### Customizing CognitoBackend Behavior
-Setting the Django setting `CREATE_UNKNOWN_USERS` to `False` prevents the backend
-from creating a new local Django user and only updates existing users.  
+Setting the Django setting `COGNITO_CREATE_UNKNOWN_USERS` to `False` prevents the backend
+from creating a new local Django user and only updates existing users.
 
-If you create your own backend class that inhereits from `CognitoBackend`, you may  
-want to also create your own custom `user_logged_in` so that it checks  
+If you create your own backend class that inhereits from `CognitoBackend`, you may
+want to also create your own custom `user_logged_in` so that it checks
 for the name of your custom class.
 
 ### API Gateway Integration
 
 #### API Key Middleware
-The `APIKeyMiddleware` checks for a `HTTP_AUTHORIZATION_ID` header  
+The `APIKeyMiddleware` checks for a `HTTP_AUTHORIZATION_ID` header
 in the request and attaches it to the request object as `api_key`.
 
