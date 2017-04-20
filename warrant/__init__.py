@@ -1,8 +1,11 @@
-import datetime
-import boto3
 import ast
-import jwt
+import boto3
+import datetime
+import requests
 
+from envs import env
+from jose import jwk, jwt
+from jose.utils import base64url_decode
 from .aws_srp import AWSSRP
 
 
@@ -45,14 +48,12 @@ class UserObj(object):
             setattr(self, key.lower(), value)
 
 
-
-
 class Cognito(object):
 
     user_class = UserObj
 
     def __init__(
-            self, user_pool_id, client_id,
+            self, user_pool_id, client_id,user_pool_region=None,
             username=None,
             id_token=None,refresh_token=None,
             access_token=None,secret_hash=None,
@@ -71,6 +72,7 @@ class Cognito(object):
 
         self.user_pool_id = user_pool_id
         self.client_id = client_id
+        self.user_pool_region = user_pool_region or env('AWS_DEFAULT_REGION','us-east-1')
         self.username = username
         self.id_token = id_token
         self.access_token = access_token
@@ -82,9 +84,37 @@ class Cognito(object):
             self.client = boto3.client('cognito-idp',
                 aws_access_key_id=access_key,
                 aws_secret_access_key=secret_key,
+                region_name=self.user_pool_region
                 )
         else:
             self.client = boto3.client('cognito-idp')
+
+    def get_keys(self):
+        try:
+            return self.pool_jwk
+        except AttributeError:
+            self.pool_jwk = requests.get(
+                'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(
+                    self.user_pool_region,self.user_pool_id
+                )).json()
+            return self.pool_jwk
+
+    def get_key(self,kid):
+        keys = self.get_keys().get('keys')
+        key = filter(lambda x:x.get('kid') == kid,keys)
+        return key[0]
+
+    def verify_token(self,token,id_name):
+        kid = jwt.get_unverified_header(token).get('kid')
+
+        hmac_key = self.get_key(kid)
+        key = jwk.construct(hmac_key)
+        message, encoded_sig = token.rsplit('.', 1)
+        decoded_sig = base64url_decode(str(encoded_sig))
+        verified = key.verify(message, decoded_sig)
+        if verified:
+            setattr(self,id_name,token)
+        return verified
 
     def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map=dict()):
         """
@@ -118,7 +148,7 @@ class Cognito(object):
         if not self.access_token:
             raise AttributeError('Access Token Required to Check Token')
         now = datetime.datetime.now()
-        dec_access_token = jwt.decode(self.access_token,verify=False)
+        dec_access_token = jwt.get_unverified_claims(self.access_token)
 
         if now > datetime.datetime.fromtimestamp(dec_access_token['exp']):
             self.renew_access_token()
@@ -196,9 +226,9 @@ class Cognito(object):
             AuthParameters=auth_params,
         )
 
-        self.id_token = tokens['AuthenticationResult']['IdToken']
+        self.verify_token(tokens['AuthenticationResult']['IdToken'], 'id_token')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
-        self.access_token = tokens['AuthenticationResult']['AccessToken']
+        self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token')
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
     def authenticate(self, password):
@@ -210,9 +240,9 @@ class Cognito(object):
         aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
                      client_id=self.client_id, client=self.client)
         tokens = aws.authenticate_user()
-        self.id_token = tokens['AuthenticationResult']['IdToken']
+        self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
-        self.access_token = tokens['AuthenticationResult']['AccessToken']
+        self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token')
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
     def logout(self):
