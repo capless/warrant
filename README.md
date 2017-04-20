@@ -414,6 +414,10 @@ you wish local Django users to be created upon successful login. If set to `Fals
 only existing local Django users are updated.
 Defaults to `True`.
 
+5. Optional - Set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+to the AWS access keys you would like to use.
+Defaults to `None`, which will use the default credentials in your `~/.aws/credentials` file.
+
 #### CognitoBackend Behavior
 Since the username of a Cognito User can never change,
 this is used by the backend to match a Cognito User with a local Django

@@ -67,7 +67,10 @@ class AbstractCognitoBackend(ModelBackend):
         :return: returns User instance of AUTH_USER_MODEL or None
         """
         cognito_user = CognitoUser(
-            settings.COGNITO_USER_POOL_ID,settings.COGNITO_APP_ID,
+            settings.COGNITO_USER_POOL_ID,
+            settings.COGNITO_APP_ID,
+            access_key=getattr(settings, 'AWS_ACCESS_KEY_ID', None),
+            secret_key=getattr(settings, 'AWS_SECRET_ACCESS_KEY', None),
             username=username)
         try:
             cognito_user.authenticate(password)
@@ -95,7 +98,7 @@ if DJANGO_VERSION[1] > 10:
     class CognitoBackend(AbstractCognitoBackend):
         def authenticate(self, request, username=None, password=None):
             """
-            Authenticate a Cognito User and store an access, ID and 
+            Authenticate a Cognito User and store an access, ID and
             refresh token in the session.
             """
             user = super(CognitoBackend, self).authenticate(
