@@ -66,7 +66,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'warrant.django',
-    'warrant.django.demo',
     'crispy_forms',
     'django_extensions'
 ]
@@ -133,7 +132,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LOGIN_REDIRECT_URL = '/accounts/user_info'
+LOGIN_REDIRECT_URL = '/accounts/profile'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
