@@ -3,6 +3,7 @@ import binascii
 import datetime
 import hashlib
 import hmac
+import sys
 
 import boto3
 import os
@@ -154,8 +155,11 @@ class AWSSRP(object):
         salt_hex = challenge_parameters['SALT']
         srp_b_hex = challenge_parameters['SRP_B']
         secret_block_b64 = challenge_parameters['SECRET_BLOCK']
-        timestamp = test_timestamp or \
-                    datetime.datetime.utcnow().strftime("%a %b %-d %H:%M:%S UTC %Y")
+        if sys.platform.startswith('win'):
+            format_string = "%a %b %#d %H:%M:%S UTC %Y"
+        else:
+            format_string = "%a %b %-d %H:%M:%S UTC %Y"
+        timestamp = test_timestamp or datetime.datetime.utcnow().strftime(format_string)
         hkdf = self.get_password_authentication_key(user_id_for_srp,
                                                     self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
