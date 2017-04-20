@@ -48,13 +48,12 @@ Makes working with AWS Cognito easier for Python developers.
 from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
-        username='optional-username',
-        id_token='optional-id-token',
-        refresh_token='optional-refresh-token',
-        access_token='optional-access-token',
-        access_key='optional-access-key',
-        secret_key='optional-secret-key'
-        )
+    username='optional-username',
+    id_token='optional-id-token',
+    refresh_token='optional-refresh-token',
+    access_token='optional-access-token',
+    access_key='optional-access-key',
+    secret_key='optional-secret-key')
 ```
 
 #### Arguments
@@ -87,8 +86,7 @@ Used when the user has not logged in yet. Start with these arguments when you pl
 from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
-        username='bob',
-        )
+    username='bob')
 ```
 
 #### Tokens ####
@@ -101,8 +99,7 @@ from warrant import Cognito
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='your-id-token',
     refresh_token='your-refresh-token',
-    access_token='your-access-token'
-)
+    access_token='your-access-token')
 ```
 
 ## Cognito Methods ##
@@ -117,16 +114,16 @@ Register a user to the user pool
 ```python
 from warrant import Cognito
 
-u = Cognito('your-user-pool-id','your-client-id')
+u = Cognito('your-user-pool-id', 'your-client-id')
 
-u.register('username','password',email='you@you.com',some_random_attr='random value') #**kwargs are the other attributes that should be set ex. email, given_name, family_name
+u.register('username', 'password', email='you@you.com', some_random_attr='random value')  # **kwargs are the other attributes that should be set ex. email, given_name, family_name
 ```
 ##### Arguments
 
 - **username:** User Pool username
 - **password:** User Pool password
 - **attr_map:** Attribute map to Cognito's attributes
-- **kwargs:** Additional User Pool attributes ex. **{'email':'you@you.com'}
+- **kwargs:** Additional User Pool attributes ex. `**{'email':'you@you.com'}`
 
 
 #### Authenticate ####
@@ -412,10 +409,15 @@ Defaults to:
         'family_name': 'last_name',
     }
     ```
+
 4. Optional - Set `COGNITO_CREATE_UNKNOWN_USERS` to `True` or `False`, depending on if
 you wish local Django users to be created upon successful login. If set to `False`,
 only existing local Django users are updated.
 Defaults to `True`.
+
+5. Optional - Set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+to the AWS access keys you would like to use.
+Defaults to `None`, which will use the default credentials in your `~/.aws/credentials` file.
 
 #### CognitoBackend Behavior
 Since the username of a Cognito User can never change,
@@ -439,7 +441,9 @@ Check the django/demo directory for an example app with a login and
 user details page.
 
 #### Customizing CognitoBackend Behavior
+
 Setting the Django setting `COGNITO_CREATE_UNKNOWN_USERS` to `False` prevents the backend
+
 from creating a new local Django user and only updates existing users.
 
 If you create your own backend class that inhereits from `CognitoBackend`, you may
