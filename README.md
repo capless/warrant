@@ -461,4 +461,3 @@ in the request and attaches it to the request object as `api_key`.
 
 ### Eric Petway
 **GitHub:** [@ebpetway](https://www.github.com/ebpetway)
-**GitHub** [
