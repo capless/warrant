@@ -409,7 +409,8 @@ Defaults to:
         'family_name': 'last_name',
     }
     ```
-4. Optional - Set `CREATE_UNKNOWN_USERS` to `True` or `False`, depending on if
+
+4. Optional - Set `COGNITO_CREATE_UNKNOWN_USERS` to `True` or `False`, depending on if
 you wish local Django users to be created upon successful login. If set to `False`,
 only existing local Django users are updated.
 Defaults to `True`.
@@ -440,7 +441,8 @@ Check the django/demo directory for an example app with a login and
 user details page.
 
 #### Customizing CognitoBackend Behavior
-Setting the Django setting `CREATE_UNKNOWN_USERS` to `False` prevents the backend
+
+Setting the Django setting `COGNITO_CREATE_UNKNOWN_USERS` to `False` prevents the backend
 from creating a new local Django user and only updates existing users.
 
 If you create your own backend class that inhereits from `CognitoBackend`, you may
