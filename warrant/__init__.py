@@ -31,7 +31,7 @@ def dict_to_cognito(attributes,attr_map=dict()):
 
 class UserObj(object):
 
-    def __init__(self, username, attribute_list, metadata=dict(),attr_map=dict()):
+    def __init__(self, username, attribute_list, cognito_obj, metadata=dict(),attr_map=dict()):
         """
         :param username:
         :param attribute_list:
@@ -39,12 +39,44 @@ class UserObj(object):
         """
         self.username = username
         self.pk = username
-        for k,v in cognito_to_dict(attribute_list,attr_map).items():
-            setattr(self, k, v)
-        for key, value in metadata.items():
-            setattr(self, key.lower(), value)
+        self._cognito = cognito_obj
+        self._attr_map = attr_map
+        self._data = cognito_to_dict(attribute_list,self._attr_map)
+        self.sub = self._data.pop('sub',None)
+        self.email_verified = self._data.pop('email_verified',None)
+        self.phone_number_verified = self._data.pop('phone_number_verified',None)
+        self._metadata = metadata
 
+    def __repr__(self):
+        return '<{class_name}: {uni} >'.format(
+            class_name=self.__class__.__name__, uni=self.__unicode__())
 
+    def __unicode__(self):
+        return self.username
+
+    def __getattr__(self, name):
+        if name in list(self.__dict__.get('_data',{}).keys()):
+            return self._data.get(name)
+        if name in list(self.__dict__.get('_metadata',{}).keys()):
+            return self._metadata.get(name)
+
+    def __setattr__(self, name, value):
+        if name in list(self.__dict__.get('_data',{}).keys()):
+            self._data[name] = value
+        else:
+            super(UserObj, self).__setattr__(name, value)
+
+    def save(self,admin=False):
+        if admin:
+            self._cognito.admin_update_profile(self._data, self._attr_map)
+            return
+        self._cognito.update_profile(self._data,self._attr_map)
+
+    def delete(self,admin=False):
+        if admin:
+            self._cognito.admin_delete_user()
+            return
+        self._cognito.delete_user()
 
 
 class Cognito(object):
@@ -98,6 +130,7 @@ class Cognito(object):
         :return:
         """
         return self.user_class(username=username,attribute_list=attribute_list,
+                               cognito_obj=self,
                                metadata=metadata,attr_map=attr_map)
 
     def switch_session(self,session):
@@ -245,6 +278,14 @@ class Cognito(object):
         self.access_token = None
         self.token_type = None
 
+    def admin_update_profile(self, attrs, attr_map=dict()):
+        user_attrs = dict_to_cognito(attrs, attr_map)
+        self.client.admin_update_user_attributes(
+            UserPoolId = self.user_pool_id,
+            Username = self.username,
+            UserAttributes = user_attrs
+        )
+
     def update_profile(self, attrs,attr_map=dict()):
         """
         Updates User attributes
@@ -253,7 +294,7 @@ class Cognito(object):
         names we would like to show to our users
         """
         user_attrs = dict_to_cognito(attrs,attr_map)
-        response = self.client.update_user_attributes(
+        self.client.update_user_attributes(
             UserAttributes=user_attrs,
             AccessToken=self.access_token
         )
@@ -369,6 +410,20 @@ class Cognito(object):
         """
         self.client.forgot_password(
             ClientId=self.client_id,
+            Username=self.username
+        )
+
+
+    def delete_user(self):
+
+        self.client.delete_user(
+            AccessToken=self.access_token
+        )
+
+
+    def admin_delete_user(self):
+        self.client.admin_delete_user(
+            UserPoolId=self.user_pool_id,
             Username=self.username
         )
 
