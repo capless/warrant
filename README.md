@@ -27,14 +27,6 @@ Makes working with AWS Cognito easier for Python developers.
         - [Logout](#logout)
 - [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
     - [Using AWSSRP](#using-awssrp)
-- [Django Utilities](#django-utilities)
-    - [Auth Backend](#django-auth-backend) `warrant.django.backend.CognitoBackend`
-        - [Using the CognitoBackend](#using-the-cognitobackend)
-        - [CognitoBackend Behavior](#cognitobackend-behavior)
-        - [Customizing CognitoBackend Behavior](#customizing-cognitobackend-behavior)
-    - [Profile Views](#profile-views)
-    - [API Gateway Integration](#api-gateway-integration)
-        - [API Key Middleware](#api-key-middleware) `warrant.django.middleware.APIKeyMiddleware`
 
 ## Install
 
