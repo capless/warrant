@@ -1,5 +1,6 @@
 import unittest
 
+from botocore.exceptions import ClientError
 from mock import patch
 from envs import env
 
@@ -46,8 +47,6 @@ class CognitoAuthTestCase(unittest.TestCase):
         self.user = Cognito(self.cognito_user_pool_id,self.app_id,
                          self.username)
 
-    def tearDown(self):
-        del self.user
 
     def test_authenticate(self):
         self.user.authenticate(self.password)
@@ -80,11 +79,12 @@ class CognitoAuthTestCase(unittest.TestCase):
         self.user.renew_access_token()
 
     @patch('warrant.Cognito', autospec=True)
-    def test_update_profile(self):
-        self.user.authenticate(self.password)
-        self.user.update_profile({'given_name':'Jenkins'})
-        u = self.user.get_user()
-        self.assertEquals(u.given_name,'Jenkins')
+    def test_update_profile(self,cognito_user):
+        u = cognito_user(self.cognito_user_pool_id, self.app_id,
+                         username=self.username)
+        u.authenticate(self.password)
+        u.update_profile({'given_name':'Jenkins'})
+
 
     def test_admin_get_user(self):
         u = self.user.admin_get_user()
