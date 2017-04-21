@@ -88,14 +88,14 @@ class Cognito(object):
 
     def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map=dict()):
         """
-        Returns the specified 
-        :param username: Username of the user 
-        :param attribute_list: List of tuples that represent the user's 
+        Returns the specified
+        :param username: Username of the user
+        :param attribute_list: List of tuples that represent the user's
             attributes as returned by the admin_get_user or get_user boto3 methods
         :param metadata: Metadata about the user
-        :param attr_map: Dictionary that maps the Cognito attribute names to 
+        :param attr_map: Dictionary that maps the Cognito attribute names to
         what we'd like to display to the users
-        :return: 
+        :return:
         """
         return self.user_class(username=username,attribute_list=attribute_list,
                                metadata=metadata,attr_map=attr_map)
@@ -215,6 +215,20 @@ class Cognito(object):
         self.access_token = tokens['AuthenticationResult']['AccessToken']
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
+    def new_password_challenge(self, password, new_password):
+        """
+        Respond to the new password challenge using the SRP protocol
+        :param password: The user's current passsword
+        :param password: The user's new passsword
+        """
+        aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
+                     client_id=self.client_id, client=self.client)
+        tokens = aws.set_new_password_challenge(new_password)
+        self.id_token = tokens['AuthenticationResult']['IdToken']
+        self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
+        self.access_token = tokens['AuthenticationResult']['AccessToken']
+        self.token_type = tokens['AuthenticationResult']['TokenType']
+
     def logout(self):
         """
         Logs the user out of all clients and removes the expires_in,
@@ -235,7 +249,7 @@ class Cognito(object):
         """
         Updates User attributes
         :param attrs: Dictionary of attribute name, values
-        :param attr_map: Dictionary map from Cognito attributes to attribute 
+        :param attr_map: Dictionary map from Cognito attributes to attribute
         names we would like to show to our users
         """
         user_attrs = dict_to_cognito(attrs,attr_map)
@@ -246,16 +260,16 @@ class Cognito(object):
 
     def get_user(self,attr_map=dict()):
         """
-        Returns a UserObj (or whatever the self.user_class is) by using the 
+        Returns a UserObj (or whatever the self.user_class is) by using the
         user's access token.
-        :param attr_map: Dictionary map from Cognito attributes to attribute 
+        :param attr_map: Dictionary map from Cognito attributes to attribute
         names we would like to show to our users
-        :return: 
+        :return:
         """
         user = self.client.get_user(
                 AccessToken=self.access_token
             )
-        
+
         user_metadata = {
             'username': user.get('Username'),
             'id_token': self.id_token,
@@ -268,10 +282,10 @@ class Cognito(object):
 
     def get_users(self,attr_map=dict()):
         """
-        Returns all users for a user pool. Returns instances of the 
+        Returns all users for a user pool. Returns instances of the
         self.user_class.
-        :param attr_map: 
-        :return: 
+        :param attr_map:
+        :return:
         """
         kwargs = {"UserPoolId":self.user_pool_id}
 
@@ -285,7 +299,7 @@ class Cognito(object):
     def admin_get_user(self,attr_map=dict()):
         """
         Get the user's details using admin super privileges.
-        :param attr_map: Dictionary map from Cognito attributes to attribute 
+        :param attr_map: Dictionary map from Cognito attributes to attribute
         names we would like to show to our users
         :return: UserObj object
         """
