@@ -358,6 +358,27 @@ class Cognito(object):
                                  attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata,attr_map=attr_map)
 
+    def admin_create_user(self, username, temporary_password='', attr_map=dict(), **kwargs):
+        """
+        Create a user using admin super privileges.
+        :param username: User Pool username
+        :param temporary_password: The temporary password to give the user.
+        Leave blank to make Cognito generate a temporary password for the user.
+        :param attr_map: Attribute map to Cognito's attributes
+        :param kwargs: Additional User Pool attributes
+        :return response: Response from Cognito
+        """
+        response = self.client.admin_create_user(
+            UserPoolId=self.user_pool_id,
+            Username=username,
+            UserAttributes=dict_to_cognito(kwargs, attr_map),
+            TemporaryPassword=temporary_password,
+        )
+        kwargs.update(username=username)
+        self._set_attributes(response, kwargs)
+
+        response.pop('ResponseMetadata')
+        return response
 
     def send_verification(self, attribute='email'):
         """
