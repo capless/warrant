@@ -8,6 +8,8 @@ import boto3
 import os
 import six
 
+from .exceptions import ForceChangePasswordException
+
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
 n_hex = 'FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1' + '29024E088A67CC74020BBEA63B139B22514A08798E3404DD' + \
         'EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245' + 'E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED' + \
@@ -88,6 +90,9 @@ def calculate_u(big_a, big_b):
 
 
 class AWSSRP(object):
+
+    NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
+    PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
 
     def __init__(self, username, password, pool_id, client_id, client=None):
         self.username = username
@@ -177,13 +182,46 @@ class AWSSRP(object):
             AuthParameters=auth_params,
             ClientId=self.client_id
         )
-        if response['ChallengeName'] == 'PASSWORD_VERIFIER':
+        if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response['ChallengeParameters'])
             tokens = boto_client.respond_to_auth_challenge(
                 ClientId=self.client_id,
-                ChallengeName='PASSWORD_VERIFIER',
+                ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
                 ChallengeResponses=challenge_response)
+
+            if tokens.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
+                raise ForceChangePasswordException('Change password before authenticating')
+
+            return tokens
         else:
             raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
-        return tokens
 
+    def set_new_password_challenge(self, new_password, client=None):
+        boto_client = self.client or client
+        auth_params = self.get_auth_params()
+        response = boto_client.initiate_auth(
+            AuthFlow='USER_SRP_AUTH',
+            AuthParameters=auth_params,
+            ClientId=self.client_id
+        )
+        if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
+            challenge_response = self.process_challenge(response['ChallengeParameters'])
+            tokens = boto_client.respond_to_auth_challenge(
+                ClientId=self.client_id,
+                ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
+                ChallengeResponses=challenge_response)
+
+            if tokens['ChallengeName'] == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
+                challenge_response = {
+                    'USERNAME': auth_params['USERNAME'],
+                    'NEW_PASSWORD': new_password
+                }
+                new_password_response = boto_client.respond_to_auth_challenge(
+                    ClientId=self.client_id,
+                    ChallengeName=self.NEW_PASSWORD_REQUIRED_CHALLENGE,
+                    Session=tokens['Session'],
+                    ChallengeResponses=challenge_response)
+                return new_password_response
+            return tokens
+        else:
+            raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
