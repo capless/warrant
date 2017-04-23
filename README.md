@@ -381,3 +381,16 @@ tokens = aws.authenticate_user()
 ## Projects Using Warrant
 
 #### [Django Warrant](https://www.github.com/metametricsinc/django-warrant)
+
+## Authors
+
+### Brian Jinwright
+**Twitter:** [@brianjinwright](https://www.twitter.com/brianjinwright)
+**GitHub:** [@bjinwright](https://www.github.com/bjinwright/)
+
+### Eric Petway
+**GitHub:** [@ebpetway](https://www.github.com/ebpetway)
+
+### Sergey 
+
+**GitHub:** [@armicron](https://www.github.com/armicron)
