@@ -9,6 +9,7 @@ Makes working with AWS Cognito easier for Python developers.
 ## Getting Started
 
 - [Install](#install)
+- [Python Versions Supported](#python-versions-supported)
 - [Cognito Utility Class](#cognito-utility-class) `warrant.Cognito`
     - [Cognito Methods](#cognito-methods)
         - [Register](#register)
@@ -27,10 +28,17 @@ Makes working with AWS Cognito easier for Python developers.
         - [Logout](#logout)
 - [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
     - [Using AWSSRP](#using-awssrp)
+- [Projects Using Warrant](#projects-using-warrant)
+    - [Django Warrant](#django-warrant)
 
 ## Install
 
 `pip install warrant`
+
+## Python Versions Supported
+
+- 2.7
+- 3.6
 
 ## Cognito Utility Class
 
@@ -369,3 +377,7 @@ aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
              client_id='client_id', client=client)
 tokens = aws.authenticate_user()
 ```
+
+## Projects Using Warrant
+
+#### [Django Warrant](https://www.github.com/metametricsinc/django-warrant)
