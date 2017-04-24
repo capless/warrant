@@ -2,6 +2,7 @@ import ast
 import boto3
 import datetime
 import requests
+import six
 
 from envs import env
 from jose import jwk, jwt
@@ -153,7 +154,10 @@ class Cognito(object):
         hmac_key = self.get_key(kid)
         key = jwk.construct(hmac_key)
         message, encoded_sig = token.rsplit('.', 1)
-        decoded_sig = base64url_decode(str(encoded_sig))
+        if six.PY3:
+            decoded_sig = base64url_decode(six.b(encoded_sig))
+        else:
+            decoded_sig = base64url_decode(str(encoded_sig))
         verified = key.verify(message, decoded_sig)
         if verified:
             setattr(self,id_name,token)
