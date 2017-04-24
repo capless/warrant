@@ -32,6 +32,8 @@ Makes working with AWS Cognito easier for Python developers.
     - [Using AWSSRP](#using-awssrp)
 - [Projects Using Warrant](#projects-using-warrant)
     - [Django Warrant](#django-warrant)
+- [Authors](#authors)
+- [Release Notes](#release-notes)
 
 ## Python Versions Supported
 
@@ -408,3 +410,5 @@ tokens = aws.authenticate_user()
 ### Sergey Vishnikin
 
 **GitHub:** [@armicron](https://www.github.com/armicron)
+
+## [Release Notes](https://github.com/capless/warrant/blob/master/HISTORY.md)
