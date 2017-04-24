@@ -2,11 +2,10 @@ import ast
 import boto3
 import datetime
 import requests
-import six
 
 from envs import env
-from jose import jwk, jwt
-from jose.utils import base64url_decode
+from jose import jwt, JWTError
+
 from .aws_srp import AWSSRP
 from .exceptions import TokenVerificationException
 
@@ -148,21 +147,19 @@ class Cognito(object):
 
     def verify_token(self,token,id_name,token_use):
         kid = jwt.get_unverified_header(token).get('kid')
-        token_use_verified = jwt.get_unverified_claims(token).get('token_use') == token_use
+        unverified_claims = jwt.get_unverified_claims(token)
+        token_use_verified = unverified_claims.get('token_use') == token_use
         if not token_use_verified:
             raise TokenVerificationException('Your {} token use could not be verified.')
         hmac_key = self.get_key(kid)
-        key = jwk.construct(hmac_key)
-        message, encoded_sig = token.rsplit('.', 1)
-        if six.PY3:
-            decoded_sig = base64url_decode(six.b(encoded_sig).encode('utf-8'))
-        else:
-            decoded_sig = base64url_decode(str(encoded_sig))
-        verified = key.verify(message, decoded_sig)
-        if verified:
-            setattr(self,id_name,token)
-        else:
+        try:
+            verified = jwt.decode(token,hmac_key,algorithms=['RS256'],
+                   audience=unverified_claims.get('aud'),
+                   issuer=unverified_claims.get('iss'))
+        except JWTError:
             raise TokenVerificationException('Your {} token could not be verified.')
+        
+        setattr(self,id_name,token)
         return verified
 
     def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map=dict()):
