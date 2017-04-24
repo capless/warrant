@@ -130,7 +130,7 @@ class Cognito(object):
         except AttributeError:
             #Check for the dictionary in environment variables.
             pool_jwk_env = env('COGNITO_JWKS', {},var_type='dict')
-            if len(pool_jwk_env.keys()) > 0:
+            if len(list(pool_jwk_env.keys())) > 0:
                 self.pool_jwk = pool_jwk_env
                 return self.pool_jwk
             #If it is not there use the requests library to get it
