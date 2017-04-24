@@ -4,7 +4,7 @@ from mock import patch
 from envs import env
 from botocore.exceptions import ClientError
 
-from warrant import Cognito,UserObj
+from warrant import Cognito, UserObj, TokenVerificationException
 from warrant.aws_srp import AWSSRP
 
 
@@ -53,8 +53,9 @@ class CognitoAuthTestCase(unittest.TestCase):
     def test_verify_token(self):
         self.user.authenticate(self.password)
         bad_access_token = '{}wrong'.format(self.user.access_token)
-        verify = self.user.verify_token(bad_access_token,'access_token')
-        self.assertFalse(verify)
+
+        with self.assertRaises(TokenVerificationException) as vm:
+            self.user.verify_token(bad_access_token, 'access_token', 'access')
 
     def test_logout(self):
         self.user.authenticate(self.password)

@@ -95,8 +95,8 @@ class Cognito(object):
             return self.pool_jwk
         except AttributeError:
             #Check for the dictionary in environment variables.
-            pool_jwk_env = env('COGNITO_JWKS', var_type='dict')
-            if isinstance(pool_jwk_env, dict):
+            pool_jwk_env = env('COGNITO_JWKS', {},var_type='dict')
+            if len(pool_jwk_env.keys()) > 0:
                 self.pool_jwk = pool_jwk_env
                 return self.pool_jwk
             #If it is not there use the requests library to get it
@@ -251,9 +251,9 @@ class Cognito(object):
         aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
                      client_id=self.client_id, client=self.client)
         tokens = aws.authenticate_user()
-        self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token')
+        self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
-        self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token')
+        self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
     def logout(self):
