@@ -155,7 +155,7 @@ class Cognito(object):
         key = jwk.construct(hmac_key)
         message, encoded_sig = token.rsplit('.', 1)
         if six.PY3:
-            decoded_sig = base64url_decode(six.b(encoded_sig))
+            decoded_sig = base64url_decode(six.b(encoded_sig).encode('utf-8'))
         else:
             decoded_sig = base64url_decode(str(encoded_sig))
         verified = key.verify(message, decoded_sig)
