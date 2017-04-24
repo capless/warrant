@@ -1,10 +1,13 @@
-import datetime
-import boto3
 import ast
-import jwt
+import boto3
+import datetime
+import requests
+
+from envs import env
+from jose import jwt, JWTError
 
 from .aws_srp import AWSSRP
-
+from .exceptions import TokenVerificationException
 
 def cognito_to_dict(attr_list,attr_map=dict()):
     attr_dict = dict()
@@ -84,7 +87,7 @@ class Cognito(object):
     user_class = UserObj
 
     def __init__(
-            self, user_pool_id, client_id,
+            self, user_pool_id, client_id,user_pool_region=None,
             username=None,
             id_token=None,refresh_token=None,
             access_token=None,secret_hash=None,
@@ -103,6 +106,7 @@ class Cognito(object):
 
         self.user_pool_id = user_pool_id
         self.client_id = client_id
+        self.user_pool_region = user_pool_region or env('AWS_DEFAULT_REGION','us-east-1')
         self.username = username
         self.id_token = id_token
         self.access_token = access_token
@@ -114,9 +118,49 @@ class Cognito(object):
             self.client = boto3.client('cognito-idp',
                 aws_access_key_id=access_key,
                 aws_secret_access_key=secret_key,
+                region_name=self.user_pool_region
                 )
         else:
             self.client = boto3.client('cognito-idp')
+
+    def get_keys(self):
+
+        try:
+            return self.pool_jwk
+        except AttributeError:
+            #Check for the dictionary in environment variables.
+            pool_jwk_env = env('COGNITO_JWKS', {},var_type='dict')
+            if len(pool_jwk_env.keys()) > 0:
+                self.pool_jwk = pool_jwk_env
+                return self.pool_jwk
+            #If it is not there use the requests library to get it
+            self.pool_jwk = requests.get(
+                'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(
+                    self.user_pool_region,self.user_pool_id
+                )).json()
+            return self.pool_jwk
+
+    def get_key(self,kid):
+        keys = self.get_keys().get('keys')
+        key = list(filter(lambda x:x.get('kid') == kid,keys))
+        return key[0]
+
+    def verify_token(self,token,id_name,token_use):
+        kid = jwt.get_unverified_header(token).get('kid')
+        unverified_claims = jwt.get_unverified_claims(token)
+        token_use_verified = unverified_claims.get('token_use') == token_use
+        if not token_use_verified:
+            raise TokenVerificationException('Your {} token use could not be verified.')
+        hmac_key = self.get_key(kid)
+        try:
+            verified = jwt.decode(token,hmac_key,algorithms=['RS256'],
+                   audience=unverified_claims.get('aud'),
+                   issuer=unverified_claims.get('iss'))
+        except JWTError:
+            raise TokenVerificationException('Your {} token could not be verified.')
+        
+        setattr(self,id_name,token)
+        return verified
 
     def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map=dict()):
         """
@@ -151,7 +195,7 @@ class Cognito(object):
         if not self.access_token:
             raise AttributeError('Access Token Required to Check Token')
         now = datetime.datetime.now()
-        dec_access_token = jwt.decode(self.access_token,verify=False)
+        dec_access_token = jwt.get_unverified_claims(self.access_token)
 
         if now > datetime.datetime.fromtimestamp(dec_access_token['exp']):
             self.renew_access_token()
@@ -229,9 +273,9 @@ class Cognito(object):
             AuthParameters=auth_params,
         )
 
-        self.id_token = tokens['AuthenticationResult']['IdToken']
+        self.verify_token(tokens['AuthenticationResult']['IdToken'], 'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
-        self.access_token = tokens['AuthenticationResult']['AccessToken']
+        self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
     def authenticate(self, password):
@@ -243,9 +287,9 @@ class Cognito(object):
         aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
                      client_id=self.client_id, client=self.client)
         tokens = aws.authenticate_user()
-        self.id_token = tokens['AuthenticationResult']['IdToken']
+        self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
-        self.access_token = tokens['AuthenticationResult']['AccessToken']
+        self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
     def new_password_challenge(self, password, new_password):

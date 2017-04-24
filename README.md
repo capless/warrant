@@ -8,8 +8,10 @@ Makes working with AWS Cognito easier for Python developers.
 
 ## Getting Started
 
-- [Install](#install)
 - [Python Versions Supported](#python-versions-supported)
+- [Install](#install)
+- [Environment Variables](#environment-variables)
+    - [COGNITO_JWKS](#cognito-jwks) (optional)
 - [Cognito Utility Class](#cognito-utility-class) `warrant.Cognito`
     - [Cognito Methods](#cognito-methods)
         - [Register](#register)
@@ -31,15 +33,27 @@ Makes working with AWS Cognito easier for Python developers.
 - [Projects Using Warrant](#projects-using-warrant)
     - [Django Warrant](#django-warrant)
 
-## Install
-
-`pip install warrant`
-
 ## Python Versions Supported
 
 - 2.7
 - 3.6
 
+## Install
+
+`pip install warrant`
+
+
+## Environment Variables
+
+#### COGNITO_JWKS
+
+**Optional:** This environment variable is a dictionary that represent the well known JWKs assigned to your user pool by AWS Cognito. You can find the keys for your user pool by substituting in your AWS region and pool id for the following example.
+ `https://cognito-idp.{aws-region}.amazonaws.com/{user-pool-id}/.well-known/jwks.json`
+ 
+ **Example Value (Not Real):**
+ ```commandline
+COGNITO_JWKS={"keys": [{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKLMNOP","kty": "RSA","n": "123456789ABCDEFGHIJKLMNOP","use": "sig"},{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKLMNOP","kty": "RSA","n": "123456789ABCDEFGHIJKLMNOP","use": "sig"}]}
+```
 ## Cognito Utility Class
 
 ### Example with All Arguments ###
