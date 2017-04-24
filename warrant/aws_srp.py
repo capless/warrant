@@ -3,10 +3,13 @@ import binascii
 import datetime
 import hashlib
 import hmac
+import sys
 
 import boto3
 import os
 import six
+
+from .exceptions import ForceChangePasswordException
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
 n_hex = 'FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1' + '29024E088A67CC74020BBEA63B139B22514A08798E3404DD' + \
@@ -89,6 +92,9 @@ def calculate_u(big_a, big_b):
 
 class AWSSRP(object):
 
+    NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
+    PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
+
     def __init__(self, username, password, pool_id, client_id, client=None):
         self.username = username
         self.password = password
@@ -154,8 +160,11 @@ class AWSSRP(object):
         salt_hex = challenge_parameters['SALT']
         srp_b_hex = challenge_parameters['SRP_B']
         secret_block_b64 = challenge_parameters['SECRET_BLOCK']
-        timestamp = test_timestamp or \
-                    datetime.datetime.utcnow().strftime("%a %b %-d %H:%M:%S UTC %Y")
+        if sys.platform.startswith('win'):
+            format_string = "%a %b %#d %H:%M:%S UTC %Y"
+        else:
+            format_string = "%a %b %-d %H:%M:%S UTC %Y"
+        timestamp = test_timestamp or datetime.datetime.utcnow().strftime(format_string)
         hkdf = self.get_password_authentication_key(user_id_for_srp,
                                                     self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
@@ -177,13 +186,46 @@ class AWSSRP(object):
             AuthParameters=auth_params,
             ClientId=self.client_id
         )
-        if response['ChallengeName'] == 'PASSWORD_VERIFIER':
+        if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response['ChallengeParameters'])
             tokens = boto_client.respond_to_auth_challenge(
                 ClientId=self.client_id,
-                ChallengeName='PASSWORD_VERIFIER',
+                ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
                 ChallengeResponses=challenge_response)
+
+            if tokens.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
+                raise ForceChangePasswordException('Change password before authenticating')
+
+            return tokens
         else:
             raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
-        return tokens
 
+    def set_new_password_challenge(self, new_password, client=None):
+        boto_client = self.client or client
+        auth_params = self.get_auth_params()
+        response = boto_client.initiate_auth(
+            AuthFlow='USER_SRP_AUTH',
+            AuthParameters=auth_params,
+            ClientId=self.client_id
+        )
+        if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
+            challenge_response = self.process_challenge(response['ChallengeParameters'])
+            tokens = boto_client.respond_to_auth_challenge(
+                ClientId=self.client_id,
+                ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
+                ChallengeResponses=challenge_response)
+
+            if tokens['ChallengeName'] == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
+                challenge_response = {
+                    'USERNAME': auth_params['USERNAME'],
+                    'NEW_PASSWORD': new_password
+                }
+                new_password_response = boto_client.respond_to_auth_challenge(
+                    ClientId=self.client_id,
+                    ChallengeName=self.NEW_PASSWORD_REQUIRED_CHALLENGE,
+                    Session=tokens['Session'],
+                    ChallengeResponses=challenge_response)
+                return new_password_response
+            return tokens
+        else:
+            raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])

@@ -1,8 +1,8 @@
 import unittest
 
+from botocore.exceptions import ClientError
 from mock import patch
 from envs import env
-from botocore.exceptions import ClientError
 
 from warrant import Cognito, UserObj, TokenVerificationException
 from warrant.aws_srp import AWSSRP
@@ -14,6 +14,12 @@ AWSSRP_TEST_FILE = 'awssrp_test_variables.json'
 class UserObjTestCase(unittest.TestCase):
 
     def setUp(self):
+        self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
+        self.app_id = env('COGNITO_APP_ID')
+        self.username = env('COGNITO_TEST_USERNAME')
+
+        self.user = Cognito(self.cognito_user_pool_id, self.app_id,
+                            self.username)
         self.user_metadata = {
             'user_status': 'CONFIRMED',
             'username': 'bjones',
@@ -25,7 +31,7 @@ class UserObjTestCase(unittest.TestCase):
         ]
 
     def test_init(self):
-        u = UserObj('bjones', self.user_info, self.user_metadata)
+        u = UserObj('bjones', self.user_info, self.user, self.user_metadata)
         self.assertEqual(u.pk,self.user_metadata.get('username'))
         self.assertEqual(u.name,self.user_info[0].get('Value'))
         self.assertEqual(u.user_status,self.user_metadata.get('user_status'))
@@ -41,8 +47,6 @@ class CognitoAuthTestCase(unittest.TestCase):
         self.user = Cognito(self.cognito_user_pool_id,self.app_id,
                          username=self.username)
 
-    def tearDown(self):
-        del self.user
 
     def test_authenticate(self):
         self.user.authenticate(self.password)
@@ -77,12 +81,17 @@ class CognitoAuthTestCase(unittest.TestCase):
         #TODO: Write assumptions
 
 
-
-    def test_update_profile(self):
+    def test_renew_tokens(self):
         self.user.authenticate(self.password)
-        self.user.update_profile({'given_name':'Jenkins'})
-        u = self.user.get_user()
-        self.assertEquals(u.given_name,'Jenkins')
+        self.user.renew_access_token()
+
+    @patch('warrant.Cognito', autospec=True)
+    def test_update_profile(self,cognito_user):
+        u = cognito_user(self.cognito_user_pool_id, self.app_id,
+                         username=self.username)
+        u.authenticate(self.password)
+        u.update_profile({'given_name':'Jenkins'})
+
 
     def test_admin_get_user(self):
         u = self.user.admin_get_user()
