@@ -8,7 +8,10 @@ Makes working with AWS Cognito easier for Python developers.
 
 ## Getting Started
 
+- [Python Versions Supported](#python-versions-supported)
 - [Install](#install)
+- [Environment Variables](#environment-variables)
+    - [COGNITO_JWKS](#cognito-jwks) (optional)
 - [Cognito Utility Class](#cognito-utility-class) `warrant.Cognito`
     - [Cognito Methods](#cognito-methods)
         - [Register](#register)
@@ -27,11 +30,32 @@ Makes working with AWS Cognito easier for Python developers.
         - [Logout](#logout)
 - [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
     - [Using AWSSRP](#using-awssrp)
+- [Projects Using Warrant](#projects-using-warrant)
+    - [Django Warrant](#django-warrant)
+- [Authors](#authors)
+- [Release Notes](#release-notes)
+
+## Python Versions Supported
+
+- 2.7
+- 3.6
 
 ## Install
 
 `pip install warrant`
 
+
+## Environment Variables
+
+#### COGNITO_JWKS
+
+**Optional:** This environment variable is a dictionary that represent the well known JWKs assigned to your user pool by AWS Cognito. You can find the keys for your user pool by substituting in your AWS region and pool id for the following example.
+ `https://cognito-idp.{aws-region}.amazonaws.com/{user-pool-id}/.well-known/jwks.json`
+ 
+ **Example Value (Not Real):**
+ ```commandline
+COGNITO_JWKS={"keys": [{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKLMNOP","kty": "RSA","n": "123456789ABCDEFGHIJKLMNOP","use": "sig"},{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKLMNOP","kty": "RSA","n": "123456789ABCDEFGHIJKLMNOP","use": "sig"}]}
+```
 ## Cognito Utility Class
 
 ### Example with All Arguments ###
@@ -369,3 +393,22 @@ aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
              client_id='client_id', client=client)
 tokens = aws.authenticate_user()
 ```
+
+## Projects Using Warrant
+
+#### [Django Warrant](https://www.github.com/metametricsinc/django-warrant)
+
+## Authors
+
+### Brian Jinwright
+**Twitter:** [@brianjinwright](https://www.twitter.com/brianjinwright)
+**GitHub:** [@bjinwright](https://www.github.com/bjinwright/)
+
+### Eric Petway
+**GitHub:** [@ebpetway](https://www.github.com/ebpetway)
+
+### Sergey Vishnikin
+
+**GitHub:** [@armicron](https://www.github.com/armicron)
+
+## [Release Notes](https://github.com/capless/warrant/blob/master/HISTORY.md)

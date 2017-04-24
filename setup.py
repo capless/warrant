@@ -5,7 +5,7 @@ from pip.req import parse_requirements
 
 install_reqs = parse_requirements('requirements.txt', session=False)
 
-version = '0.1.0'
+version = '0.2.0'
 
 README="""Python class to integrate Boto3's Cognito client so it is easy to login users. With SRP support."""
 
@@ -15,7 +15,8 @@ setup(
     description=README,
     long_description=README,
     classifiers=[
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.6",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Environment :: Web Environment",
     ],
