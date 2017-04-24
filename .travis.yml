@@ -7,4 +7,4 @@ install:
   - "pip install nose coverage"
   - "pip install -r requirements.txt"
 # command to run tests
-script: nosetests warrant.tests
+script: nosetests warrant.tests --nocapture --nologcapture
