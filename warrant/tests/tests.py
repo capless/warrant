@@ -1,6 +1,5 @@
 import unittest
 
-from botocore.exceptions import ClientError
 from mock import patch
 from envs import env
 
@@ -168,6 +167,7 @@ class AWSSRPTestCase(unittest.TestCase):
         self.assertTrue('IdToken' in tokens['AuthenticationResult'])
         self.assertTrue('AccessToken' in tokens['AuthenticationResult'])
         self.assertTrue('RefreshToken' in tokens['AuthenticationResult'])
+        
 
 if __name__ == '__main__':
     unittest.main()
