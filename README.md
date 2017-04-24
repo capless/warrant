@@ -405,6 +405,6 @@ tokens = aws.authenticate_user()
 ### Eric Petway
 **GitHub:** [@ebpetway](https://www.github.com/ebpetway)
 
-### Sergey 
+### Sergey Vishnikin
 
 **GitHub:** [@armicron](https://www.github.com/armicron)
