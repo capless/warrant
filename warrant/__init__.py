@@ -7,7 +7,7 @@ from envs import env
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 from .aws_srp import AWSSRP
-
+from .exceptions import TokenVerificationException
 
 def cognito_to_dict(attr_list,attr_map=dict()):
     attr_dict = dict()
@@ -90,9 +90,16 @@ class Cognito(object):
             self.client = boto3.client('cognito-idp')
 
     def get_keys(self):
+
         try:
             return self.pool_jwk
         except AttributeError:
+            #Check for the dictionary in environment variables.
+            pool_jwk_env = env('COGNITO_JWKS', var_type='dict')
+            if isinstance(pool_jwk_env, dict):
+                self.pool_jwk = pool_jwk_env
+                return self.pool_jwk
+            #If it is not there use the requests library to get it
             self.pool_jwk = requests.get(
                 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(
                     self.user_pool_region,self.user_pool_id
@@ -104,9 +111,11 @@ class Cognito(object):
         key = filter(lambda x:x.get('kid') == kid,keys)
         return key[0]
 
-    def verify_token(self,token,id_name):
+    def verify_token(self,token,id_name,token_use):
         kid = jwt.get_unverified_header(token).get('kid')
-
+        token_use_verified = jwt.get_unverified_claims(token).get('token_use') == token_use
+        if not token_use_verified:
+            raise TokenVerificationException('Your {} token use could not be verified.')
         hmac_key = self.get_key(kid)
         key = jwk.construct(hmac_key)
         message, encoded_sig = token.rsplit('.', 1)
@@ -114,6 +123,8 @@ class Cognito(object):
         verified = key.verify(message, decoded_sig)
         if verified:
             setattr(self,id_name,token)
+        else:
+            raise TokenVerificationException('Your {} token could not be verified.')
         return verified
 
     def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map=dict()):
@@ -226,9 +237,9 @@ class Cognito(object):
             AuthParameters=auth_params,
         )
 
-        self.verify_token(tokens['AuthenticationResult']['IdToken'], 'id_token')
+        self.verify_token(tokens['AuthenticationResult']['IdToken'], 'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
-        self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token')
+        self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
     def authenticate(self, password):
