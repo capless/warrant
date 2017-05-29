@@ -26,6 +26,9 @@ Makes working with AWS Cognito easier for Python developers.
         - [Get User Object](#get-user-object)
         - [Get User](#get-user)
         - [Get Users](#get-users)
+        - [Get Group Object](#get-group-object)
+        - [Get Group](#get-group)
+        - [Get Groups](#get-groups)
         - [Check Token](#check-token)
         - [Logout](#logout)
 - [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
@@ -338,6 +341,49 @@ user = u.get_users(attr_map={"given_name":"first_name","family_name":"last_name"
 ##### Arguments
 - **attr_map:** Dictionary map from Cognito attributes to attribute names we would like to show to our users
 
+#### Get Group object
+
+Returns an instance of the specified group_class.
+
+```python
+u = Cognito('your-user-pool-id', 'your-client-id')
+
+group_data = {'GroupName': 'user_group', 'Description': 'description',
+            'Precedence': 1}
+
+group_obj = u.get_group_obj(group_data)
+```
+
+##### Arguments
+- **group_data:** Dictionary with group's attributes.
+
+#### Get Group
+
+Get all of the group's attributes. Returns an instance of the group_class.
+Requires developer credentials.
+
+```python
+from warrant import Cognito
+
+u = Cognito('your-user-pool-id','your-client-id')
+
+group = u.get_group(group_name='some_group_name')
+```
+
+##### Arguments
+- **group_name:** Name of a group
+
+#### Get Groups
+
+Get a list of groups in the user pool. Requires developer credentials.
+
+```python
+from warrant import Cognito
+
+u = Cognito('your-user-pool-id','your-client-id')
+
+groups = u.get_groups()
+```
 
 #### Check Token
 
