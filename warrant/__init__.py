@@ -1,6 +1,7 @@
 import ast
 import boto3
 import datetime
+import re
 import requests
 
 from envs import env
@@ -8,6 +9,7 @@ from jose import jwt, JWTError
 
 from .aws_srp import AWSSRP
 from .exceptions import TokenVerificationException
+
 
 def cognito_to_dict(attr_list, attr_map=None):
     if attr_map is None:
@@ -35,6 +37,22 @@ def dict_to_cognito(attributes, attr_map=None):
 
     return [{'Name': key, 'Value': value} for key, value in attributes.items()]
 
+def camel_to_snake(camel_str):
+    """
+    :param camel_str: string
+    :return: string converted from a CamelCase to a snake_case
+    """
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', camel_str)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+def snake_to_camel(snake_str):
+    """
+    :param snake_str: string
+    :return: string converted from a snake_case to a CamelCase
+    """
+    components = snake_str.split('_')
+    return ''.join(x.title() for x in components)
+
 
 class UserObj(object):
 
@@ -55,7 +73,7 @@ class UserObj(object):
         self._metadata = {} if metadata is None else metadata
 
     def __repr__(self):
-        return '<{class_name}: {uni} >'.format(
+        return '<{class_name}: {uni}>'.format(
             class_name=self.__class__.__name__, uni=self.__unicode__())
 
     def __unicode__(self):
@@ -86,9 +104,34 @@ class UserObj(object):
         self._cognito.delete_user()
 
 
+class GroupObj(object):
+
+    def __init__(self, group_data, cognito_obj):
+        """
+        :param group_data: a dictionary with information about a group
+        :param cognito_obj: an instance of the Cognito class
+        """
+        self._data = group_data
+        self._cognito = cognito_obj
+        self.group_name = self._data.pop('GroupName', None)
+        self.description = self._data.pop('Description', None)
+        self.creation_date = self._data.pop('CreationDate', None)
+        self.last_modified_date = self._data.pop('LastModifiedDate', None)
+        self.role_arn = self._data.pop('RoleArn', None)
+        self.precedence = self._data.pop('Precedence', None)
+
+    def __unicode__(self):
+        return self.group_name
+
+    def __repr__(self):
+        return '<{class_name}: {uni}>'.format(
+            class_name=self.__class__.__name__, uni=self.__unicode__())
+
+
 class Cognito(object):
 
     user_class = UserObj
+    group_class = GroupObj
 
     def __init__(
             self, user_pool_id, client_id,user_pool_region=None,
@@ -180,6 +223,14 @@ class Cognito(object):
         return self.user_class(username=username,attribute_list=attribute_list,
                                cognito_obj=self,
                                metadata=metadata,attr_map=attr_map)
+
+    def get_group_obj(self, group_data):
+        """
+        Instantiates the self.group_class
+        :param group_data: a dictionary with information about a group
+        :return: an instance of the self.group_class
+        """
+        return self.group_class(group_data=group_data, cognito_obj=self)
 
     def switch_session(self,session):
         """
@@ -538,3 +589,24 @@ class Cognito(object):
         if status_code == 200:
             for k, v in attribute_dict.items():
                 setattr(self, k, v)
+
+    def get_group(self, group_name):
+        """
+        Get a group by a name
+        :param group_name: name of a group
+        :return: instance of the self.group_class
+        """
+        response = self.client.get_group(GroupName=group_name,
+                                         UserPoolId=self.user_pool_id)
+        return self.get_group_obj(response.get('Group'))
+
+    def get_groups(self):
+        """
+        Returns all groups for a user pool. Returns instances of the
+        self.group_class.
+        :return: list of instances
+        """
+        response = self.client.list_groups(UserPoolId=self.user_pool_id)
+        return [self.get_group_obj(group_data)
+                for group_data in response.get('Groups')]
+
