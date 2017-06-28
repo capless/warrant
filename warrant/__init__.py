@@ -392,6 +392,7 @@ class Cognito(object):
                            UserPoolId=self.user_pool_id,
                            Username=self.username)
         user_metadata = {
+            'enabled': user.get('Enabled'),
             'user_status':user.get('UserStatus'),
             'username':user.get('Username'),
             'id_token': self.id_token,
