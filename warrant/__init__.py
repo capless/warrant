@@ -106,7 +106,7 @@ class Cognito(object):
 
         self.user_pool_id = user_pool_id
         self.client_id = client_id
-        self.user_pool_region = user_pool_region or env('AWS_DEFAULT_REGION','us-east-1')
+        self.user_pool_region = user_pool_region
         self.username = username
         self.id_token = id_token
         self.access_token = access_token
@@ -114,14 +114,14 @@ class Cognito(object):
         self.secret_hash = secret_hash
         self.token_type = None
 
+        boto3_client_kwargs = {}
         if access_key and secret_key:
-            self.client = boto3.client('cognito-idp',
-                aws_access_key_id=access_key,
-                aws_secret_access_key=secret_key,
-                region_name=self.user_pool_region
-                )
-        else:
-            self.client = boto3.client('cognito-idp')
+            boto3_client_kwargs['aws_access_key'] = access_key
+            boto3_client_kwargs['aws_secret_access_key'] = secret_key
+        if user_pool_region:
+            boto3_client_kwargs['region_name'] = user_pool_region
+
+        self.client = boto3.client('cognito-idp', **boto3_client_kwargs)
 
     def get_keys(self):
 
