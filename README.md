@@ -381,7 +381,7 @@ results in a final response that contains ID, access and refresh tokens.
 
 ### Using AWSSRP
 The `AWSSRP` class takes a username, password, cognito user pool id, cognito app id, and an optional
-`boto3` client. Afterwards, the `authenticate_user` class method is used for SRP authentication.
+pool_region or `boto3` client. Afterwards, the `authenticate_user` class method is used for SRP authentication.
 
 
 ```python
