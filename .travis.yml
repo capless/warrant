@@ -3,8 +3,7 @@ python:
   - "2.7"
   - "3.6"
 # command to install dependencies
-install: 
-  - "pip install nose coverage"
-  - "pip install -r requirements.txt"
+install:
+  - "pip install -e '.[test]'"
 # command to run tests
 script: nosetests warrant.tests --nocapture --nologcapture
