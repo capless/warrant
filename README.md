@@ -388,7 +388,7 @@ pool_region or `boto3` client. Afterwards, the `authenticate_user` class method 
 import boto3
 from warrant.aws_srp import AWSSRP
 
-client = boto3('cognito-idp')
+client = boto3.client('cognito-idp')
 aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
              client_id='client_id', client=client)
 tokens = aws.authenticate_user()
