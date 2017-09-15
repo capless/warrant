@@ -121,6 +121,48 @@ class AWSSRP(object):
         random_long_int = get_random(128)
         return random_long_int % self.big_n
 
+    def generate_random_string(self):
+        """
+        helper function to generate a random string
+        :return {String} a random value.
+        """
+        random_bytes = os.urandom(40)
+        return base64.standard_b64encode(random_bytes)
+
+    def generate_random_password(self):
+        """
+        :return {String} Generated random value included in password hash.
+        """
+        return self.random_password
+
+    def get_salt_devices(self):
+        """
+        :return: {String} Generated random value included in devices hash.
+        """
+        return self.salt_to_hash_devices
+
+    def get_verifier_devices(self):
+        """
+        :return: {String} Value used to verify devices.
+        """
+        return self.verifier_devices
+
+    def generate_hash_device(self, device_group_key, username):
+        """
+        Generate salts and compute verifier.
+        :param device_group_key: {String} deviceGroupKey Devices to generate verifier for.
+        :param username: {String} username User to generate verifier for.
+        :return:void
+        """
+        self.random_password = self.generate_random_string()
+        combined_string = '%s%s%s' % (device_group_key, username, self.random_password)
+        hashed_string = hash_sha256(combined_string)
+        hex_random = binascii.hexify(os.urandom(16))
+        self.salt_to_hash_devices = pad_hex(hex_to_long(hex_random))
+        long_from_hashes = hex_to_long(hex_hash(self.salt_to_hash_devices + hashed_string))
+        verifier_devices_not_padded = pow(self.g, long_from_hashes, self.big_n)
+        self.verifier_devices = pad_hex(verifier_devices_not_padded)
+
     def calculate_a(self):
         """
         Calculate the client's public value A = g^a%N
