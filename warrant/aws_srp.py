@@ -95,12 +95,16 @@ class AWSSRP(object):
     NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
     PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
 
-    def __init__(self, username, password, pool_id, client_id, client=None):
+    def __init__(self, username, password, pool_id, client_id, pool_region=None, client=None):
+        if pool_region is not None and client is not None:
+            raise ValueError("pool_region and client should not both be specified "
+                             "(region should be passed to the boto3 client instead)")
+
         self.username = username
         self.password = password
         self.pool_id = pool_id
         self.client_id = client_id
-        self.client = client if client else boto3.client('cognito-idp')
+        self.client = client if client else boto3.client('cognito-idp', region_name=pool_region)
         self.big_n = hex_to_long(n_hex)
         self.g = hex_to_long(g_hex)
         self.k = hex_to_long(hex_hash('00' + n_hex + '0' + g_hex))

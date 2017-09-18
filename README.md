@@ -381,14 +381,14 @@ results in a final response that contains ID, access and refresh tokens.
 
 ### Using AWSSRP
 The `AWSSRP` class takes a username, password, cognito user pool id, cognito app id, and an optional
-`boto3` client. Afterwards, the `authenticate_user` class method is used for SRP authentication.
+pool_region or `boto3` client. Afterwards, the `authenticate_user` class method is used for SRP authentication.
 
 
 ```python
 import boto3
 from warrant.aws_srp import AWSSRP
 
-client = boto3('cognito-idp')
+client = boto3.client('cognito-idp')
 aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
              client_id='client_id', client=client)
 tokens = aws.authenticate_user()

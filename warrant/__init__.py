@@ -9,7 +9,9 @@ from jose import jwt, JWTError
 from .aws_srp import AWSSRP
 from .exceptions import TokenVerificationException
 
-def cognito_to_dict(attr_list,attr_map=dict()):
+def cognito_to_dict(attr_list, attr_map=None):
+    if attr_map is None:
+        attr_map = {}
     attr_dict = dict()
     for a in attr_list:
         name = a.get('Name')
@@ -20,11 +22,13 @@ def cognito_to_dict(attr_list,attr_map=dict()):
         attr_dict[name] = value
     return attr_dict
 
-def dict_to_cognito(attributes,attr_map=dict()):
+def dict_to_cognito(attributes, attr_map=None):
     """
     :param attributes: Dictionary of User Pool attribute names/values
     :return: list of User Pool attribute formatted dicts: {'Name': <attr_name>, 'Value': <attr_value>}
     """
+    if attr_map is None:
+        attr_map = {}
     for k,v in attr_map.items():
         if v in attributes.keys():
             attributes[k] = attributes.pop(v)
@@ -34,7 +38,7 @@ def dict_to_cognito(attributes,attr_map=dict()):
 
 class UserObj(object):
 
-    def __init__(self, username, attribute_list, cognito_obj, metadata=dict(),attr_map=dict()):
+    def __init__(self, username, attribute_list, cognito_obj, metadata=None, attr_map=None):
         """
         :param username:
         :param attribute_list:
@@ -43,12 +47,12 @@ class UserObj(object):
         self.username = username
         self.pk = username
         self._cognito = cognito_obj
-        self._attr_map = attr_map
+        self._attr_map = {} if attr_map is None else attr_map
         self._data = cognito_to_dict(attribute_list,self._attr_map)
         self.sub = self._data.pop('sub',None)
         self.email_verified = self._data.pop('email_verified',None)
         self.phone_number_verified = self._data.pop('phone_number_verified',None)
-        self._metadata = metadata
+        self._metadata = {} if metadata is None else metadata
 
     def __repr__(self):
         return '<{class_name}: {uni} >'.format(
@@ -106,7 +110,7 @@ class Cognito(object):
 
         self.user_pool_id = user_pool_id
         self.client_id = client_id
-        self.user_pool_region = user_pool_region or env('AWS_DEFAULT_REGION','us-east-1')
+        self.user_pool_region = self.user_pool_id.split('_')[0]
         self.username = username
         self.id_token = id_token
         self.access_token = access_token
@@ -114,14 +118,14 @@ class Cognito(object):
         self.secret_hash = secret_hash
         self.token_type = None
 
+        boto3_client_kwargs = {}
         if access_key and secret_key:
-            self.client = boto3.client('cognito-idp',
-                aws_access_key_id=access_key,
-                aws_secret_access_key=secret_key,
-                region_name=self.user_pool_region
-                )
-        else:
-            self.client = boto3.client('cognito-idp')
+            boto3_client_kwargs['aws_access_key'] = access_key
+            boto3_client_kwargs['aws_secret_access_key'] = secret_key
+        if user_pool_region:
+            boto3_client_kwargs['region_name'] = user_pool_region
+
+        self.client = boto3.client('cognito-idp', **boto3_client_kwargs)
 
     def get_keys(self):
 
@@ -158,11 +162,11 @@ class Cognito(object):
                    issuer=unverified_claims.get('iss'))
         except JWTError:
             raise TokenVerificationException('Your {} token could not be verified.')
-        
         setattr(self,id_name,token)
         return verified
 
-    def get_user_obj(self,username=None,attribute_list=[],metadata={},attr_map=dict()):
+    def get_user_obj(self, username=None, attribute_list=None, metadata=None,
+                     attr_map=None):
         """
         Returns the specified
         :param username: Username of the user
@@ -202,7 +206,7 @@ class Cognito(object):
             return True
         return False
 
-    def register(self, username, password,attr_map=dict(),**kwargs):
+    def register(self, username, password, attr_map=None, **kwargs):
         """
         Register the user. Other base attributes from AWS Cognito User Pools
         are  address, birthdate, email, family_name (last name), gender,
@@ -322,7 +326,7 @@ class Cognito(object):
         self.access_token = None
         self.token_type = None
 
-    def admin_update_profile(self, attrs, attr_map=dict()):
+    def admin_update_profile(self, attrs, attr_map=None):
         user_attrs = dict_to_cognito(attrs, attr_map)
         self.client.admin_update_user_attributes(
             UserPoolId = self.user_pool_id,
@@ -330,7 +334,7 @@ class Cognito(object):
             UserAttributes = user_attrs
         )
 
-    def update_profile(self, attrs,attr_map=dict()):
+    def update_profile(self, attrs, attr_map=None):
         """
         Updates User attributes
         :param attrs: Dictionary of attribute name, values
@@ -343,7 +347,7 @@ class Cognito(object):
             AccessToken=self.access_token
         )
 
-    def get_user(self,attr_map=dict()):
+    def get_user(self, attr_map=None):
         """
         Returns a UserObj (or whatever the self.user_class is) by using the
         user's access token.
@@ -365,7 +369,7 @@ class Cognito(object):
                                  attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata,attr_map=attr_map)
 
-    def get_users(self,attr_map=dict()):
+    def get_users(self, attr_map=None):
         """
         Returns all users for a user pool. Returns instances of the
         self.user_class.
@@ -381,7 +385,7 @@ class Cognito(object):
                                   attr_map=attr_map)
                 for user in response.get('Users')]
 
-    def admin_get_user(self,attr_map=dict()):
+    def admin_get_user(self, attr_map=None):
         """
         Get the user's details using admin super privileges.
         :param attr_map: Dictionary map from Cognito attributes to attribute
@@ -403,7 +407,7 @@ class Cognito(object):
                                  attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata,attr_map=attr_map)
 
-    def admin_create_user(self, username, temporary_password='', attr_map=dict(), **kwargs):
+    def admin_create_user(self, username, temporary_password='', attr_map=None, **kwargs):
         """
         Create a user using admin super privileges.
         :param username: User Pool username
