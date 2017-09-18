@@ -110,7 +110,7 @@ class Cognito(object):
 
         self.user_pool_id = user_pool_id
         self.client_id = client_id
-        self.user_pool_region = user_pool_region
+        self.user_pool_region = self.user_pool_id.split('_')[0]
         self.username = username
         self.id_token = id_token
         self.access_token = access_token
@@ -162,7 +162,6 @@ class Cognito(object):
                    issuer=unverified_claims.get('iss'))
         except JWTError:
             raise TokenVerificationException('Your {} token could not be verified.')
-        
         setattr(self,id_name,token)
         return verified
 
