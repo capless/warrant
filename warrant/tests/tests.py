@@ -7,9 +7,6 @@ from warrant import Cognito, UserObj, TokenVerificationException
 from warrant.aws_srp import AWSSRP
 
 
-AWSSRP_TEST_FILE = 'awssrp_test_variables.json'
-
-
 class UserObjTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -136,7 +133,7 @@ class CognitoAuthTestCase(unittest.TestCase):
                 'somerandom':'attribute'
             }
         )
-        self.assertEquals(u.somerandom,'attribute')
+        self.assertEqual(u.somerandom,'attribute')
 
     
     def test_admin_authenticate(self):
