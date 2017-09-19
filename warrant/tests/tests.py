@@ -3,7 +3,7 @@ import unittest
 from mock import patch
 from envs import env
 
-from warrant import Cognito, UserObj, TokenVerificationException
+from warrant import Cognito, UserObj, GroupObj, TokenVerificationException
 from warrant.aws_srp import AWSSRP
 
 
@@ -31,6 +31,20 @@ class UserObjTestCase(unittest.TestCase):
         self.assertEqual(u.pk,self.user_metadata.get('username'))
         self.assertEqual(u.name,self.user_info[0].get('Value'))
         self.assertEqual(u.user_status,self.user_metadata.get('user_status'))
+
+
+class GroupObjTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
+        self.app_id = env('COGNITO_APP_ID')
+        self.group_data = {'GroupName': 'test_group', 'Precedence': 1}
+        self.cognito_obj = Cognito(self.cognito_user_pool_id, self.app_id)
+
+    def test_init(self):
+        group = GroupObj(group_data=self.group_data, cognito_obj=self.cognito_obj)
+        self.assertEqual(group.group_name, 'test_group')
+        self.assertEqual(group.precedence, 1)
 
 
 class CognitoAuthTestCase(unittest.TestCase):
