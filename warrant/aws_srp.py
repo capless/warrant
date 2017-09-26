@@ -55,14 +55,14 @@ def pad_hex(long_int):
     :return {String} Padded hex string.
     """
     if not isinstance(long_int, six.string_types):
-        hashStr = long_to_hex(long_int)
+        hash_str = long_to_hex(long_int)
     else:
-        hashStr = long_int
-    if len(hashStr) % 2 == 1:
-        hashStr = '0%s' % hashStr
-    elif hashStr[0] in '89ABCDEFabcdef':
-        hashStr = '00%s' % hashStr
-    return hashStr
+        hash_str = long_int
+    if len(hash_str) % 2 == 1:
+        hash_str = '0%s' % hash_str
+    elif hash_str[0] in '89ABCDEFabcdef':
+        hash_str = '00%s' % hash_str
+    return hash_str
 
 
 def compute_hkdf(ikm, salt):
