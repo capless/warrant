@@ -10,8 +10,11 @@ from warrant.aws_srp import AWSSRP
 class UserObjTestCase(unittest.TestCase):
 
     def setUp(self):
+        if env('USE_CLIENT_SECRET') == 'True':
+            self.app_id = env('COGNITO_APP_WITH_SECRET_ID')
+        else:
+            self.app_id = env('COGNITO_APP_ID')
         self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
-        self.app_id = env('COGNITO_APP_ID')
         self.username = env('COGNITO_TEST_USERNAME')
 
         self.user = Cognito(self.cognito_user_pool_id, self.app_id,
@@ -36,8 +39,11 @@ class UserObjTestCase(unittest.TestCase):
 class GroupObjTestCase(unittest.TestCase):
 
     def setUp(self):
+        if env('USE_CLIENT_SECRET') == 'True':
+            self.app_id = env('COGNITO_APP_WITH_SECRET_ID')
+        else:
+            self.app_id = env('COGNITO_APP_ID')
         self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
-        self.app_id = env('COGNITO_APP_ID')
         self.group_data = {'GroupName': 'test_group', 'Precedence': 1}
         self.cognito_obj = Cognito(self.cognito_user_pool_id, self.app_id)
 
@@ -50,9 +56,13 @@ class GroupObjTestCase(unittest.TestCase):
 class CognitoAuthTestCase(unittest.TestCase):
 
     def setUp(self):
+        if env('USE_CLIENT_SECRET') == 'True':
+            self.app_id = env('COGNITO_APP_WITH_SECRET_ID')
+            self.client_secret = env('COGNITO_CLIENT_SECRET')
+        else:
+            self.app_id = env('COGNITO_APP_ID')
+            self.client_secret = None
         self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
-        self.app_id = env('COGNITO_APP_ID')
-        self.client_secret = env('COGNITO_CLIENT_SECRET')
         self.username = env('COGNITO_TEST_USERNAME')
         self.password = env('COGNITO_TEST_PASSWORD')
         self.user = Cognito(self.cognito_user_pool_id,self.app_id,
@@ -162,12 +172,15 @@ class CognitoAuthTestCase(unittest.TestCase):
 class AWSSRPTestCase(unittest.TestCase):
 
     def setUp(self):
+        if env('USE_CLIENT_SECRET') == 'True':
+            self.client_secret = env('COGNITO_CLIENT_SECRET')
+            self.app_id = env('COGNITO_APP_WITH_SECRET_ID')
+        else:
+            self.app_id = env('COGNITO_APP_ID')
+            self.client_secret = None
         self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
-        self.app_id = env('COGNITO_APP_ID')
-        self.client_secret = env('COGNITO_CLIENT_SECRET')
         self.username = env('COGNITO_TEST_USERNAME')
         self.password = env('COGNITO_TEST_PASSWORD')
-
         self.aws = AWSSRP(username=self.username, password=self.password,
                           pool_id=self.cognito_user_pool_id,
                           client_id=self.app_id, client_secret=self.client_secret)
