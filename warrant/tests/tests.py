@@ -52,10 +52,11 @@ class CognitoAuthTestCase(unittest.TestCase):
     def setUp(self):
         self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
         self.app_id = env('COGNITO_APP_ID')
+        self.client_secret = env('COGNITO_CLIENT_SECRET')
         self.username = env('COGNITO_TEST_USERNAME')
         self.password = env('COGNITO_TEST_PASSWORD')
         self.user = Cognito(self.cognito_user_pool_id,self.app_id,
-                         username=self.username)
+                         username=self.username, client_secret=self.client_secret)
 
 
     def test_authenticate(self):
@@ -163,12 +164,13 @@ class AWSSRPTestCase(unittest.TestCase):
     def setUp(self):
         self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID')
         self.app_id = env('COGNITO_APP_ID')
+        self.client_secret = env('COGNITO_CLIENT_SECRET')
         self.username = env('COGNITO_TEST_USERNAME')
         self.password = env('COGNITO_TEST_PASSWORD')
 
         self.aws = AWSSRP(username=self.username, password=self.password,
                           pool_id=self.cognito_user_pool_id,
-                          client_id=self.app_id)
+                          client_id=self.app_id, client_secret=self.client_secret)
 
     def tearDown(self):
         del self.aws

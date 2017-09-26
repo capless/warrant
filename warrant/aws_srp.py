@@ -95,7 +95,8 @@ class AWSSRP(object):
     NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
     PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
 
-    def __init__(self, username, password, pool_id, client_id, pool_region=None, client=None):
+    def __init__(self, username, password, pool_id, client_id, pool_region=None,
+                 client=None, client_secret=None):
         if pool_region is not None and client is not None:
             raise ValueError("pool_region and client should not both be specified "
                              "(region should be passed to the boto3 client instead)")
@@ -104,6 +105,7 @@ class AWSSRP(object):
         self.password = password
         self.pool_id = pool_id
         self.client_id = client_id
+        self.client_secret = client_secret
         self.client = client if client else boto3.client('cognito-idp', region_name=pool_region)
         self.big_n = hex_to_long(n_hex)
         self.g = hex_to_long(g_hex)
@@ -152,12 +154,23 @@ class AWSSRP(object):
         int_value2 = server_b_value - self.k * g_mod_pow_xn
         s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
         hkdf = compute_hkdf(bytearray.fromhex(pad_hex(s_value)),
-                           bytearray.fromhex(pad_hex(long_to_hex(u_value))))
+                            bytearray.fromhex(pad_hex(long_to_hex(u_value))))
         return hkdf
 
     def get_auth_params(self):
-        return {'USERNAME': self.username,
-                'SRP_A': long_to_hex(self.large_a_value)}
+        auth_params = {'USERNAME': self.username,
+                       'SRP_A': long_to_hex(self.large_a_value)}
+        if self.client_secret is not None:
+            auth_params.update({
+                "SECRET_HASH":
+                self.get_secret_hash(self.username,self.client_id, self.client_secret)})
+        return auth_params
+
+    @staticmethod
+    def get_secret_hash(username, client_id, client_secret):
+        message = bytearray(username + client_id, 'utf-8')
+        hmac_obj = hmac.new(bytearray(client_secret, 'utf-8'), message, hashlib.sha256)
+        return base64.standard_b64encode(hmac_obj.digest()).decode('utf-8')
 
     def process_challenge(self, challenge_parameters, test_timestamp=None):
         user_id_for_srp = challenge_parameters['USER_ID_FOR_SRP']
@@ -176,11 +189,15 @@ class AWSSRP(object):
               bytearray(secret_block_bytes) + bytearray(timestamp, 'utf-8')
         hmac_obj = hmac.new(hkdf, msg, digestmod=hashlib.sha256)
         signature_string = base64.standard_b64encode(hmac_obj.digest())
-
-        return {"TIMESTAMP": timestamp,
-                "USERNAME": user_id_for_srp,
-                "PASSWORD_CLAIM_SECRET_BLOCK": secret_block_b64,
-                "PASSWORD_CLAIM_SIGNATURE": signature_string.decode('utf-8')}
+        response = {'TIMESTAMP': timestamp,
+                    'USERNAME': user_id_for_srp,
+                    'PASSWORD_CLAIM_SECRET_BLOCK': secret_block_b64,
+                    'PASSWORD_CLAIM_SIGNATURE': signature_string.decode('utf-8')}
+        if self.client_secret is not None:
+            response.update({
+                "SECRET_HASH":
+                self.get_secret_hash(self.username, self.client_id, self.client_secret)})
+        return response
 
     def authenticate_user(self, client=None):
         boto_client = self.client or client
