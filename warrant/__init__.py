@@ -240,11 +240,12 @@ class Cognito(object):
         """
         self.client = session.client('cognito-idp')
 
-    def check_token(self):
+    def check_token(self, renew=True):
         """
         Checks the exp attribute of the access_token and either refreshes
         the tokens by calling the renew_access_tokens method or does nothing
-        :return: None
+        :param renew: bool indicating whether to refresh on expiration
+        :return: bool indicating whether access_token has expired
         """
         if not self.access_token:
             raise AttributeError('Access Token Required to Check Token')
@@ -252,9 +253,12 @@ class Cognito(object):
         dec_access_token = jwt.get_unverified_claims(self.access_token)
 
         if now > datetime.datetime.fromtimestamp(dec_access_token['exp']):
-            self.renew_access_token()
-            return True
-        return False
+            expired = True
+            if renew:
+                self.renew_access_token()
+        else:
+            expired = False
+        return expired
 
     def register(self, username, password, attr_map=None, **kwargs):
         """
