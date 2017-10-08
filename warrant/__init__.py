@@ -135,9 +135,8 @@ class Cognito(object):
 
     def __init__(
             self, user_pool_id, client_id,user_pool_region=None,
-            username=None,
-            id_token=None,refresh_token=None,
-            access_token=None,secret_hash=None,
+            username=None, id_token=None, refresh_token=None,
+            access_token=None, client_secret=None,
             access_key=None, secret_key=None,
             ):
         """
@@ -158,7 +157,7 @@ class Cognito(object):
         self.id_token = id_token
         self.access_token = access_token
         self.refresh_token = refresh_token
-        self.secret_hash = secret_hash
+        self.client_secret = client_secret
         self.token_type = None
 
         boto3_client_kwargs = {}
@@ -241,11 +240,12 @@ class Cognito(object):
         """
         self.client = session.client('cognito-idp')
 
-    def check_token(self):
+    def check_token(self, renew=True):
         """
         Checks the exp attribute of the access_token and either refreshes
         the tokens by calling the renew_access_tokens method or does nothing
-        :return: None
+        :param renew: bool indicating whether to refresh on expiration
+        :return: bool indicating whether access_token has expired
         """
         if not self.access_token:
             raise AttributeError('Access Token Required to Check Token')
@@ -253,9 +253,12 @@ class Cognito(object):
         dec_access_token = jwt.get_unverified_claims(self.access_token)
 
         if now > datetime.datetime.fromtimestamp(dec_access_token['exp']):
-            self.renew_access_token()
-            return True
-        return False
+            expired = True
+            if renew:
+                self.renew_access_token()
+        else:
+            expired = False
+        return expired
 
     def register(self, username, password, attr_map=None, **kwargs):
         """
@@ -319,7 +322,11 @@ class Cognito(object):
                 'USERNAME': self.username,
                 'PASSWORD': password
             }
-
+        if self.client_secret is not None:
+            auth_params.update({
+                'SECRET_HASH':
+                AWSSRP.get_secret_hash(self.username, self.client_id,
+                                       self.client_secret)})
         tokens = self.client.admin_initiate_auth(
             UserPoolId=self.user_pool_id,
             ClientId=self.client_id,
@@ -340,7 +347,8 @@ class Cognito(object):
         :return:
         """
         aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
-                     client_id=self.client_id, client=self.client)
+                     client_id=self.client_id, client=self.client,
+                     client_secret=self.client_secret)
         tokens = aws.authenticate_user()
         self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
@@ -354,7 +362,8 @@ class Cognito(object):
         :param password: The user's new passsword
         """
         aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
-                     client_id=self.client_id, client=self.client)
+                     client_id=self.client_id, client=self.client,
+                     client_secret=self.client_secret)
         tokens = aws.set_new_password_challenge(new_password)
         self.id_token = tokens['AuthenticationResult']['IdToken']
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
@@ -508,12 +517,14 @@ class Cognito(object):
         """
         Sets a new access token on the User using the refresh token.
         """
+        auth_params = {'REFRESH_TOKEN': self.refresh_token}
+        if self.client_secret is not None:
+            auth_params.update({'SECRET_HASH':
+                                AWSSRP.get_secret_hash(self.username, self.client_id, self.client_secret)})
         refresh_response = self.client.initiate_auth(
             ClientId=self.client_id,
             AuthFlow='REFRESH_TOKEN',
-            AuthParameters={
-                'REFRESH_TOKEN': self.refresh_token
-            },
+            AuthParameters=auth_params,
         )
 
         self._set_attributes(

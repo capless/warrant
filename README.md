@@ -67,6 +67,7 @@ COGNITO_JWKS={"keys": [{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKL
 from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
+    client_secret='optional-client-secret'
     username='optional-username',
     id_token='optional-id-token',
     refresh_token='optional-refresh-token',
@@ -79,6 +80,7 @@ u = Cognito('your-user-pool-id','your-client-id',
 
 - **user_pool_id:** Cognito User Pool ID
 - **client_id:** Cognito User Pool Application client ID
+- **client_secret:** App client secret (if app client is configured with client secret)
 - **username:** User Pool username
 - **id_token:** ID Token returned by authentication
 - **refresh_token:** Refresh Token returned by authentication
@@ -426,8 +428,9 @@ The process involves a series of authentication challenges and responses, which 
 results in a final response that contains ID, access and refresh tokens.
 
 ### Using AWSSRP
-The `AWSSRP` class takes a username, password, cognito user pool id, cognito app id, and an optional
-pool_region or `boto3` client. Afterwards, the `authenticate_user` class method is used for SRP authentication.
+The `AWSSRP` class takes a username, password, cognito user pool id, cognito app id, an optional
+client secret (if app client is configured with client secret), an optional pool_region or `boto3` client.
+Afterwards, the `authenticate_user` class method is used for SRP authentication.
 
 
 ```python
