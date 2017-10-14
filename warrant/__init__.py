@@ -1,5 +1,6 @@
 import ast
 import boto3
+import botocore
 import datetime
 import re
 import requests
@@ -164,6 +165,10 @@ class Cognito(object):
         if access_key and secret_key:
             boto3_client_kwargs['aws_access_key'] = access_key
             boto3_client_kwargs['aws_secret_access_key'] = secret_key
+        else:
+            boto3_client_kwargs['config'] = botocore.config.Config(
+                signature_version=botocore.UNSIGNED
+            )
         if user_pool_region:
             boto3_client_kwargs['region_name'] = user_pool_region
 
