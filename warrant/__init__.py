@@ -163,7 +163,7 @@ class Cognito(object):
 
         boto3_client_kwargs = {}
         if access_key and secret_key:
-            boto3_client_kwargs['aws_access_key'] = access_key
+            boto3_client_kwargs['aws_access_key_id'] = access_key
             boto3_client_kwargs['aws_secret_access_key'] = secret_key
         else:
             boto3_client_kwargs['config'] = botocore.config.Config(
