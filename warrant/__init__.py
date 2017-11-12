@@ -296,6 +296,21 @@ class Cognito(object):
         response.pop('ResponseMetadata')
         return response
 
+    def admin_confirm_sign_up(self, username=None):
+        """
+        Confirms user registration as an admin without using a confirmation
+        code. Works on any user.
+        :param confirmation_code: Confirmation code sent via text or email
+        :param username: User's username
+        :return:
+        """
+        if not username:
+            username = self.username
+        self.client.admin_confirm_sign_up(
+            UserPoolId=self.user_pool_id,
+            Username=username,
+        )
+
     def confirm_sign_up(self,confirmation_code,username=None):
         """
         Using the confirmation code that is either sent via email or text
