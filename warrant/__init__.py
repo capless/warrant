@@ -300,7 +300,6 @@ class Cognito(object):
         """
         Confirms user registration as an admin without using a confirmation
         code. Works on any user.
-        :param confirmation_code: Confirmation code sent via text or email
         :param username: User's username
         :return:
         """
