@@ -340,11 +340,11 @@ class Cognito(object):
         """
         if not username:
             username = self.username
-        self.client.confirm_sign_up(
-            ClientId=self.client_id,
-            Username=username,
-            ConfirmationCode=confirmation_code
-        )
+        params = {'ClientId': self.client_id,
+                  'Username': username,
+                  'ConfirmationCode': confirmation_code}
+        self._add_secret_hash(params, 'SecretHash')
+        self.client.confirm_sign_up(**params)
 
     def admin_authenticate(self, password):
         """
@@ -568,10 +568,12 @@ class Cognito(object):
         """
         Sends a verification code to the user to use to change their password.
         """
-        self.client.forgot_password(
-            ClientId=self.client_id,
-            Username=self.username
-        )
+        params = {
+            'ClientId': self.client_id,
+            'Username': self.username
+        }
+        self._add_secret_hash(params, 'SecretHash')
+        self.client.forgot_password(**params)
 
 
     def delete_user(self):
@@ -595,12 +597,13 @@ class Cognito(object):
         to retrieve a forgotten password
         :param password: New password
         """
-        response = self.client.confirm_forgot_password(
-            ClientId=self.client_id,
-            Username=self.username,
-            ConfirmationCode=confirmation_code,
-            Password=password
-        )
+        params = {'ClientId': self.client_id,
+                  'Username': self.username,
+                  'ConfirmationCode': confirmation_code,
+                  'Password': password
+                  }
+        self._add_secret_hash(params, 'SecretHash')
+        response = self.client.confirm_forgot_password(**params)
         self._set_attributes(response, {'password': password})
 
     def change_password(self, previous_password, proposed_password):
