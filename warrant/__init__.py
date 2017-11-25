@@ -307,11 +307,7 @@ class Cognito(object):
             'Password': password,
             'UserAttributes': cognito_attributes
         }
-
-        if self.client_secret is not None:
-            params.update({'SecretHash':
-                           AWSSRP.get_secret_hash(username, self.client_id, self.client_secret)})
-
+        self._add_secret_hash(params, 'SecretHash')
         response = self.client.sign_up(**params)
 
         attributes.update(username=username, password=password)
@@ -360,11 +356,7 @@ class Cognito(object):
                 'USERNAME': self.username,
                 'PASSWORD': password
             }
-        if self.client_secret is not None:
-            auth_params.update({
-                'SECRET_HASH':
-                AWSSRP.get_secret_hash(self.username, self.client_id,
-                                       self.client_secret)})
+        self._add_secret_hash(auth_params, 'SECRET_HASH')
         tokens = self.client.admin_initiate_auth(
             UserPoolId=self.user_pool_id,
             ClientId=self.client_id,
@@ -556,9 +548,7 @@ class Cognito(object):
         Sets a new access token on the User using the refresh token.
         """
         auth_params = {'REFRESH_TOKEN': self.refresh_token}
-        if self.client_secret is not None:
-            auth_params.update({'SECRET_HASH':
-                                AWSSRP.get_secret_hash(self.username, self.client_id, self.client_secret)})
+        self._add_secret_hash(auth_params, 'SECRET_HASH')
         refresh_response = self.client.initiate_auth(
             ClientId=self.client_id,
             AuthFlow='REFRESH_TOKEN',
@@ -624,6 +614,16 @@ class Cognito(object):
             AccessToken=self.access_token
         )
         self._set_attributes(response, {'password': proposed_password})
+
+    def _add_secret_hash(self, parameters, key):
+        """
+        Helper function that computes SecretHash and adds it
+        to a parameters dictionary at a specified key
+        """
+        if self.client_secret is not None:
+            secret_hash = AWSSRP.get_secret_hash(self.username, self.client_id,
+                                                 self.client_secret)
+            parameters[key] = secret_hash
 
     def _set_attributes(self, response, attribute_dict):
         """
