@@ -263,18 +263,17 @@ class Cognito(object):
         return expired
 
     def add_base_attributes(self, **kwargs):
-        self.base_attributes=kwargs
+        self.base_attributes = kwargs
 
     def add_custom_attributes(self, **kwargs):
-
-        custom_key='custom'
-        custom_attributes={}
+        custom_key = 'custom'
+        custom_attributes = {}
         
-        for old_key,value in kwargs.items():
-            new_key=custom_key+':'+old_key
-            custom_attributes[new_key]= value
+        for old_key, value in kwargs.items():
+            new_key = custom_key + ':' + old_key
+            custom_attributes[new_key] = value
         
-        self.custom_attributes= custom_attributes
+        self.custom_attributes = custom_attributes
 
     def register(self, username, password, attr_map=None):
         """
@@ -286,7 +285,6 @@ class Cognito(object):
         :param username: User Pool username
         :param password: User Pool password
         :param attr_map: Attribute map to Cognito's attributes
-        :param kwargs: Additional User Pool attributes
         :return response: Response from Cognito
 
         Example response::
@@ -299,16 +297,18 @@ class Cognito(object):
             }
         }
         """
-
-        attributes= dict(self.base_attributes.items() + self.custom_attributes.items())
-        cognito_attributes = dict_to_cognito(attributes,attr_map)
-        user_attrs = [{'Name': key, 'Value': value} for key, value in attributes.items()]
-        response = self.client.sign_up(
-            ClientId=self.client_id,
-            Username=username,
-            Password=password,
-            UserAttributes= cognito_attributes
-        )
+        attributes = self.base_attributes.copy()
+        if self.custom_attributes:
+            attributes.update(self.custom_attributes)
+        cognito_attributes = dict_to_cognito(attributes, attr_map)
+        params = {
+            'ClientId': self.client_id,
+            'Username': username,
+            'Password': password,
+            'UserAttributes': cognito_attributes
+        }
+        self._add_secret_hash(params, 'SecretHash')
+        response = self.client.sign_up(**params)
 
         attributes.update(username=username, password=password)
         self._set_attributes(response, attributes)
@@ -340,11 +340,11 @@ class Cognito(object):
         """
         if not username:
             username = self.username
-        self.client.confirm_sign_up(
-            ClientId=self.client_id,
-            Username=username,
-            ConfirmationCode=confirmation_code
-        )
+        params = {'ClientId': self.client_id,
+                  'Username': username,
+                  'ConfirmationCode': confirmation_code}
+        self._add_secret_hash(params, 'SecretHash')
+        self.client.confirm_sign_up(**params)
 
     def admin_authenticate(self, password):
         """
@@ -356,11 +356,7 @@ class Cognito(object):
                 'USERNAME': self.username,
                 'PASSWORD': password
             }
-        if self.client_secret is not None:
-            auth_params.update({
-                'SECRET_HASH':
-                AWSSRP.get_secret_hash(self.username, self.client_id,
-                                       self.client_secret)})
+        self._add_secret_hash(auth_params, 'SECRET_HASH')
         tokens = self.client.admin_initiate_auth(
             UserPoolId=self.user_pool_id,
             ClientId=self.client_id,
@@ -552,9 +548,7 @@ class Cognito(object):
         Sets a new access token on the User using the refresh token.
         """
         auth_params = {'REFRESH_TOKEN': self.refresh_token}
-        if self.client_secret is not None:
-            auth_params.update({'SECRET_HASH':
-                                AWSSRP.get_secret_hash(self.username, self.client_id, self.client_secret)})
+        self._add_secret_hash(auth_params, 'SECRET_HASH')
         refresh_response = self.client.initiate_auth(
             ClientId=self.client_id,
             AuthFlow='REFRESH_TOKEN',
@@ -574,10 +568,12 @@ class Cognito(object):
         """
         Sends a verification code to the user to use to change their password.
         """
-        self.client.forgot_password(
-            ClientId=self.client_id,
-            Username=self.username
-        )
+        params = {
+            'ClientId': self.client_id,
+            'Username': self.username
+        }
+        self._add_secret_hash(params, 'SecretHash')
+        self.client.forgot_password(**params)
 
 
     def delete_user(self):
@@ -601,12 +597,13 @@ class Cognito(object):
         to retrieve a forgotten password
         :param password: New password
         """
-        response = self.client.confirm_forgot_password(
-            ClientId=self.client_id,
-            Username=self.username,
-            ConfirmationCode=confirmation_code,
-            Password=password
-        )
+        params = {'ClientId': self.client_id,
+                  'Username': self.username,
+                  'ConfirmationCode': confirmation_code,
+                  'Password': password
+                  }
+        self._add_secret_hash(params, 'SecretHash')
+        response = self.client.confirm_forgot_password(**params)
         self._set_attributes(response, {'password': password})
 
     def change_password(self, previous_password, proposed_password):
@@ -620,6 +617,16 @@ class Cognito(object):
             AccessToken=self.access_token
         )
         self._set_attributes(response, {'password': proposed_password})
+
+    def _add_secret_hash(self, parameters, key):
+        """
+        Helper function that computes SecretHash and adds it
+        to a parameters dictionary at a specified key
+        """
+        if self.client_secret is not None:
+            secret_hash = AWSSRP.get_secret_hash(self.username, self.client_id,
+                                                 self.client_secret)
+            parameters[key] = secret_hash
 
     def _set_attributes(self, response, attribute_dict):
         """

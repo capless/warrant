@@ -90,15 +90,16 @@ class CognitoAuthTestCase(unittest.TestCase):
     #     self.assertEqual(self.user.access_token,None)
 
     @patch('warrant.Cognito', autospec=True)
-    def test_register(self,cognito_user):
+    def test_register(self, cognito_user):
         u = cognito_user(self.cognito_user_pool_id, self.app_id,
                          username=self.username)
-        res = u.register('sampleuser','sample4#Password',
-                given_name='Brian',family_name='Jones',
-                name='Brian Jones',
-                email='bjones39@capless.io',
-                phone_number='+19194894555',gender='Male',
-                preferred_username='billyocean')
+        u.add_base_attributes(
+            given_name='Brian', family_name='Jones',
+            name='Brian Jones', email='bjones39@capless.io',
+            phone_number='+19194894555', gender='Male',
+            preferred_username='billyocean')
+        res = u.register('sampleuser', 'sample4#Password')
+
         #TODO: Write assumptions
 
 

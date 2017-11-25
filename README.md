@@ -129,7 +129,7 @@ u = Cognito('your-user-pool-id','your-client-id',
 
 Register a user to the user pool
 
-**Important:** The keyword arguments used for this method depend on your user pool's configuration, and make sure the client id (app id) used has write permissions for the attriubtes you are trying to create. Example, if you want to create a user with a given_name equal to Johnson make sure the client_id you're using has permissions to edit or create given_name for a user in the pool.
+**Important:** The arguments for `add_base_attributes` and `add_custom_attributes` methods depend on your user pool's configuration, and make sure the client id (app id) used has write permissions for the attriubtes you are trying to create. Example, if you want to create a user with a given_name equal to Johnson make sure the client_id you're using has permissions to edit or create given_name for a user in the pool.
 
 
 ```python
@@ -137,14 +137,31 @@ from warrant import Cognito
 
 u = Cognito('your-user-pool-id', 'your-client-id')
 
-u.register('username', 'password', email='you@you.com', some_random_attr='random value')  # **kwargs are the other attributes that should be set ex. email, given_name, family_name
+u.add_base_attributes(email='you@you.com', some_random_attr='random value')
+
+u.register('username', 'password')
+```
+
+Register with custom attributes.
+
+Firstly, add custom attributes on 'General settings -> Attributes' page.
+Secondly, set permissions on 'Generals settings-> App clients-> Show details-> Set attribute read and write permissions' page.
+```python
+from warrant import Cognito
+
+u = Cognito('your-user-pool-id', 'your-client-id')
+
+u.add_base_attributes(email='you@you.com', some_random_attr='random value')
+
+u.add_custom_attributes(state='virginia', city='Centreville')
+
+u.register('username', 'password')
 ```
 ##### Arguments
 
 - **username:** User Pool username
 - **password:** User Pool password
 - **attr_map:** Attribute map to Cognito's attributes
-- **kwargs:** Additional User Pool attributes ex. `**{'email':'you@you.com'}`
 
 
 #### Authenticate ####
