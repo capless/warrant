@@ -285,7 +285,6 @@ class Cognito(object):
         :param username: User Pool username
         :param password: User Pool password
         :param attr_map: Attribute map to Cognito's attributes
-        :param kwargs: Additional User Pool attributes
         :return response: Response from Cognito
 
         Example response::
@@ -298,16 +297,22 @@ class Cognito(object):
             }
         }
         """
+        attributes = self.base_attributes.copy()
+        if self.custom_attributes:
+            attributes.update(self.custom_attributes)
+        cognito_attributes = dict_to_cognito(attributes, attr_map)
+        params = {
+            'ClientId': self.client_id,
+            'Username': username,
+            'Password': password,
+            'UserAttributes': cognito_attributes
+        }
 
-        attributes= dict(self.base_attributes.items() + self.custom_attributes.items())
-        cognito_attributes = dict_to_cognito(attributes,attr_map)
-        user_attrs = [{'Name': key, 'Value': value} for key, value in attributes.items()]
-        response = self.client.sign_up(
-            ClientId=self.client_id,
-            Username=username,
-            Password=password,
-            UserAttributes= cognito_attributes
-        )
+        if self.client_secret is not None:
+            params.update({'SecretHash':
+                           AWSSRP.get_secret_hash(username, self.client_id, self.client_secret)})
+
+        response = self.client.sign_up(**params)
 
         attributes.update(username=username, password=password)
         self._set_attributes(response, attributes)
