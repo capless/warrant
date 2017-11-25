@@ -1,5 +1,12 @@
 # History
 
+## 0.6.0
+
+- Renamed boto3 argument, fixes aws_access_key error
+- Confirm user registration as admin without needing a confirmation code.
+- Added helper function _add_secret_hash, DRY
+- Added support for registering a user with a ClientSecret 
+
 ## 0.5.0
 
 - Added support for app clients with a generated secret. 
