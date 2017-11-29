@@ -4,7 +4,6 @@ import datetime
 import hashlib
 import hmac
 import re
-import sys
 
 import boto3
 import os
