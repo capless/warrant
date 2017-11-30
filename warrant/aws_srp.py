@@ -3,6 +3,7 @@ import binascii
 import datetime
 import hashlib
 import hmac
+import platform
 import re
 
 import boto3
@@ -88,6 +89,17 @@ def calculate_u(big_a, big_b):
     """
     u_hex_hash = hex_hash(pad_hex(big_a) + pad_hex(big_b))
     return hex_to_long(u_hex_hash)
+
+
+def current_time():
+    """Return the current time formatted per Cognito rules."""
+    if sys.platform.startswith('win'):
+        return datetime.datetime.utcnow().strftime("%a %b %#d %H:%M:%S UTC %Y")
+    elif platform.libc_ver()[0] == 'glibc':
+        return datetime.datetime.utcnow().strftime("%a %b %-d %H:%M:%S UTC %Y")
+    else:
+        timestamp = datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
+        return re.sub(r" 0(\d)", r" \1 ", timestamp)
 
 
 class AWSSRP(object):
@@ -177,8 +189,7 @@ class AWSSRP(object):
         salt_hex = challenge_parameters['SALT']
         srp_b_hex = challenge_parameters['SRP_B']
         secret_block_b64 = challenge_parameters['SECRET_BLOCK'] 
-        timestamp = test_timestamp or datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
-        re.sub(r" 0(\d) ", r" \1 ", timestamp, 1)
+        timestamp = test_timestamp or current_time()
         hkdf = self.get_password_authentication_key(user_id_for_srp,
                                                     self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
