@@ -90,6 +90,15 @@ def calculate_u(big_a, big_b):
     return hex_to_long(u_hex_hash)
 
 
+def current_time():
+    """Return the current time formatted per Cognito rules."""
+    if sys.platform.startswith('win'):
+        format_string = "%a %b %#d %H:%M:%S UTC %Y"
+    else:
+        format_string = "%a %b %-d %H:%M:%S UTC %Y"
+    return datetime.datetime.utcnow().strftime(format_string)
+
+
 class AWSSRP(object):
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
@@ -177,11 +186,7 @@ class AWSSRP(object):
         salt_hex = challenge_parameters['SALT']
         srp_b_hex = challenge_parameters['SRP_B']
         secret_block_b64 = challenge_parameters['SECRET_BLOCK']
-        if sys.platform.startswith('win'):
-            format_string = "%a %b %#d %H:%M:%S UTC %Y"
-        else:
-            format_string = "%a %b %-d %H:%M:%S UTC %Y"
-        timestamp = test_timestamp or datetime.datetime.utcnow().strftime(format_string)
+        timestamp = test_timestamp or current_time()
         hkdf = self.get_password_authentication_key(user_id_for_srp,
                                                     self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
