@@ -99,7 +99,7 @@ def current_time():
         return datetime.datetime.utcnow().strftime("%a %b %-d %H:%M:%S UTC %Y")
     else:
         timestamp = datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
-        return re.sub(r" 0(\d)", r" \1 ", timestamp)
+        return re.sub(r" 0(\d) ", r" \1 ", timestamp)
 
 
 class AWSSRP(object):
