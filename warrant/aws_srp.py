@@ -3,7 +3,7 @@ import binascii
 import datetime
 import hashlib
 import hmac
-import sys
+import re
 
 import boto3
 import os
@@ -172,16 +172,14 @@ class AWSSRP(object):
         hmac_obj = hmac.new(bytearray(client_secret, 'utf-8'), message, hashlib.sha256)
         return base64.standard_b64encode(hmac_obj.digest()).decode('utf-8')
 
-    def process_challenge(self, challenge_parameters, test_timestamp=None):
+    def process_challenge(self, challenge_parameters):
         user_id_for_srp = challenge_parameters['USER_ID_FOR_SRP']
         salt_hex = challenge_parameters['SALT']
         srp_b_hex = challenge_parameters['SRP_B']
         secret_block_b64 = challenge_parameters['SECRET_BLOCK']
-        if sys.platform.startswith('win'):
-            format_string = "%a %b %#d %H:%M:%S UTC %Y"
-        else:
-            format_string = "%a %b %-d %H:%M:%S UTC %Y"
-        timestamp = test_timestamp or datetime.datetime.utcnow().strftime(format_string)
+        # re strips leading zero from a day number (required by AWS Cognito)
+        timestamp = re.sub(r" 0(\d) ", r" \1 ",
+                           datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"))
         hkdf = self.get_password_authentication_key(user_id_for_srp,
                                                     self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
