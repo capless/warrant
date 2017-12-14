@@ -268,11 +268,11 @@ class Cognito(object):
     def add_custom_attributes(self, **kwargs):
         custom_key = 'custom'
         custom_attributes = {}
-        
+
         for old_key, value in kwargs.items():
             new_key = custom_key + ':' + old_key
             custom_attributes[new_key] = value
-        
+
         self.custom_attributes = custom_attributes
 
     def register(self, username, password, attr_map=None):
