@@ -346,6 +346,18 @@ class Cognito(object):
         self._add_secret_hash(params, 'SecretHash')
         self.client.confirm_sign_up(**params)
 
+    def resend_confirmation_code(self,username=None):
+        """
+        Resend the confirmation for registration
+        :param username: User's username
+        """
+        if not username:
+            username = self.username
+        params = {'ClientId': self.client_id,
+                  'Username': username}
+        self._add_secret_hash(params, 'SecretHash')
+        self.client.resend_confirmation_code(**params)
+
     def admin_authenticate(self, password):
         """
         Authenticate the user using admin super privileges
