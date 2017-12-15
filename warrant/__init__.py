@@ -330,7 +330,7 @@ class Cognito(object):
             Username=username,
         )
 
-    def confirm_sign_up(self,confirmation_code,username=None):
+    def confirm_sign_up(self, confirmation_code, username=None):
         """
         Using the confirmation code that is either sent via email or text
         message.
@@ -346,7 +346,7 @@ class Cognito(object):
         self._add_secret_hash(params, 'SecretHash')
         self.client.confirm_sign_up(**params)
 
-    def resend_confirmation_code(self,username=None):
+    def resend_confirmation_code(self, username=None):
         """
         Resend the confirmation for registration
         :param username: User's username
