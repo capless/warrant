@@ -338,10 +338,8 @@ class Cognito(object):
         :param username: User's username
         :return:
         """
-        if not username:
-            username = self.username
         params = {'ClientId': self.client_id,
-                  'Username': username,
+                  'Username': self.username if username is None else username,
                   'ConfirmationCode': confirmation_code}
         self._add_secret_hash(params, 'SecretHash')
         self.client.confirm_sign_up(**params)
@@ -351,10 +349,8 @@ class Cognito(object):
         Resend the confirmation for registration
         :param username: User's username
         """
-        if not username:
-            username = self.username
         params = {'ClientId': self.client_id,
-                  'Username': username}
+                  'Username': self.username if username is None else username}
         self._add_secret_hash(params, 'SecretHash')
         self.client.resend_confirmation_code(**params)
 
