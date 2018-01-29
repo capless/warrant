@@ -459,7 +459,7 @@ class Cognito(object):
                                  attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata,attr_map=attr_map)
 
-    def get_users(self, attr_map=None):
+    def get_users(self, attr_map=None, attr_filter=None):
         """
         Returns all users for a user pool. Returns instances of the
         self.user_class.
@@ -467,6 +467,8 @@ class Cognito(object):
         :return:
         """
         kwargs = {"UserPoolId":self.user_pool_id}
+        if attr_filter is not None:
+            kwargs['Filter'] = "%s = \"%s\"" % (attr_filter['Name'], attr_filter['Value'])
 
         response = self.client.list_users(**kwargs)
         return [self.get_user_obj(user.get('Username'),
