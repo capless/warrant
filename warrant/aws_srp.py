@@ -239,6 +239,10 @@ class AWSSRP(object):
                     'USERNAME': auth_params['USERNAME'],
                     'NEW_PASSWORD': new_password
                 }
+
+                if self.client_secret is not None:
+                    challenge_response['SECRET_HASH'] = self.get_secret_hash(self.username, self.client_id, self.client_secret)
+
                 new_password_response = boto_client.respond_to_auth_challenge(
                     ClientId=self.client_id,
                     ChallengeName=self.NEW_PASSWORD_REQUIRED_CHALLENGE,
