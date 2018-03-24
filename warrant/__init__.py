@@ -268,11 +268,11 @@ class Cognito(object):
     def add_custom_attributes(self, **kwargs):
         custom_key = 'custom'
         custom_attributes = {}
-        
+
         for old_key, value in kwargs.items():
             new_key = custom_key + ':' + old_key
             custom_attributes[new_key] = value
-        
+
         self.custom_attributes = custom_attributes
 
     def register(self, username, password, attr_map=None):
@@ -474,6 +474,36 @@ class Cognito(object):
                                   metadata={'username':user.get('Username')},
                                   attr_map=attr_map)
                 for user in response.get('Users')]
+
+    def get_users_paginated(self, attr_map=None, per_page=10, nextToken=None):
+        """
+        Returns all users for a user pool. Returns instances of the
+        self.user_class.
+        :param attr_map:
+        :return:
+        """
+        kwargs = {
+            'UserPoolId': self.user_pool_id,
+            'Limit': per_page,
+        }
+        if nextToken:
+            kwargs['PaginationToken'] = nextToken
+
+        response = self.client.list_users(**kwargs)
+        users = [
+            self.get_user_obj(
+                user.get('Username'),
+                attribute_list=user.get('Attributes'),
+                metadata={'username':user.get('Username')},
+                attr_map=attr_map,
+            )
+            for user in response.get('Users')
+        ]
+        return {
+            'data': users,
+            'nextToken': response['PaginationToken'],
+            'perPage': per_page,
+        }
 
     def admin_get_user(self, attr_map=None):
         """
