@@ -501,7 +501,7 @@ class Cognito(object):
         ]
         return {
             'data': users,
-            'nextToken': response['PaginationToken'],
+            'nextToken': response.get('PaginationToken', None),
             'perPage': per_page,
         }
 
