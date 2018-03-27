@@ -365,6 +365,12 @@ class Cognito(object):
             AuthParameters=auth_params,
         )
 
+        if tokens.get('ChallengeName') is not None:
+            if tokens.get('ChallengeName') == aws_srp.AWSSRP.NEW_PASSWORD_REQUIRED_CHALLENGE:
+                raise aws_srp.ForceChangePasswordException('Change password before authenticating')
+            else:
+                raise NotImplementedError('The %s challenge is not supported' % tokens.get('ChallengeName'))
+
         self.verify_token(tokens['AuthenticationResult']['IdToken'], 'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
