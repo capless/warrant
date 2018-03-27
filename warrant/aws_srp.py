@@ -194,7 +194,7 @@ class AWSSRP(object):
         if self.client_secret is not None:
             response.update({
                 "SECRET_HASH":
-                self.get_secret_hash(self.username, self.client_id, self.client_secret)})
+                self.get_secret_hash(user_id_for_srp, self.client_id, self.client_secret)})
         return response
 
     def authenticate_user(self, client=None):
@@ -235,10 +235,20 @@ class AWSSRP(object):
                 ChallengeResponses=challenge_response)
 
             if tokens['ChallengeName'] == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
+                challenge_parameters = response['ChallengeParameters']
+                user_id_for_srp = challenge_parameters.get('USER_ID_FOR_SRP')
+
+                if user_id_for_srp is None:
+                    user_id_for_srp = self.username
+
                 challenge_response = {
-                    'USERNAME': auth_params['USERNAME'],
+                    'USERNAME': user_id_for_srp,
                     'NEW_PASSWORD': new_password
                 }
+
+                if self.client_secret is not None:
+                    challenge_response['SECRET_HASH'] = self.get_secret_hash(user_id_for_srp, self.client_id, self.client_secret)
+
                 new_password_response = boto_client.respond_to_auth_challenge(
                     ClientId=self.client_id,
                     ChallengeName=self.NEW_PASSWORD_REQUIRED_CHALLENGE,
