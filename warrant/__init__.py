@@ -475,7 +475,13 @@ class Cognito(object):
                                   attr_map=attr_map)
                 for user in response.get('Users')]
 
-    def get_users_paginated(self, attr_map=None, per_page=10, nextToken=None):
+    def get_users_paginated(
+        self,
+        attr_map=None,
+        per_page=10,
+        nextToken=None,
+        extra_args={},
+    ):
         """
         Returns all users for a user pool. Returns instances of the
         self.user_class.
@@ -486,6 +492,8 @@ class Cognito(object):
             'UserPoolId': self.user_pool_id,
             'Limit': per_page,
         }
+        for extra_key in extra_args.keys():
+            kwargs[extra_key] = extra_args[extra_key]
         if nextToken:
             kwargs['PaginationToken'] = nextToken
 
