@@ -533,6 +533,20 @@ class Cognito(object):
         response.pop('ResponseMetadata')
         return response
 
+    def admin_reset_password(self, username):
+        """
+        Reset a password using admin super privileges.
+        :param username: User Pool username
+        :return response: Response from Cognito
+        """
+        args = {
+            'UserPoolId': self.user_pool_id,
+            'Username': username            
+        }
+        response = self.client.admin_reset_user_password(**args)        
+        response.pop('ResponseMetadata')
+        return response
+
     def send_verification(self, attribute='email'):
         """
         Sends the user an attribute verification code for the specified attribute name.
