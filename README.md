@@ -21,6 +21,7 @@ Makes working with AWS Cognito easier for Python developers.
         - [Confirm Forgot Password](#confirm-forgot-password)
         - [Change Password](#change-password)
         - [Confirm Sign Up](#confirm-sign-up)
+        - [Resend Confirmation Code](#resend-confirmation-code)
         - [Update Profile](#update-profile)
         - [Send Verification](#send-verification)
         - [Get User Object](#get-user-object)
@@ -262,6 +263,18 @@ from warrant import Cognito
 u = Cognito('your-user-pool-id','your-client-id')
 
 u.confirm_sign_up('users-conf-code',username='bob')
+```
+
+#### Resend Confirmation Code
+
+Resend the confirmation for registration
+
+```python
+from warrant import Cognito
+
+u = Cognito('your-user-pool-id','your-client-id')
+
+u.resend_confirmation_code(username='bob')
 ```
 
 ##### Arguments
