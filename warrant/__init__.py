@@ -297,7 +297,10 @@ class Cognito(object):
             }
         }
         """
-        attributes = self.base_attributes.copy()
+        if self.base_attributes is None:
+            attributes = {}
+        else:
+            attributes = self.base_attributes.copy()
         if self.custom_attributes:
             attributes.update(self.custom_attributes)
         cognito_attributes = dict_to_cognito(attributes, attr_map)
