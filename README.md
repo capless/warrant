@@ -31,6 +31,8 @@ Makes working with AWS Cognito easier for Python developers.
         - [Get Groups](#get-groups)
         - [Check Token](#check-token)
         - [Logout](#logout)
+        - [Disable User](#admin-disable-user)
+        - [Enable User](#admin-enable-user)
 - [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
     - [Using AWSSRP](#using-awssrp)
 - [Projects Using Warrant](#projects-using-warrant)
