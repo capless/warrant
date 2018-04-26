@@ -438,6 +438,44 @@ u.logout()
 
 No arguments for check_token
 
+#### Admin Disable User ####
+
+Sets user to disabled.
+
+```python
+from warrant import Cognito
+
+#If you don't use your tokens then you will need to
+#use your username and password and call the authenticate method
+u = Cognito('your-user-pool-id','your-client-id',
+    id_token='id-token',refresh_token='refresh-token',
+    access_token='access-token', username='bob')
+
+u.admin_disable_user()
+```
+##### Arguments
+
+No arguments for check_token
+
+#### Admin Enable User ####
+
+Sets user to enabled.
+
+```python
+from warrant import Cognito
+
+#If you don't use your tokens then you will need to
+#use your username and password and call the authenticate method
+u = Cognito('your-user-pool-id','your-client-id',
+    id_token='id-token',refresh_token='refresh-token',
+    access_token='access-token', username='bob.)
+
+u.admin_enable_user()
+```
+##### Arguments
+
+No arguments for check_token
+
 ## Cognito SRP Utility
 The `AWSSRP` class is used to perform [SRP(Secure Remote Password protocol)](https://www.ietf.org/rfc/rfc2945.txt) authentication.
 This is the preferred method of user authentication with AWS Cognito.
