@@ -589,6 +589,18 @@ class Cognito(object):
             Username=self.username
         )
 
+    def admin_disable_user(self):
+        self.client.admin_disable_user(
+            UserPoolId=self.user_pool_id,
+            Username=self.username
+        )
+
+    def admin_enable_user(self):
+        self.client.admin_enable_user(
+            UserPoolId=self.user_pool_id,
+            Username=self.username
+        )
+
     def confirm_forgot_password(self, confirmation_code, password):
         """
         Allows a user to enter a code provided when they reset their password
