@@ -8,6 +8,7 @@ import re
 import boto3
 import os
 import six
+from babel.dates import format_datetime
 
 from .exceptions import ForceChangePasswordException
 
@@ -178,8 +179,10 @@ class AWSSRP(object):
         srp_b_hex = challenge_parameters['SRP_B']
         secret_block_b64 = challenge_parameters['SECRET_BLOCK']
         # re strips leading zero from a day number (required by AWS Cognito)
-        timestamp = re.sub(r" 0(\d) ", r" \1 ",
-                           datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"))
+        timestamp = re.sub(r" 0(\d) ", r" \1 ", 
+                           format_datetime(datetime.datetime.utcnow(), 
+                                           "EEE MMM d HH:mm:ss UTC yyyy", 
+                                           locale='en'))
         hkdf = self.get_password_authentication_key(user_id_for_srp,
                                                     self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
