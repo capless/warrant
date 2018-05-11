@@ -275,7 +275,7 @@ class Cognito(object):
         
         self.custom_attributes = custom_attributes
 
-    def register(self, username, password, attr_map=None):
+    def register(self, username, password, attr_map=None, validation_data=None):
         """
         Register the user. Other base attributes from AWS Cognito User Pools
         are  address, birthdate, email, family_name (last name), gender,
@@ -285,6 +285,7 @@ class Cognito(object):
         :param username: User Pool username
         :param password: User Pool password
         :param attr_map: Attribute map to Cognito's attributes
+        :param validation_data: Validation data dict for custom validation in pre-sign up trigger
         :return response: Response from Cognito
 
         Example response::
@@ -307,6 +308,10 @@ class Cognito(object):
             'Password': password,
             'UserAttributes': cognito_attributes
         }
+        if validation_data:
+            cognito_validation_data = dict_to_cognito(validation_data)
+            params.update({'ValidationData': cognito_validation_data})
+
         self._add_secret_hash(params, 'SecretHash')
         response = self.client.sign_up(**params)
 
