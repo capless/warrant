@@ -258,6 +258,7 @@ class Cognito(object):
             expired = True
             if renew:
                 self.renew_access_token()
+                expired = self.check_token(renew=False)
         else:
             expired = False
         return expired
@@ -576,7 +577,9 @@ class Cognito(object):
         Sets a new access token on the User using the refresh token.
         """
         auth_params = {'REFRESH_TOKEN': self.refresh_token}
+
         self._add_secret_hash(auth_params, 'SECRET_HASH')
+
         refresh_response = self.client.initiate_auth(
             ClientId=self.client_id,
             AuthFlow='REFRESH_TOKEN',
