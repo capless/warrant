@@ -21,6 +21,7 @@ Makes working with AWS Cognito easier for Python developers.
         - [Confirm Forgot Password](#confirm-forgot-password)
         - [Change Password](#change-password)
         - [Confirm Sign Up](#confirm-sign-up)
+        - [Resend Confirmation Code](#resend-confirmation-code)
         - [Update Profile](#update-profile)
         - [Send Verification](#send-verification)
         - [Get User Object](#get-user-object)
@@ -264,6 +265,18 @@ u = Cognito('your-user-pool-id','your-client-id')
 u.confirm_sign_up('users-conf-code',username='bob')
 ```
 
+#### Resend Confirmation Code
+
+Resend the confirmation for registration
+
+```python
+from warrant import Cognito
+
+u = Cognito('your-user-pool-id','your-client-id')
+
+u.resend_confirmation_code(username='bob')
+```
+
 ##### Arguments
 
 - **confirmation_code:** Confirmation code sent via text or email
@@ -444,21 +457,11 @@ This is the preferred method of user authentication with AWS Cognito.
 The process involves a series of authentication challenges and responses, which if successful,
 results in a final response that contains ID, access and refresh tokens.
 
-### Using AWSSRP
-The `AWSSRP` class takes a username, password, cognito user pool id, cognito app id, an optional
-client secret (if app client is configured with client secret), an optional pool_region or `boto3` client.
-Afterwards, the `authenticate_user` class method is used for SRP authentication.
+### Using AWSSRP (Now WarrantLite)
+The `AWSSRP` code has moved to [Warrant-Lite](https://github.com/capless/warrant-lite). Some projects don't need all of the features that Warrant has so we decided to make a separate.
 
 
-```python
-import boto3
-from warrant.aws_srp import AWSSRP
 
-client = boto3.client('cognito-idp')
-aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
-             client_id='client_id', client=client)
-tokens = aws.authenticate_user()
-```
 
 ## Projects Using Warrant
 
