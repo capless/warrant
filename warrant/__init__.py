@@ -268,11 +268,11 @@ class Cognito(object):
     def add_custom_attributes(self, **kwargs):
         custom_key = 'custom'
         custom_attributes = {}
-        
+
         for old_key, value in kwargs.items():
             new_key = custom_key + ':' + old_key
             custom_attributes[new_key] = value
-        
+
         self.custom_attributes = custom_attributes
 
     def register(self, username, password, attr_map=None):
@@ -297,7 +297,10 @@ class Cognito(object):
             }
         }
         """
-        attributes = self.base_attributes.copy()
+        if self.base_attributes is None:
+            attributes = {}
+        else:
+            attributes = self.base_attributes.copy()
         if self.custom_attributes:
             attributes.update(self.custom_attributes)
         cognito_attributes = dict_to_cognito(attributes, attr_map)
@@ -330,7 +333,7 @@ class Cognito(object):
             Username=username,
         )
 
-    def confirm_sign_up(self,confirmation_code,username=None):
+    def confirm_sign_up(self, confirmation_code, username=None):
         """
         Using the confirmation code that is either sent via email or text
         message.
@@ -338,13 +341,21 @@ class Cognito(object):
         :param username: User's username
         :return:
         """
-        if not username:
-            username = self.username
         params = {'ClientId': self.client_id,
-                  'Username': username,
+                  'Username': self.username if username is None else username,
                   'ConfirmationCode': confirmation_code}
         self._add_secret_hash(params, 'SecretHash')
         self.client.confirm_sign_up(**params)
+
+    def resend_confirmation_code(self, username=None):
+        """
+        Resend the confirmation for registration
+        :param username: User's username
+        """
+        params = {'ClientId': self.client_id,
+                  'Username': self.username if username is None else username}
+        self._add_secret_hash(params, 'SecretHash')
+        self.client.resend_confirmation_code(**params)
 
     def admin_authenticate(self, password):
         """
