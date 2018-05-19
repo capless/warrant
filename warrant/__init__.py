@@ -491,6 +491,44 @@ class Cognito(object):
                                   attr_map=attr_map)
                 for user in response.get('Users')]
 
+    def get_users_paginated(
+        self,
+        attr_map=None,
+        per_page=10,
+        nextToken=None,
+        extra_args={},
+    ):
+        """
+        Returns all users for a user pool. Returns instances of the
+        self.user_class.
+        :param attr_map:
+        :return:
+        """
+        kwargs = {
+            'UserPoolId': self.user_pool_id,
+            'Limit': per_page,
+        }
+        for extra_key in extra_args.keys():
+            kwargs[extra_key] = extra_args[extra_key]
+        if nextToken:
+            kwargs['PaginationToken'] = nextToken
+
+        response = self.client.list_users(**kwargs)
+        users = [
+            self.get_user_obj(
+                user.get('Username'),
+                attribute_list=user.get('Attributes'),
+                metadata={'username':user.get('Username')},
+                attr_map=attr_map,
+            )
+            for user in response.get('Users')
+        ]
+        return {
+            'data': users,
+            'nextToken': response.get('PaginationToken', None),
+            'perPage': per_page,
+        }
+
     def admin_get_user(self, attr_map=None):
         """
         Get the user's details using admin super privileges.
