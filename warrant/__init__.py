@@ -6,8 +6,8 @@ import requests
 
 from envs import env
 from jose import jwt, JWTError
+from warrant_lite import WarrantLite
 
-from .aws_srp import AWSSRP
 from .exceptions import TokenVerificationException
 
 
@@ -376,7 +376,7 @@ class Cognito(object):
         :param password: The user's passsword
         :return:
         """
-        aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
+        aws = WarrantLite(username=self.username, password=password, pool_id=self.user_pool_id,
                      client_id=self.client_id, client=self.client,
                      client_secret=self.client_secret)
         tokens = aws.authenticate_user()
@@ -391,7 +391,7 @@ class Cognito(object):
         :param password: The user's current passsword
         :param password: The user's new passsword
         """
-        aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
+        aws = WarrantLite(username=self.username, password=password, pool_id=self.user_pool_id,
                      client_id=self.client_id, client=self.client,
                      client_secret=self.client_secret)
         tokens = aws.set_new_password_challenge(new_password)
@@ -624,7 +624,7 @@ class Cognito(object):
         to a parameters dictionary at a specified key
         """
         if self.client_secret is not None:
-            secret_hash = AWSSRP.get_secret_hash(self.username, self.client_id,
+            secret_hash = WarrantLite.get_secret_hash(self.username, self.client_id,
                                                  self.client_secret)
             parameters[key] = secret_hash
 

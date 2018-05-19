@@ -445,20 +445,10 @@ The process involves a series of authentication challenges and responses, which 
 results in a final response that contains ID, access and refresh tokens.
 
 ### Using AWSSRP
-The `AWSSRP` class takes a username, password, cognito user pool id, cognito app id, an optional
-client secret (if app client is configured with client secret), an optional pool_region or `boto3` client.
-Afterwards, the `authenticate_user` class method is used for SRP authentication.
+The `AWSSRP` code has moved to [Warrant-Lite](https://github.com/capless/warrant-lite). Some projects don't need all of the features that Warrant has so we decided to make a separate.
 
 
-```python
-import boto3
-from warrant.aws_srp import AWSSRP
 
-client = boto3.client('cognito-idp')
-aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
-             client_id='client_id', client=client)
-tokens = aws.authenticate_user()
-```
 
 ## Projects Using Warrant
 
