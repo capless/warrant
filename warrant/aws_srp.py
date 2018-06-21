@@ -3,13 +3,13 @@ import binascii
 import datetime
 import hashlib
 import hmac
+import os
 import re
 
 import boto3
-import os
 import six
 
-from .exceptions import ForceChangePasswordException
+from .exceptions import ForceChangePasswordException, InvalidStateException, SecondFactorRequiredException
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
 n_hex = 'FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1' + '29024E088A67CC74020BBEA63B139B22514A08798E3404DD' + \
@@ -94,6 +94,7 @@ class AWSSRP(object):
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
     PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
+    SMS_MFA_CHALLENGE = 'SMS_MFA'
 
     def __init__(self, username, password, pool_id, client_id, pool_region=None,
                  client=None, client_secret=None):
@@ -112,6 +113,7 @@ class AWSSRP(object):
         self.k = hex_to_long(hex_hash('00' + n_hex + '0' + g_hex))
         self.small_a_value = self.generate_random_small_a()
         self.large_a_value = self.calculate_a()
+        self.tokens = None
 
     def generate_random_small_a(self):
         """
@@ -212,7 +214,11 @@ class AWSSRP(object):
                 ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
                 ChallengeResponses=challenge_response)
 
-            if tokens.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
+            if tokens.get('ChallengeName') == self.SMS_MFA_CHALLENGE:
+                # Store the tokens for later because if we try to login once we have the code then it will no longer be valid
+                self.tokens = tokens
+                raise SecondFactorRequiredException('Supply MFA code to complete authentication')
+            elif tokens.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
                 raise ForceChangePasswordException('Change password before authenticating')
 
             return tokens
@@ -248,3 +254,21 @@ class AWSSRP(object):
             return tokens
         else:
             raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
+
+    def sms_mfa_challenge(self, mfa_code, client=None):
+        boto_client = self.client or client
+        auth_params = self.get_auth_params()
+
+        if self.tokens['ChallengeName'] == self.SMS_MFA_CHALLENGE:
+            challenge_response = {
+                'USERNAME': auth_params['USERNAME'],
+                'SMS_MFA_CODE': mfa_code
+            }
+            self.tokens = boto_client.respond_to_auth_challenge(
+                ClientId=self.client_id,
+                ChallengeName=self.SMS_MFA_CHALLENGE,
+                Session=self.tokens['Session'],
+                ChallengeResponses=challenge_response)
+            return self.tokens
+        else:
+            raise InvalidStateException('Must have ChallengeName == SMS_MFA to supply SMS_MFA code')
