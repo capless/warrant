@@ -54,7 +54,7 @@ Makes working with AWS Cognito easier for Python developers.
 
 **Optional:** This environment variable is a dictionary that represent the well known JWKs assigned to your user pool by AWS Cognito. You can find the keys for your user pool by substituting in your AWS region and pool id for the following example.
  `https://cognito-idp.{aws-region}.amazonaws.com/{user-pool-id}/.well-known/jwks.json`
- 
+
  **Example Value (Not Real):**
  ```commandline
 COGNITO_JWKS={"keys": [{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKLMNOP","kty": "RSA","n": "123456789ABCDEFGHIJKLMNOP","use": "sig"},{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKLMNOP","kty": "RSA","n": "123456789ABCDEFGHIJKLMNOP","use": "sig"}]}
@@ -458,6 +458,43 @@ client = boto3.client('cognito-idp')
 aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
              client_id='client_id', client=client)
 tokens = aws.authenticate_user()
+```
+
+### SMS Multi-Factor-Authentication With AWSSRP
+When using MFA it is necessary to authenticate with a username & password, as above, followed by authentication of a six digit code
+that AWS sends to the user's phone. The code must be sent to Cognito along with information from the initial username/password
+login.
+
+If MFA is enabled the response to username/passowrd authentication is that `authenticate_user` raises a `SecondFactorRequiredException`.
+The `tokens` from the `AWSSRP` should be saved so that they can be reused when authenticating with the code received from AWS.
+
+```python
+import boto3
+from warrant import AWSSRP
+from warrant.exceptions import SecondFactorRequiredException
+
+COGNITO_TOKENS_KEY = 'cognito_tokens'
+
+client = boto3.client('cognito-idp')
+aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
+             client_id='client_id', client=client)
+try:
+    tokens = aws.authenticate_user()
+except SecondFactorRequiredException:
+    pass
+    # request.session[COGNITO_TOKENS_KEY] = aws.tokens  # Optional: if the AWSSRP object will go out
+                                                        # of scope before the SMS-MFA code can be used
+                                                        # store the tokens in a 'session' object
+
+# Wait for AWS to send code in SMS
+# Use a form to get the code from the user
+# Once the code is submitted the tokens can be retrieved from the 'session' and a new AWSSRP can
+# be constructed using the saved tokens
+# aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
+#              client_id='client_id', client=client)
+# aws.tokens = request.session.get(COGNITO_TOKENS_KEY)
+
+tokens = aws.sms_mfa_challenge('123456')
 ```
 
 ## Projects Using Warrant
