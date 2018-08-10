@@ -67,7 +67,7 @@ COGNITO_JWKS={"keys": [{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKL
 from warrant import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
-    client_secret='optional-client-secret'
+    client_secret='optional-client-secret',
     username='optional-username',
     id_token='optional-id-token',
     refresh_token='optional-refresh-token',
