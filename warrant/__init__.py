@@ -463,8 +463,9 @@ class Cognito(object):
         """
         Returns all users for a user pool. Returns instances of the
         self.user_class.
-        :param attr_map:
-        :return:
+        :param attr_map: Dictionary map from Cognito attributes to attribute
+        names we would like to show to our users
+        :return: list of self.user_class
         """
         response = self.client.list_users(UserPoolId=self.user_pool_id)
         user_list = response.get("Users")
