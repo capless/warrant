@@ -466,14 +466,23 @@ class Cognito(object):
         :param attr_map:
         :return:
         """
-        kwargs = {"UserPoolId":self.user_pool_id}
+        response = self.client.list_users(UserPoolId=self.user_pool_id)
+        user_list = response.get("Users")
+        page_token = response.get("PaginationToken")
+        
+        while page_token:
+            response = self.client.list_users(
+                UserPoolId=self.user_pool_id, 
+                PaginationToken=page_token
+            )
+            user_list.extend(response.get("Users"))
+            page_token = response.get("PaginationToken")
 
-        response = self.client.list_users(**kwargs)
         return [self.get_user_obj(user.get('Username'),
                                   attribute_list=user.get('Attributes'),
                                   metadata={'username':user.get('Username')},
                                   attr_map=attr_map)
-                for user in response.get('Users')]
+                for user in user_list]
 
     def admin_get_user(self, attr_map=None):
         """
