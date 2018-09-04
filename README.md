@@ -33,6 +33,7 @@ Makes working with AWS Cognito easier for Python developers.
         - [Logout](#logout)
 - [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
     - [Using AWSSRP](#using-awssrp)
+    - [Setting new password with AWSSRP](#setting-new-password-with-awssrp)
 - [Projects Using Warrant](#projects-using-warrant)
     - [Django Warrant](#django-warrant)
 - [Authors](#authors)
@@ -458,6 +459,30 @@ client = boto3.client('cognito-idp')
 aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
              client_id='client_id', client=client)
 tokens = aws.authenticate_user()
+```
+
+### Setting new password with AWSSRP
+
+If you try to change the password with the `Cognito.change_password()` you
+might come across following error:
+
+```
+  File ".../warrant/__init__.py", line 196, in check_token
+    raise AttributeError('Access Token Required to Check Token')
+AttributeError: Access Token Required to Check Token
+```
+
+which was asked for in a number of issues. The correct approach is to use
+`AWSSRP.set_new_password_challenge()` as shown below:
+
+```python
+import boto3
+from warrant.aws_srp import AWSSRP
+
+client = boto3.client('cognito-idp', region_name='region')
+aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
+             client_id='client_id', client=client)
+tokens = aws.set_new_password_challenge('new_password')
 ```
 
 ## Projects Using Warrant
