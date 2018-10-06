@@ -129,7 +129,7 @@ u = Cognito('your-user-pool-id','your-client-id',
 
 Register a user to the user pool
 
-**Important:** The arguments for `add_base_attributes` and `add_custom_attributes` methods depend on your user pool's configuration, and make sure the client id (app id) used has write permissions for the attriubtes you are trying to create. Example, if you want to create a user with a given_name equal to Johnson make sure the client_id you're using has permissions to edit or create given_name for a user in the pool.
+**Important:** The arguments for `set_base_attributes` and `add_custom_attributes` methods depend on your user pool's configuration, and make sure the client id (app id) used has write permissions for the attriubtes you are trying to create. Example, if you want to create a user with a given_name equal to Johnson make sure the client_id you're using has permissions to edit or create given_name for a user in the pool.
 
 
 ```python
@@ -137,7 +137,7 @@ from warrant import Cognito
 
 u = Cognito('your-user-pool-id', 'your-client-id')
 
-u.add_base_attributes(email='you@you.com', some_random_attr='random value')
+u.set_base_attributes(email='you@you.com', some_random_attr='random value')
 
 u.register('username', 'password')
 ```
@@ -151,7 +151,7 @@ from warrant import Cognito
 
 u = Cognito('your-user-pool-id', 'your-client-id')
 
-u.add_base_attributes(email='you@you.com', some_random_attr='random value')
+u.set_base_attributes(email='you@you.com', some_random_attr='random value')
 
 u.add_custom_attributes(state='virginia', city='Centreville')
 
