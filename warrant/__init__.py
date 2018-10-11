@@ -519,6 +519,16 @@ class Cognito(object):
         response.pop('ResponseMetadata')
         return response
 
+    def admin_delete_user(self, username):
+        """
+        Deletes a user using admin super privileges
+        :param username: User Pool username
+        """
+        self.client.admin_delete_user(
+            UserPoolId=self.user_pool_id,
+            Username=username
+        )
+
     def send_verification(self, attribute='email'):
         """
         Sends the user an attribute verification code for the specified attribute name.
