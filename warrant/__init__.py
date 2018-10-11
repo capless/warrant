@@ -221,7 +221,7 @@ class Cognito(object):
         what we'd like to display to the users
         :return:
         """
-        return self.user_class(username=username,attribute_list=attribute_list,
+        return self.user_class(username=username, attribute_list=attribute_list,
                                cognito_obj=self,
                                metadata=metadata,attr_map=attr_map)
 
