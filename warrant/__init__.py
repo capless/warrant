@@ -262,7 +262,7 @@ class Cognito(object):
             expired = False
         return expired
 
-    def set_base_attributes(self, **kwargs):
+    def add_base_attributes(self, **kwargs):
         self.base_attributes = kwargs
 
     def add_custom_attributes(self, **kwargs):
