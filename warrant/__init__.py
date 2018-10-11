@@ -134,7 +134,7 @@ class Cognito(object):
     group_class = GroupObj
 
     def __init__(
-            self, user_pool_id, client_id,user_pool_region=None,
+            self, user_pool_id, client_id, user_pool_region=None,
             username=None, id_token=None, refresh_token=None,
             access_token=None, client_secret=None,
             access_key=None, secret_key=None,
@@ -152,7 +152,7 @@ class Cognito(object):
 
         self.user_pool_id = user_pool_id
         self.client_id = client_id
-        self.user_pool_region = self.user_pool_id.split('_')[0]
+        self.user_pool_region = user_pool_region if user_pool_region else self.user_pool_id.split('_')[0]
         self.username = username
         self.id_token = id_token
         self.access_token = access_token
@@ -166,8 +166,8 @@ class Cognito(object):
         if access_key and secret_key:
             boto3_client_kwargs['aws_access_key_id'] = access_key
             boto3_client_kwargs['aws_secret_access_key'] = secret_key
-        if user_pool_region:
-            boto3_client_kwargs['region_name'] = user_pool_region
+        if self.user_pool_region:
+            boto3_client_kwargs['region_name'] = self.user_pool_region
 
         self.client = boto3.client('cognito-idp', **boto3_client_kwargs)
 
