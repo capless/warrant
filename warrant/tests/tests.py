@@ -8,8 +8,23 @@ from warrant import Cognito, UserObj, GroupObj, TokenVerificationException
 from warrant.aws_srp import AWSSRP
 
 
+def _mock_authenticate_user(_, client=None):
+    return {
+          'AuthenticationResult': {
+              'TokenType': 'admin',
+              'IdToken': 'dummy_token',
+              'AccessToken': 'dummy_token',
+              'RefreshToken': 'dummy_token'
+          }
+      }
+
+
 def _mock_get_params(_):
     return {'USERNAME': 'bob', 'SRP_A': 'srp'}
+
+
+def _mock_verify_tokens(self, token, id_name, token_use):
+    setattr(self, id_name, token)
 
 
 class UserObjTestCase(unittest.TestCase):
@@ -60,29 +75,32 @@ class GroupObjTestCase(unittest.TestCase):
         self.assertEqual(group.group_name, 'test_group')
         self.assertEqual(group.precedence, 1)
 
-#
-# class CognitoAuthTestCase(unittest.TestCase):
-#
-#     def setUp(self):
-#         if env('USE_CLIENT_SECRET') == 'True':
-#             self.app_id = env('COGNITO_APP_WITH_SECRET_ID')
-#             self.client_secret = env('COGNITO_CLIENT_SECRET')
-#         else:
-#             self.app_id = env('COGNITO_APP_ID')
-#             self.client_secret = None
-#         self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID', 'us-east-1_123456789')
-#         self.username = env('COGNITO_TEST_USERNAME')
-#         self.password = env('COGNITO_TEST_PASSWORD')
-#         self.user = Cognito(self.cognito_user_pool_id,self.app_id,
-#                             username=self.username,
-#                             client_secret=self.client_secret)
-#
-#     def test_authenticate(self):
-#         self.user.authenticate(self.password)
-#         self.assertNotEqual(self.user.access_token,None)
-#         self.assertNotEqual(self.user.id_token, None)
-#         self.assertNotEqual(self.user.refresh_token, None)
-#
+
+class CognitoAuthTestCase(unittest.TestCase):
+
+    def setUp(self):
+        if env('USE_CLIENT_SECRET') == 'True':
+            self.app_id = env('COGNITO_APP_WITH_SECRET_ID', 'app')
+            self.client_secret = env('COGNITO_CLIENT_SECRET')
+        else:
+            self.app_id = env('COGNITO_APP_ID', 'app')
+            self.client_secret = None
+        self.cognito_user_pool_id = env('COGNITO_USER_POOL_ID', 'us-east-1_123456789')
+        self.username = env('COGNITO_TEST_USERNAME', 'bob')
+        self.password = env('COGNITO_TEST_PASSWORD', 'bobpassword')
+        self.user = Cognito(self.cognito_user_pool_id, self.app_id,
+                            username=self.username,
+                            client_secret=self.client_secret)
+
+    @patch('warrant.aws_srp.AWSSRP.authenticate_user', _mock_authenticate_user)
+    @patch('warrant.Cognito.verify_token', _mock_verify_tokens)
+    def test_authenticate(self):
+
+        self.user.authenticate(self.password)
+        self.assertNotEqual(self.user.access_token,None)
+        self.assertNotEqual(self.user.id_token, None)
+        self.assertNotEqual(self.user.refresh_token, None)
+
 #     def test_verify_token(self):
 #         self.user.authenticate(self.password)
 #         bad_access_token = '{}wrong'.format(self.user.access_token)
@@ -166,12 +184,38 @@ class GroupObjTestCase(unittest.TestCase):
 #         )
 #         self.assertEqual(u.somerandom,'attribute')
 #
-#     def test_admin_authenticate(self):
-#
-#         self.user.admin_authenticate(self.password)
-#         self.assertNotEqual(self.user.access_token,None)
-#         self.assertNotEqual(self.user.id_token, None)
-#         self.assertNotEqual(self.user.refresh_token, None)
+
+    @patch('warrant.Cognito.verify_token', _mock_verify_tokens)
+    def test_admin_authenticate(self):
+
+        stub = Stubber(self.user.client)
+
+        # By the stubber nature, we need to add the sequence
+        # of calls for the AWS SRP auth to test the whole process
+        stub.add_response(method='admin_initiate_auth',
+                          service_response={
+                              'AuthenticationResult': {
+                                  'TokenType': 'admin',
+                                  'IdToken': 'dummy_token',
+                                  'AccessToken': 'dummy_token',
+                                  'RefreshToken': 'dummy_token'
+                              }
+                          },
+                          expected_params={
+                              'UserPoolId': self.cognito_user_pool_id,
+                              'ClientId': self.app_id,
+                              'AuthFlow': 'ADMIN_NO_SRP_AUTH',
+                              'AuthParameters': {
+                                  'USERNAME': self.username,
+                                  'PASSWORD': self.password}
+                          })
+
+        with stub:
+            self.user.admin_authenticate(self.password)
+            self.assertNotEqual(self.user.access_token, None)
+            self.assertNotEqual(self.user.id_token, None)
+            self.assertNotEqual(self.user.refresh_token, None)
+            stub.assert_no_pending_responses()
 
 
 class AWSSRPTestCase(unittest.TestCase):
@@ -193,47 +237,48 @@ class AWSSRPTestCase(unittest.TestCase):
                           client_id=self.app_id,
                           client_secret=self.client_secret)
 
-        self.stub = Stubber(self.aws.client)
-
-        # By the stubber nature, we need to add the sequence
-        # of calls for the AWS SRP auth to test the whole process
-        self.stub.add_response(method='initiate_auth',
-                               service_response={
-                                   'ChallengeName': 'PASSWORD_VERIFIER',
-                                   'ChallengeParameters': {}
-                               },
-                               expected_params={
-                                   'AuthFlow': 'USER_SRP_AUTH',
-                                   'AuthParameters': _mock_get_params(None),
-                                   'ClientId': self.app_id
-                               })
-
-        self.stub.add_response(method='respond_to_auth_challenge',
-                               service_response={
-                                   'AuthenticationResult': {
-                                       'IdToken': 'dummy_token',
-                                       'AccessToken': 'dummy_token',
-                                       'RefreshToken': 'dummy_token'
-                                   }
-                               },
-                               expected_params={
-                                   'ClientId': self.app_id,
-                                   'ChallengeName': 'PASSWORD_VERIFIER',
-                                   'ChallengeResponses': {}
-                               })
-
     def tearDown(self):
         del self.aws
 
     @patch('warrant.aws_srp.AWSSRP.get_auth_params', _mock_get_params)
     @patch('warrant.aws_srp.AWSSRP.process_challenge', return_value={})
     def test_authenticate_user(self, _):
-        with self.stub:
+
+        stub = Stubber(self.aws.client)
+
+        # By the stubber nature, we need to add the sequence
+        # of calls for the AWS SRP auth to test the whole process
+        stub.add_response(method='initiate_auth',
+                          service_response={
+                              'ChallengeName': 'PASSWORD_VERIFIER',
+                              'ChallengeParameters': {}
+                          },
+                          expected_params={
+                              'AuthFlow': 'USER_SRP_AUTH',
+                              'AuthParameters': _mock_get_params(None),
+                              'ClientId': self.app_id
+                          })
+
+        stub.add_response(method='respond_to_auth_challenge',
+                          service_response={
+                              'AuthenticationResult': {
+                                  'IdToken': 'dummy_token',
+                                  'AccessToken': 'dummy_token',
+                                  'RefreshToken': 'dummy_token'
+                              }
+                          },
+                          expected_params={
+                              'ClientId': self.app_id,
+                              'ChallengeName': 'PASSWORD_VERIFIER',
+                              'ChallengeResponses': {}
+                          })
+
+        with stub:
             tokens = self.aws.authenticate_user()
             self.assertTrue('IdToken' in tokens['AuthenticationResult'])
             self.assertTrue('AccessToken' in tokens['AuthenticationResult'])
             self.assertTrue('RefreshToken' in tokens['AuthenticationResult'])
-            self.stub.assert_no_pending_responses()
+            stub.assert_no_pending_responses()
 
 
 if __name__ == '__main__':
