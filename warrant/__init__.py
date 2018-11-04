@@ -1,5 +1,5 @@
 import ast
-import boto3
+import aioboto3
 import datetime
 import re
 import requests
@@ -169,7 +169,7 @@ class Cognito(object):
         if user_pool_region:
             boto3_client_kwargs['region_name'] = user_pool_region
 
-        self.client = boto3.client('cognito-idp', **boto3_client_kwargs)
+        self.client = aioboto3.client('cognito-idp', **boto3_client_kwargs)
 
     def get_keys(self):
 
@@ -583,11 +583,12 @@ class Cognito(object):
         )
 
 
-    def admin_delete_user(self):
-        self.client.admin_delete_user(
-            UserPoolId=self.user_pool_id,
-            Username=self.username
-        )
+    async def admin_delete_user(self):
+        async with self.client as client:
+            await client.admin_delete_user(
+                UserPoolId=self.user_pool_id,
+                Username=self.username
+            )
 
     def confirm_forgot_password(self, confirmation_code, password):
         """
