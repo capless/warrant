@@ -2,7 +2,8 @@ import ast
 import aioboto3
 import datetime
 import re
-import requests
+import aiohttp
+import asyncio
 
 from envs import env
 from jose import jwt, JWTError
@@ -137,7 +138,7 @@ class Cognito(object):
             self, user_pool_id, client_id,user_pool_region=None,
             username=None, id_token=None, refresh_token=None,
             access_token=None, client_secret=None,
-            access_key=None, secret_key=None,
+            access_key=None, secret_key=None, loop=None
             ):
         """
         :param user_pool_id: Cognito User Pool ID
@@ -161,6 +162,7 @@ class Cognito(object):
         self.token_type = None
         self.custom_attributes = None
         self.base_attributes = None
+        self.loop = loop
 
         boto3_client_kwargs = {}
         if access_key and secret_key:
@@ -169,10 +171,12 @@ class Cognito(object):
         if user_pool_region:
             boto3_client_kwargs['region_name'] = user_pool_region
 
-        self.client = aioboto3.client('cognito-idp', **boto3_client_kwargs)
+        self.session = aiohttp.ClientSession(loop=self.loop)
+        self.get_client = lambda: aioboto3.client('cognito-idp', loop=self.loop, **boto3_client_kwargs)
 
-    def get_keys(self):
 
+
+    async def get_keys(self):
         try:
             return self.pool_jwk
         except AttributeError:
@@ -181,17 +185,22 @@ class Cognito(object):
             if len(pool_jwk_env.keys()) > 0:
                 self.pool_jwk = pool_jwk_env
                 return self.pool_jwk
-            #If it is not there use the requests library to get it
-            self.pool_jwk = requests.get(
+
+            #If it is not there use the aiohttp library to get it
+            async with self.session as session:
+                resp = await session.get(
                 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(
                     self.user_pool_region,self.user_pool_id
-                )).json()
-            return self.pool_jwk
+                ))
+                self.pool_jwk = await resp.json()
+                return self.pool_jwk
 
-    def get_key(self,kid):
-        keys = self.get_keys().get('keys')
+
+    async def get_key(self,kid):
+        keys = (await self.get_keys()).get('keys')
         key = list(filter(lambda x:x.get('kid') == kid,keys))
         return key[0]
+
 
     def verify_token(self,token,id_name,token_use):
         kid = jwt.get_unverified_header(token).get('kid')
@@ -308,7 +317,7 @@ class Cognito(object):
             'UserAttributes': cognito_attributes
         }
         self._add_secret_hash(params, 'SecretHash')
-        response = self.client.sign_up(**params)
+        response = self.get_client().ent().sign_up(**params)
 
         attributes.update(username=username, password=password)
         self._set_attributes(response, attributes)
@@ -325,7 +334,7 @@ class Cognito(object):
         """
         if not username:
             username = self.username
-        self.client.admin_confirm_sign_up(
+        self.get_client().ent().admin_confirm_sign_up(
             UserPoolId=self.user_pool_id,
             Username=username,
         )
@@ -344,7 +353,7 @@ class Cognito(object):
                   'Username': username,
                   'ConfirmationCode': confirmation_code}
         self._add_secret_hash(params, 'SecretHash')
-        self.client.confirm_sign_up(**params)
+        self.get_client().ent().confirm_sign_up(**params)
 
     def admin_authenticate(self, password):
         """
@@ -357,7 +366,7 @@ class Cognito(object):
                 'PASSWORD': password
             }
         self._add_secret_hash(auth_params, 'SECRET_HASH')
-        tokens = self.client.admin_initiate_auth(
+        tokens = self.get_client().ent().admin_initiate_auth(
             UserPoolId=self.user_pool_id,
             ClientId=self.client_id,
             # AuthFlow='USER_SRP_AUTH'|'REFRESH_TOKEN_AUTH'|'REFRESH_TOKEN'|'CUSTOM_AUTH'|'ADMIN_NO_SRP_AUTH',
@@ -407,7 +416,7 @@ class Cognito(object):
         attributes
         :return:
         """
-        self.client.global_sign_out(
+        self.get_client().ent().global_sign_out(
             AccessToken=self.access_token
         )
 
@@ -418,7 +427,7 @@ class Cognito(object):
 
     def admin_update_profile(self, attrs, attr_map=None):
         user_attrs = dict_to_cognito(attrs, attr_map)
-        self.client.admin_update_user_attributes(
+        self.get_client().ent().admin_update_user_attributes(
             UserPoolId = self.user_pool_id,
             Username = self.username,
             UserAttributes = user_attrs
@@ -432,7 +441,7 @@ class Cognito(object):
         names we would like to show to our users
         """
         user_attrs = dict_to_cognito(attrs,attr_map)
-        self.client.update_user_attributes(
+        self.get_client().ent().update_user_attributes(
             UserAttributes=user_attrs,
             AccessToken=self.access_token
         )
@@ -445,7 +454,7 @@ class Cognito(object):
         names we would like to show to our users
         :return:
         """
-        user = self.client.get_user(
+        user = self.get_client().ent().get_user(
                 AccessToken=self.access_token
             )
 
@@ -468,7 +477,7 @@ class Cognito(object):
         """
         kwargs = {"UserPoolId":self.user_pool_id}
 
-        response = self.client.list_users(**kwargs)
+        response = self.get_client().ent().list_users(**kwargs)
         return [self.get_user_obj(user.get('Username'),
                                   attribute_list=user.get('Attributes'),
                                   metadata={'username':user.get('Username')},
@@ -482,7 +491,7 @@ class Cognito(object):
         names we would like to show to our users
         :return: UserObj object
         """
-        user = self.client.admin_get_user(
+        user = self.get_client().ent().admin_get_user(
                            UserPoolId=self.user_pool_id,
                            Username=self.username)
         user_metadata = {
@@ -507,7 +516,7 @@ class Cognito(object):
         :param kwargs: Additional User Pool attributes
         :return response: Response from Cognito
         """
-        response = self.client.admin_create_user(
+        response = self.get_client().ent().admin_create_user(
             UserPoolId=self.user_pool_id,
             Username=username,
             UserAttributes=dict_to_cognito(kwargs, attr_map),
@@ -525,7 +534,7 @@ class Cognito(object):
         :param attribute: Attribute to confirm
         """
         self.check_token()
-        self.client.get_user_attribute_verification_code(
+        self.get_client().ent().get_user_attribute_verification_code(
             AccessToken=self.access_token,
             AttributeName=attribute
         )
@@ -537,7 +546,7 @@ class Cognito(object):
         :param attribute: Attribute to confirm
         """
         self.check_token()
-        return self.client.verify_user_attribute(
+        return self.get_client().ent().verify_user_attribute(
             AccessToken=self.access_token,
             AttributeName=attribute,
             Code=confirmation_code
@@ -549,7 +558,7 @@ class Cognito(object):
         """
         auth_params = {'REFRESH_TOKEN': self.refresh_token}
         self._add_secret_hash(auth_params, 'SECRET_HASH')
-        refresh_response = self.client.initiate_auth(
+        refresh_response = self.get_client().ent().initiate_auth(
             ClientId=self.client_id,
             AuthFlow='REFRESH_TOKEN',
             AuthParameters=auth_params,
@@ -573,12 +582,12 @@ class Cognito(object):
             'Username': self.username
         }
         self._add_secret_hash(params, 'SecretHash')
-        self.client.forgot_password(**params)
+        self.get_client().ent().forgot_password(**params)
 
 
     def delete_user(self):
 
-        self.client.delete_user(
+        self.get_client().ent().delete_user(
             AccessToken=self.access_token
         )
 
@@ -604,7 +613,7 @@ class Cognito(object):
                   'Password': password
                   }
         self._add_secret_hash(params, 'SecretHash')
-        response = self.client.confirm_forgot_password(**params)
+        response = self.get_client().ent().confirm_forgot_password(**params)
         self._set_attributes(response, {'password': password})
 
     def change_password(self, previous_password, proposed_password):
@@ -612,7 +621,7 @@ class Cognito(object):
         Change the User password
         """
         self.check_token()
-        response = self.client.change_password(
+        response = self.get_client().ent().change_password(
             PreviousPassword=previous_password,
             ProposedPassword=proposed_password,
             AccessToken=self.access_token
@@ -649,7 +658,7 @@ class Cognito(object):
         :param group_name: name of a group
         :return: instance of the self.group_class
         """
-        response = self.client.get_group(GroupName=group_name,
+        response = self.get_client().ent().get_group(GroupName=group_name,
                                          UserPoolId=self.user_pool_id)
         return self.get_group_obj(response.get('Group'))
 
@@ -659,7 +668,7 @@ class Cognito(object):
         self.group_class.
         :return: list of instances
         """
-        response = self.client.list_groups(UserPoolId=self.user_pool_id)
+        response = self.get_client().ent().list_groups(UserPoolId=self.user_pool_id)
         return [self.get_group_obj(group_data)
                 for group_data in response.get('Groups')]
 
