@@ -202,13 +202,13 @@ class Cognito(object):
         return key[0]
 
 
-    def verify_token(self,token,id_name,token_use):
+    async def verify_token(self,token,id_name,token_use):
         kid = jwt.get_unverified_header(token).get('kid')
         unverified_claims = jwt.get_unverified_claims(token)
         token_use_verified = unverified_claims.get('token_use') == token_use
         if not token_use_verified:
             raise TokenVerificationException('Your {} token use could not be verified.')
-        hmac_key = self.get_key(kid)
+        hmac_key = await self.get_key(kid)
         try:
             verified = jwt.decode(token,hmac_key,algorithms=['RS256'],
                    audience=unverified_claims.get('aud'),
@@ -277,11 +277,11 @@ class Cognito(object):
     def add_custom_attributes(self, **kwargs):
         custom_key = 'custom'
         custom_attributes = {}
-        
+
         for old_key, value in kwargs.items():
             new_key = custom_key + ':' + old_key
             custom_attributes[new_key] = value
-        
+
         self.custom_attributes = custom_attributes
 
     def register(self, username, password, attr_map=None):
