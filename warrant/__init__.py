@@ -326,7 +326,7 @@ class Cognito(object):
             response.pop('ResponseMetadata')
             return response
 
-    def admin_confirm_sign_up(self, username=None):
+    async def admin_confirm_sign_up(self, username=None):
         """
         Confirms user registration as an admin without using a confirmation
         code. Works on any user.
@@ -335,12 +335,13 @@ class Cognito(object):
         """
         if not username:
             username = self.username
-        self.get_client().admin_confirm_sign_up(
-            UserPoolId=self.user_pool_id,
-            Username=username,
-        )
+        async with self.get_client() as client:
+            await client.admin_confirm_sign_up(
+                UserPoolId=self.user_pool_id,
+                Username=username,
+            )
 
-    def confirm_sign_up(self,confirmation_code,username=None):
+    async def confirm_sign_up(self,confirmation_code,username=None):
         """
         Using the confirmation code that is either sent via email or text
         message.
@@ -354,9 +355,10 @@ class Cognito(object):
                   'Username': username,
                   'ConfirmationCode': confirmation_code}
         self._add_secret_hash(params, 'SecretHash')
-        self.get_client().confirm_sign_up(**params)
+        async with self.get_client() as client:
+            await client.confirm_sign_up(**params)
 
-    def admin_authenticate(self, password):
+    async def admin_authenticate(self, password):
         """
         Authenticate the user using admin super privileges
         :param password: User's password
@@ -367,18 +369,20 @@ class Cognito(object):
                 'PASSWORD': password
             }
         self._add_secret_hash(auth_params, 'SECRET_HASH')
-        tokens = self.get_client().admin_initiate_auth(
-            UserPoolId=self.user_pool_id,
-            ClientId=self.client_id,
-            # AuthFlow='USER_SRP_AUTH'|'REFRESH_TOKEN_AUTH'|'REFRESH_TOKEN'|'CUSTOM_AUTH'|'ADMIN_NO_SRP_AUTH',
-            AuthFlow='ADMIN_NO_SRP_AUTH',
-            AuthParameters=auth_params,
-        )
 
-        self.verify_token(tokens['AuthenticationResult']['IdToken'], 'id_token','id')
-        self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
-        self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
-        self.token_type = tokens['AuthenticationResult']['TokenType']
+        async with self.get_client() as client:
+            tokens = await client.admin_initiate_auth(
+                UserPoolId=self.user_pool_id,
+                ClientId=self.client_id,
+                # AuthFlow='USER_SRP_AUTH'|'REFRESH_TOKEN_AUTH'|'REFRESH_TOKEN'|'CUSTOM_AUTH'|'ADMIN_NO_SRP_AUTH',
+                AuthFlow='ADMIN_NO_SRP_AUTH',
+                AuthParameters=auth_params,
+            )
+
+            self.verify_token(tokens['AuthenticationResult']['IdToken'], 'id_token','id')
+            self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
+            self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
+            self.token_type = tokens['AuthenticationResult']['TokenType']
 
     def authenticate(self, password):
         """
