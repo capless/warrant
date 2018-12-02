@@ -669,7 +669,7 @@ class Cognito(object):
         """
         async with self.get_client() as client:
             await self.check_token()
-            response = client.change_password(
+            response = await client.change_password(
                 PreviousPassword=previous_password,
                 ProposedPassword=proposed_password,
                 AccessToken=self.access_token
@@ -684,7 +684,7 @@ class Cognito(object):
         if self.client_secret is not None:
             secret_hash = AWSSRP.get_secret_hash(self.username, self.client_id,
                                                  self.client_secret)
-        parameters[key] = secret_hash
+            parameters[key] = secret_hash
 
     def _set_attributes(self, response, attribute_dict):
         """
