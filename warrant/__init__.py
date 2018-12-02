@@ -10,6 +10,7 @@ from jose import jwt, JWTError
 from .aws_srp import AWSSRP
 from .exceptions import TokenVerificationException
 
+__version__ = "0.1.0"
 
 def cognito_to_dict(attr_list, attr_map=None):
     if attr_map is None:
