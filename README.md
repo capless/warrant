@@ -1,6 +1,6 @@
 # Mandate
 
-Async fork of (https://github.com/capless/warrant)[warrant].
+Async fork of [warrant](https://github.com/capless/warrant).
 
 ## Initialise
 
