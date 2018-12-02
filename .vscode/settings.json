@@ -2,7 +2,7 @@
   "python.pythonPath": "/home/errietta/.local/share/virtualenvs/warrant-jvNhX3_q/bin/python",
   "python.linting.pylintEnabled": false,
   "python.linting.flake8Enabled": true,
-  "python.linting.enabled": false,
+  "python.linting.enabled": true,
   "editor.tabSize": 4,
   "editor.rulers": [
     79
