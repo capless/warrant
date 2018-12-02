@@ -251,7 +251,7 @@ class Cognito(object):
         """
         self.client = session.client('cognito-idp')
 
-    def check_token(self, renew=True):
+    async def check_token(self, renew=True):
         """
         Checks the exp attribute of the access_token and either refreshes
         the tokens by calling the renew_access_tokens method or does nothing
@@ -266,7 +266,7 @@ class Cognito(object):
         if now > datetime.datetime.fromtimestamp(dec_access_token['exp']):
             expired = True
             if renew:
-                self.renew_access_token()
+                await self.renew_access_token()
         else:
             expired = False
         return expired
@@ -319,12 +319,12 @@ class Cognito(object):
         self._add_secret_hash(params, 'SecretHash')
 
         async with self.get_client() as client:
-            print(params)
             response = await client.sign_up(**params)
             attributes.update(username=username, password=password)
             self._set_attributes(response, attributes)
             response.pop('ResponseMetadata')
             return response
+
 
     async def admin_confirm_sign_up(self, username=None):
         """
@@ -358,6 +358,7 @@ class Cognito(object):
         async with self.get_client() as client:
             await client.confirm_sign_up(**params)
 
+
     async def admin_authenticate(self, password):
         """
         Authenticate the user using admin super privileges
@@ -379,66 +380,74 @@ class Cognito(object):
                 AuthParameters=auth_params,
             )
 
-            self.verify_token(tokens['AuthenticationResult']['IdToken'], 'id_token','id')
+            await self.verify_token(tokens['AuthenticationResult']['IdToken'], 'id_token','id')
             self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
-            self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
+            await self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
             self.token_type = tokens['AuthenticationResult']['TokenType']
 
-    def authenticate(self, password):
+
+    async def authenticate(self, password):
         """
         Authenticate the user using the SRP protocol
         :param password: The user's passsword
         :return:
         """
+
         aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
-                     client_id=self.client_id, client=self.client,
+                     client_id=self.client_id, client=self.get_client(),
                      client_secret=self.client_secret)
-        tokens = aws.authenticate_user()
-        self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token','id')
+        tokens = await aws.authenticate_user()
+        await self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
-        self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
+        await self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
-    def new_password_challenge(self, password, new_password):
+
+    async def new_password_challenge(self, password, new_password):
         """
         Respond to the new password challenge using the SRP protocol
         :param password: The user's current passsword
         :param password: The user's new passsword
         """
         aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
-                     client_id=self.client_id, client=self.client,
+                     client_id=self.client_id, client=self.get_client(),
                      client_secret=self.client_secret)
-        tokens = aws.set_new_password_challenge(new_password)
+        tokens = await aws.set_new_password_challenge(new_password)
         self.id_token = tokens['AuthenticationResult']['IdToken']
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.access_token = tokens['AuthenticationResult']['AccessToken']
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
-    def logout(self):
+
+    async def logout(self):
         """
         Logs the user out of all clients and removes the expires_in,
         expires_datetime, id_token, refresh_token, access_token, and token_type
         attributes
         :return:
         """
-        self.get_client().global_sign_out(
-            AccessToken=self.access_token
-        )
+        async with self.get_client() as client:
+            await client.global_sign_out(
+                AccessToken=self.access_token
+            )
 
-        self.id_token = None
-        self.refresh_token = None
-        self.access_token = None
-        self.token_type = None
+            self.id_token = None
+            self.refresh_token = None
+            self.access_token = None
+            self.token_type = None
 
-    def admin_update_profile(self, attrs, attr_map=None):
+
+    async def admin_update_profile(self, attrs, attr_map=None):
         user_attrs = dict_to_cognito(attrs, attr_map)
-        self.get_client().admin_update_user_attributes(
-            UserPoolId = self.user_pool_id,
-            Username = self.username,
-            UserAttributes = user_attrs
-        )
+        async with self.get_client() as client:
+            await client.admin_update_user_attributes(
+                UserPoolId=self.user_pool_id,
+                Username=self.username,
+                UserAttributes=user_attrs
+            )
 
-    def update_profile(self, attrs, attr_map=None):
+
+    async def update_profile(self, attrs, attr_map=None):
         """
         Updates User attributes
         :param attrs: Dictionary of attribute name, values
@@ -446,12 +455,14 @@ class Cognito(object):
         names we would like to show to our users
         """
         user_attrs = dict_to_cognito(attrs,attr_map)
-        self.get_client().update_user_attributes(
-            UserAttributes=user_attrs,
-            AccessToken=self.access_token
-        )
+        async with self.get_client() as client:
+            await client.update_user_attributes(
+                UserAttributes=user_attrs,
+                AccessToken=self.access_token
+            )
 
-    def get_user(self, attr_map=None):
+
+    async def get_user(self, attr_map=None):
         """
         Returns a UserObj (or whatever the self.user_class is) by using the
         user's access token.
@@ -459,21 +470,23 @@ class Cognito(object):
         names we would like to show to our users
         :return:
         """
-        user = self.get_client().get_user(
+        async with self.get_client() as client:
+            user = await client.get_user(
                 AccessToken=self.access_token
             )
 
-        user_metadata = {
-            'username': user.get('Username'),
-            'id_token': self.id_token,
-            'access_token': self.access_token,
-            'refresh_token': self.refresh_token,
-        }
-        return self.get_user_obj(username=self.username,
-                                 attribute_list=user.get('UserAttributes'),
-                                 metadata=user_metadata,attr_map=attr_map)
+            user_metadata = {
+                'username': user.get('Username'),
+                'id_token': self.id_token,
+                'access_token': self.access_token,
+                'refresh_token': self.refresh_token,
+            }
+            return self.get_user_obj(username=self.username,
+                                    attribute_list=user.get('UserAttributes'),
+                                    metadata=user_metadata, attr_map=attr_map)
 
-    def get_users(self, attr_map=None):
+
+    async def get_users(self, attr_map=None):
         """
         Returns all users for a user pool. Returns instances of the
         self.user_class.
@@ -482,36 +495,38 @@ class Cognito(object):
         """
         kwargs = {"UserPoolId":self.user_pool_id}
 
-        response = self.get_client().list_users(**kwargs)
-        return [self.get_user_obj(user.get('Username'),
-                                  attribute_list=user.get('Attributes'),
-                                  metadata={'username':user.get('Username')},
-                                  attr_map=attr_map)
-                for user in response.get('Users')]
+        async with self.get_client() as client:
+            response = await client.list_users(**kwargs)
+            return [self.get_user_obj(user.get('Username'),
+                                    attribute_list=user.get('Attributes'),
+                                    metadata={'username': user.get('Username')},
+                                    attr_map=attr_map)
+                    for user in response.get('Users')]
 
-    def admin_get_user(self, attr_map=None):
+    async def admin_get_user(self, attr_map=None):
         """
         Get the user's details using admin super privileges.
         :param attr_map: Dictionary map from Cognito attributes to attribute
         names we would like to show to our users
         :return: UserObj object
         """
-        user = self.get_client().admin_get_user(
+        async with self.get_client() as client:
+            user = await client.admin_get_user(
                            UserPoolId=self.user_pool_id,
                            Username=self.username)
-        user_metadata = {
-            'enabled': user.get('Enabled'),
-            'user_status':user.get('UserStatus'),
-            'username':user.get('Username'),
-            'id_token': self.id_token,
-            'access_token': self.access_token,
-            'refresh_token': self.refresh_token
-        }
-        return self.get_user_obj(username=self.username,
-                                 attribute_list=user.get('UserAttributes'),
-                                 metadata=user_metadata,attr_map=attr_map)
+            user_metadata = {
+                'enabled': user.get('Enabled'),
+                'user_status': user.get('UserStatus'),
+                'username': user.get('Username'),
+                'id_token': self.id_token,
+                'access_token': self.access_token,
+                'refresh_token': self.refresh_token
+            }
+            return self.get_user_obj(username=self.username,
+                                    attribute_list=user.get('UserAttributes'),
+                                    metadata=user_metadata, attr_map=attr_map)
 
-    def admin_create_user(self, username, temporary_password='', attr_map=None, **kwargs):
+    async def admin_create_user(self, username, temporary_password=None, attr_map=None, **kwargs):
         """
         Create a user using admin super privileges.
         :param username: User Pool username
@@ -521,64 +536,80 @@ class Cognito(object):
         :param kwargs: Additional User Pool attributes
         :return response: Response from Cognito
         """
-        response = self.get_client().admin_create_user(
-            UserPoolId=self.user_pool_id,
-            Username=username,
-            UserAttributes=dict_to_cognito(kwargs, attr_map),
-            TemporaryPassword=temporary_password,
-        )
-        kwargs.update(username=username)
-        self._set_attributes(response, kwargs)
+        async with self.get_client() as client:
+            if temporary_password:
+                response = await client.admin_create_user(
+                    UserPoolId=self.user_pool_id,
+                    Username=username,
+                    UserAttributes=dict_to_cognito(kwargs, attr_map),
+                    TemporaryPassword=temporary_password,
+                )
+            else:
+                # don't @ me, i'm not the one who designed that API
+                response = await client.admin_create_user(
+                    UserPoolId=self.user_pool_id,
+                    Username=username,
+                    UserAttributes=dict_to_cognito(kwargs, attr_map)
+                )
+            kwargs.update(username=username)
+            self._set_attributes(response, kwargs)
 
-        response.pop('ResponseMetadata')
-        return response
+            response.pop('ResponseMetadata')
+            return response
 
-    def send_verification(self, attribute='email'):
+
+    async def send_verification(self, attribute='email'):
         """
         Sends the user an attribute verification code for the specified attribute name.
         :param attribute: Attribute to confirm
         """
-        self.check_token()
-        self.get_client().get_user_attribute_verification_code(
-            AccessToken=self.access_token,
-            AttributeName=attribute
-        )
+        await self.check_token()
+        async with self.get_client() as client:
+            await client.get_user_attribute_verification_code(
+                AccessToken=self.access_token,
+                AttributeName=attribute
+            )
 
-    def validate_verification(self, confirmation_code, attribute='email'):
+
+    async def validate_verification(self, confirmation_code, attribute='email'):
         """
         Verifies the specified user attributes in the user pool.
         :param confirmation_code: Code sent to user upon intiating verification
         :param attribute: Attribute to confirm
         """
-        self.check_token()
-        return self.get_client().verify_user_attribute(
-            AccessToken=self.access_token,
-            AttributeName=attribute,
-            Code=confirmation_code
-        )
+        await self.check_token()
+        async with self.get_client() as client:
+            await client.verify_user_attribute(
+                AccessToken=self.access_token,
+                AttributeName=attribute,
+                Code=confirmation_code
+            )
 
-    def renew_access_token(self):
+
+    async def renew_access_token(self):
         """
         Sets a new access token on the User using the refresh token.
         """
         auth_params = {'REFRESH_TOKEN': self.refresh_token}
         self._add_secret_hash(auth_params, 'SECRET_HASH')
-        refresh_response = self.get_client().initiate_auth(
-            ClientId=self.client_id,
-            AuthFlow='REFRESH_TOKEN',
-            AuthParameters=auth_params,
-        )
 
-        self._set_attributes(
-            refresh_response,
-            {
-                'access_token': refresh_response['AuthenticationResult']['AccessToken'],
-                'id_token': refresh_response['AuthenticationResult']['IdToken'],
-                'token_type': refresh_response['AuthenticationResult']['TokenType']
-            }
-        )
+        async with self.get_client() as client:
+            refresh_response = await client.initiate_auth(
+                ClientId=self.client_id,
+                AuthFlow='REFRESH_TOKEN',
+                AuthParameters=auth_params,
+            )
 
-    def initiate_forgot_password(self):
+            self._set_attributes(
+                refresh_response,
+                {
+                    'access_token': refresh_response['AuthenticationResult']['AccessToken'],
+                    'id_token': refresh_response['AuthenticationResult']['IdToken'],
+                    'token_type': refresh_response['AuthenticationResult']['TokenType']
+                }
+            )
+
+    async def initiate_forgot_password(self):
         """
         Sends a verification code to the user to use to change their password.
         """
@@ -587,14 +618,15 @@ class Cognito(object):
             'Username': self.username
         }
         self._add_secret_hash(params, 'SecretHash')
-        self.get_client().forgot_password(**params)
+        async with self.get_client() as client:
+            await client.forgot_password(**params)
 
 
-    def delete_user(self):
-
-        self.get_client().delete_user(
-            AccessToken=self.access_token
-        )
+    async def delete_user(self):
+        async with self.get_client() as client:
+            await client.delete_user(
+                AccessToken=self.access_token
+            )
 
 
     async def admin_delete_user(self):
@@ -604,7 +636,7 @@ class Cognito(object):
                 Username=self.username
             )
 
-    def confirm_forgot_password(self, confirmation_code, password):
+    async def confirm_forgot_password(self, confirmation_code, password):
         """
         Allows a user to enter a code provided when they reset their password
         to update their password.
@@ -618,19 +650,21 @@ class Cognito(object):
                   'Password': password
                   }
         self._add_secret_hash(params, 'SecretHash')
-        response = self.get_client().confirm_forgot_password(**params)
-        self._set_attributes(response, {'password': password})
+        async with self.get_client() as client:
+            response = await client.confirm_forgot_password(**params)
+            self._set_attributes(response, {'password': password})
 
-    def change_password(self, previous_password, proposed_password):
+    async def change_password(self, previous_password, proposed_password):
         """
         Change the User password
         """
-        self.check_token()
-        response = self.get_client().change_password(
-            PreviousPassword=previous_password,
-            ProposedPassword=proposed_password,
-            AccessToken=self.access_token
-        )
+        async with self.get_client() as client:
+            await self.check_token()
+            response = client.change_password(
+                PreviousPassword=previous_password,
+                ProposedPassword=proposed_password,
+                AccessToken=self.access_token
+            )
         self._set_attributes(response, {'password': proposed_password})
 
     def _add_secret_hash(self, parameters, key):
@@ -640,8 +674,8 @@ class Cognito(object):
         """
         if self.client_secret is not None:
             secret_hash = AWSSRP.get_secret_hash(self.username, self.client_id,
-                                                 self.client_secret)
-            parameters[key] = secret_hash
+            self.client_secret)
+        parameters[key] = secret_hash
 
     def _set_attributes(self, response, attribute_dict):
         """
@@ -657,23 +691,25 @@ class Cognito(object):
             for k, v in attribute_dict.items():
                 setattr(self, k, v)
 
-    def get_group(self, group_name):
+    async def get_group(self, group_name):
         """
         Get a group by a name
         :param group_name: name of a group
         :return: instance of the self.group_class
         """
-        response = self.get_client().get_group(GroupName=group_name,
-                                         UserPoolId=self.user_pool_id)
-        return self.get_group_obj(response.get('Group'))
+        async with self.get_client() as client:
+            response = await client.get_group(GroupName=group_name,
+                                            UserPoolId=self.user_pool_id)
+            return self.get_group_obj(response.get('Group'))
 
-    def get_groups(self):
+    async def get_groups(self):
         """
         Returns all groups for a user pool. Returns instances of the
         self.group_class.
         :return: list of instances
         """
-        response = self.get_client().list_groups(UserPoolId=self.user_pool_id)
-        return [self.get_group_obj(group_data)
-                for group_data in response.get('Groups')]
+        async with self.get_client() as client:
+            response = await client.list_groups(UserPoolId=self.user_pool_id)
+            return [self.get_group_obj(group_data)
+                    for group_data in response.get('Groups')]
 
