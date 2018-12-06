@@ -258,6 +258,7 @@ class Cognito(object):
             expired = True
             if renew:
                 self.renew_access_token()
+                expired = self.check_token(renew=False)
         else:
             expired = False
         return expired
@@ -364,6 +365,12 @@ class Cognito(object):
             AuthFlow='ADMIN_NO_SRP_AUTH',
             AuthParameters=auth_params,
         )
+
+        if tokens.get('ChallengeName') is not None:
+            if tokens.get('ChallengeName') == aws_srp.AWSSRP.NEW_PASSWORD_REQUIRED_CHALLENGE:
+                raise aws_srp.ForceChangePasswordException('Change password before authenticating')
+            else:
+                raise NotImplementedError('The %s challenge is not supported' % tokens.get('ChallengeName'))
 
         self.verify_token(tokens['AuthenticationResult']['IdToken'], 'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
@@ -497,7 +504,7 @@ class Cognito(object):
                                  attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata,attr_map=attr_map)
 
-    def admin_create_user(self, username, temporary_password='', attr_map=None, **kwargs):
+    def admin_create_user(self, username, temporary_password='', attr_map=None, email_delivery=False, sms_delivery=False, **kwargs):
         """
         Create a user using admin super privileges.
         :param username: User Pool username
@@ -507,15 +514,37 @@ class Cognito(object):
         :param kwargs: Additional User Pool attributes
         :return response: Response from Cognito
         """
-        response = self.client.admin_create_user(
-            UserPoolId=self.user_pool_id,
-            Username=username,
-            UserAttributes=dict_to_cognito(kwargs, attr_map),
-            TemporaryPassword=temporary_password,
-        )
+        delivery_mediums = []
+        if email_delivery:
+            delivery_mediums.append("EMAIL")
+        if sms_delivery:
+            delivery_mediums.append("SMS")
+        args = {
+            'UserPoolId': self.user_pool_id,
+            'Username': username,
+            'UserAttributes': dict_to_cognito(kwargs, attr_map),            
+            'DesiredDeliveryMediums': delivery_mediums
+        }
+        if temporary_password is not None:
+            args['TemporaryPassword'] = temporary_password
+        response = self.client.admin_create_user(**args)
         kwargs.update(username=username)
         self._set_attributes(response, kwargs)
 
+        response.pop('ResponseMetadata')
+        return response
+
+    def admin_reset_password(self, username):
+        """
+        Reset a password using admin super privileges.
+        :param username: User Pool username
+        :return response: Response from Cognito
+        """
+        args = {
+            'UserPoolId': self.user_pool_id,
+            'Username': username            
+        }
+        response = self.client.admin_reset_user_password(**args)        
         response.pop('ResponseMetadata')
         return response
 
@@ -548,7 +577,9 @@ class Cognito(object):
         Sets a new access token on the User using the refresh token.
         """
         auth_params = {'REFRESH_TOKEN': self.refresh_token}
+
         self._add_secret_hash(auth_params, 'SECRET_HASH')
+
         refresh_response = self.client.initiate_auth(
             ClientId=self.client_id,
             AuthFlow='REFRESH_TOKEN',
