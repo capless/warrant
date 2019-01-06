@@ -3,6 +3,7 @@ import aioboto3
 import datetime
 import re
 import aiohttp
+import attr
 
 from envs import env
 from jose import jwt, JWTError
@@ -136,51 +137,43 @@ class GroupObj(object):
             class_name=self.__class__.__name__, uni=self.__unicode__())
 
 
+@attr.s
 class Cognito(object):
-
     user_class = UserObj
     group_class = GroupObj
 
-    def __init__(
-            self, user_pool_id, client_id, user_pool_region=None,
-            username=None, id_token=None, refresh_token=None,
-            access_token=None, client_secret=None,
-            access_key=None, secret_key=None, loop=None
-    ):
-        """
-        :param user_pool_id: Cognito User Pool ID
-        :param client_id: Cognito User Pool Application client ID
-        :param username: User Pool username
-        :param id_token: ID Token returned by authentication
-        :param refresh_token: Refresh Token returned by authentication
-        :param access_token: Access Token returned by authentication
-        :param access_key: AWS IAM access key
-        :param secret_key: AWS IAM secret key
-        """
+    custom_attributes = {}
 
-        self.user_pool_id = user_pool_id
-        self.client_id = client_id
-        self.user_pool_region = user_pool_region or \
-            self.user_pool_id.split('_')[0]
-        self.username = username
-        self.id_token = id_token
-        self.access_token = access_token
-        self.refresh_token = refresh_token
-        self.client_secret = client_secret
-        self.token_type = None
-        self.custom_attributes = None
-        self.base_attributes = None
-        self.loop = loop
+    user_pool_id = attr.ib()
+    client_id = attr.ib()
+    user_pool_region = attr.ib()
 
+    username = attr.ib(default=None)
+    id_token = attr.ib(default=None)
+    access_token = attr.ib(default=None)
+    client_secret = attr.ib(default=None)
+
+    access_key = attr.ib(default=None)
+    secret_key = attr.ib(default=None)
+
+    loop = attr.ib(default=None)
+
+    @user_pool_region.default
+    def generate_region_from_pool(self):
+        return self.user_pool_id.split('_')[0]
+
+    def get_session(self):
+        return aiohttp.ClientSession(loop=self.loop)
+
+    def get_client(self):
         boto3_client_kwargs = {}
-        if access_key and secret_key:
-            boto3_client_kwargs['aws_access_key_id'] = access_key
-            boto3_client_kwargs['aws_secret_access_key'] = secret_key
-        if user_pool_region:
-            boto3_client_kwargs['region_name'] = user_pool_region
+        if self.access_key and self.secret_key:
+            boto3_client_kwargs['aws_access_key_id'] = self.access_key
+            boto3_client_kwargs['aws_secret_access_key'] = self.secret_key
+        if self.user_pool_region:
+            boto3_client_kwargs['region_name'] = self.user_pool_region
 
-        self.get_session = lambda: aiohttp.ClientSession(loop=self.loop)
-        self.get_client = lambda: aioboto3.client(
+        return aioboto3.client(
             'cognito-idp', loop=self.loop, **boto3_client_kwargs)
 
     async def get_keys(self):
