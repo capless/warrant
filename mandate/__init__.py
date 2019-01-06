@@ -8,7 +8,6 @@ from jose import jwt, JWTError
 
 from .aws_srp import AWSSRP
 from .exceptions import TokenVerificationException
-
 from .utils import cognito_to_dict, dict_to_cognito
 
 __version__ = "0.1.0"
