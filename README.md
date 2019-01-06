@@ -95,3 +95,6 @@ If you create an app without app secrets, you should also be able to use the non
 ```python
     await cog.logout()
 ```
+
+## Unit tests
+python -m unittest discover tests
