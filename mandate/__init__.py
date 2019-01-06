@@ -1,7 +1,6 @@
 import ast
 import aioboto3
 import datetime
-import re
 import aiohttp
 import attr
 
@@ -41,24 +40,6 @@ def dict_to_cognito(attributes, attr_map=None):
             attributes[k] = attributes.pop(v)
 
     return [{'Name': key, 'Value': value} for key, value in attributes.items()]
-
-
-def camel_to_snake(camel_str):
-    """
-    :param camel_str: string
-    :return: string converted from a CamelCase to a snake_case
-    """
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', camel_str)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
-
-
-def snake_to_camel(snake_str):
-    """
-    :param snake_str: string
-    :return: string converted from a snake_case to a CamelCase
-    """
-    components = snake_str.split('_')
-    return ''.join(x.title() for x in components)
 
 
 class UserObj(object):
