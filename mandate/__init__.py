@@ -109,6 +109,7 @@ class Cognito(object):
     secret_key = attr.ib(default=None)
 
     loop = attr.ib(default=None)
+    _client = None
 
     @user_pool_region.default
     def generate_region_from_pool(self):
@@ -118,6 +119,9 @@ class Cognito(object):
         return aiohttp.ClientSession(loop=self.loop)
 
     def get_client(self):
+        if self._client:
+            return self._client
+
         boto3_client_kwargs = {}
         if self.access_key and self.secret_key:
             boto3_client_kwargs['aws_access_key_id'] = self.access_key
@@ -125,8 +129,10 @@ class Cognito(object):
         if self.user_pool_region:
             boto3_client_kwargs['region_name'] = self.user_pool_region
 
-        return aioboto3.client(
+        self._client = aioboto3.client(
             'cognito-idp', loop=self.loop, **boto3_client_kwargs)
+
+        return self._client
 
     async def get_keys(self):
         try:
