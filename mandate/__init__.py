@@ -1,63 +1,16 @@
-import ast
 import aioboto3
 import datetime
-import re
 import aiohttp
+import attr
 
 from envs import env
 from jose import jwt, JWTError
 
 from .aws_srp import AWSSRP
 from .exceptions import TokenVerificationException
+from .utils import cognito_to_dict, dict_to_cognito
 
 __version__ = "0.1.0"
-
-
-def cognito_to_dict(attr_list, attr_map=None):
-    if attr_map is None:
-        attr_map = {}
-    attr_dict = dict()
-    for a in attr_list:
-        name = a.get('Name')
-        value = a.get('Value')
-        if value in ['true', 'false']:
-            value = ast.literal_eval(value.capitalize())
-        name = attr_map.get(name, name)
-        attr_dict[name] = value
-    return attr_dict
-
-
-def dict_to_cognito(attributes, attr_map=None):
-    """
-    :param attributes: Dictionary of User Pool attribute names/values
-    :return: list of User Pool attribute formatted dicts:
-    {'Name': <attr_name>, 'Value': <attr_value>}
-    """
-    if attr_map is None:
-        attr_map = {}
-    for k, v in attr_map.items():
-        if v in attributes.keys():
-            attributes[k] = attributes.pop(v)
-
-    return [{'Name': key, 'Value': value} for key, value in attributes.items()]
-
-
-def camel_to_snake(camel_str):
-    """
-    :param camel_str: string
-    :return: string converted from a CamelCase to a snake_case
-    """
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', camel_str)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
-
-
-def snake_to_camel(snake_str):
-    """
-    :param snake_str: string
-    :return: string converted from a snake_case to a CamelCase
-    """
-    components = snake_str.split('_')
-    return ''.join(x.title() for x in components)
 
 
 class UserObj(object):
@@ -136,51 +89,50 @@ class GroupObj(object):
             class_name=self.__class__.__name__, uni=self.__unicode__())
 
 
+@attr.s
 class Cognito(object):
-
     user_class = UserObj
     group_class = GroupObj
 
-    def __init__(
-            self, user_pool_id, client_id, user_pool_region=None,
-            username=None, id_token=None, refresh_token=None,
-            access_token=None, client_secret=None,
-            access_key=None, secret_key=None, loop=None
-    ):
-        """
-        :param user_pool_id: Cognito User Pool ID
-        :param client_id: Cognito User Pool Application client ID
-        :param username: User Pool username
-        :param id_token: ID Token returned by authentication
-        :param refresh_token: Refresh Token returned by authentication
-        :param access_token: Access Token returned by authentication
-        :param access_key: AWS IAM access key
-        :param secret_key: AWS IAM secret key
-        """
+    custom_attributes = {}
 
-        self.user_pool_id = user_pool_id
-        self.client_id = client_id
-        self.user_pool_region = self.user_pool_id.split('_')[0]
-        self.username = username
-        self.id_token = id_token
-        self.access_token = access_token
-        self.refresh_token = refresh_token
-        self.client_secret = client_secret
-        self.token_type = None
-        self.custom_attributes = None
-        self.base_attributes = None
-        self.loop = loop
+    user_pool_id = attr.ib()
+    client_id = attr.ib()
+    user_pool_region = attr.ib()
+
+    username = attr.ib(default=None)
+    id_token = attr.ib(default=None)
+    access_token = attr.ib(default=None)
+    client_secret = attr.ib(default=None)
+
+    access_key = attr.ib(default=None)
+    secret_key = attr.ib(default=None)
+
+    loop = attr.ib(default=None)
+    _client = None
+
+    @user_pool_region.default
+    def generate_region_from_pool(self):
+        return self.user_pool_id.split('_')[0]
+
+    def get_session(self):
+        return aiohttp.ClientSession(loop=self.loop)
+
+    def get_client(self):
+        if self._client:
+            return self._client
 
         boto3_client_kwargs = {}
-        if access_key and secret_key:
-            boto3_client_kwargs['aws_access_key_id'] = access_key
-            boto3_client_kwargs['aws_secret_access_key'] = secret_key
-        if user_pool_region:
-            boto3_client_kwargs['region_name'] = user_pool_region
+        if self.access_key and self.secret_key:
+            boto3_client_kwargs['aws_access_key_id'] = self.access_key
+            boto3_client_kwargs['aws_secret_access_key'] = self.secret_key
+        if self.user_pool_region:
+            boto3_client_kwargs['region_name'] = self.user_pool_region
 
-        self.get_session = lambda: aiohttp.ClientSession(loop=self.loop)
-        self.get_client = lambda: aioboto3.client(
+        self._client = aioboto3.client(
             'cognito-idp', loop=self.loop, **boto3_client_kwargs)
+
+        return self._client
 
     async def get_keys(self):
         try:

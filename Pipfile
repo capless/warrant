@@ -10,6 +10,8 @@ python-jose-cryptodome = ">=1.3.2"
 aiohttp = "*"
 aiohttp-client-manager = "*"
 lru-dict = "*"
+attrs = "*"
+asynctest = "*"
 
 [dev-packages]
 "autopep8" = "*"
