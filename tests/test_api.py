@@ -1,12 +1,7 @@
-import asyncio
 import asynctest
 
 from mandate import Cognito
 from kgb import SpyAgency
-
-
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
 
 
 class testApi(SpyAgency, asynctest.TestCase):
