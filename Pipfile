@@ -11,6 +11,7 @@ aiohttp = "*"
 aiohttp-client-manager = "*"
 lru-dict = "*"
 attrs = "*"
+asynctest = "*"
 
 [dev-packages]
 "autopep8" = "*"
