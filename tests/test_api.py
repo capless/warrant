@@ -1,10 +1,9 @@
 import asynctest
 
 from mandate import Cognito
-from kgb import SpyAgency
 
 
-class testApi(SpyAgency, asynctest.TestCase):
+class testApi(asynctest.TestCase):
     async def test_register(self):
         cog = Cognito(
             'user_pool_id',  # user pool id
@@ -16,7 +15,6 @@ class testApi(SpyAgency, asynctest.TestCase):
         cog.add_base_attributes(email='test@test.com')
 
         async with cog.get_client() as client:
-            mock = asynctest.CoroutineMock()
-            self.spy_on(client.sign_up, call_fake=mock)
-            await cog.register('test@test.com', 'password')
-            mock.assert_awaited()
+            with asynctest.patch.object(client, 'sign_up', new=asynctest.CoroutineMock()):
+                await cog.register('test@test.com', 'password')
+                client.sign_up.assert_awaited()
