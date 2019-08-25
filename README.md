@@ -73,7 +73,8 @@ u = Cognito('your-user-pool-id','your-client-id',
     refresh_token='optional-refresh-token',
     access_token='optional-access-token',
     access_key='optional-access-key',
-    secret_key='optional-secret-key')
+    secret_key='optional-secret-key',
+    user_pool_region='optional-user-pool-region')
 ```
 
 #### Arguments
@@ -87,7 +88,7 @@ u = Cognito('your-user-pool-id','your-client-id',
 - **access_token:** Access Token returned by authentication
 - **access_key:** AWS IAM access key
 - **secret_key:** AWS IAM secret key
-
+- **user_poor_region:** Region Cognito User Pool is hosted in
 
 ### Examples with Realistic Arguments ###
 
