@@ -1,4 +1,14 @@
 from setuptools import setup, find_packages
+<<<<<<< Updated upstream
+=======
+
+# pip >= 10
+try: 
+    from pip._internal.req import parse_requirements
+# pip <= 9.0.3
+except ImportError: 
+    from pip.req import parse_requirements
+>>>>>>> Stashed changes
 
 
 def parse_requirements(filename):

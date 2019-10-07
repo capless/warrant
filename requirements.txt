@@ -1,4 +1,8 @@
 boto3>=1.4.3
 envs>=0.3.0
 requests>=2.13.0
+<<<<<<< Updated upstream
 warrant-lite>=1.0.3
+=======
+pycryptodome>=3.9.0
+>>>>>>> Stashed changes
