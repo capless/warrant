@@ -1,10 +1,15 @@
-import os
-
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
+
+# pip >= 10
+try: 
+    from pip._internal.req import parse_requirements
+# pip <= 9.0.3
+except ImportError: 
+    from pip.req import parse_requirements
 
 install_reqs = parse_requirements('requirements.txt', session=False)
 test_reqs = parse_requirements('requirements_test.txt', session=False)
+
 
 version = '0.6.1'
 

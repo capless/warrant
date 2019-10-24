@@ -3,11 +3,13 @@ import boto3
 import datetime
 import re
 import requests
+from botocore.config import Config
+from botocore import UNSIGNED
 
 from envs import env
 from jose import jwt, JWTError
+from warrant_lite import WarrantLite
 
-from .aws_srp import AWSSRP
 from .exceptions import TokenVerificationException
 
 
@@ -137,9 +139,9 @@ class Cognito(object):
             self, user_pool_id, client_id,user_pool_region=None,
             username=None, id_token=None, refresh_token=None,
             access_token=None, client_secret=None,
-            access_key=None, secret_key=None,
+            access_key=None, secret_key=None
             ):
-        """
+        """ 
         :param user_pool_id: Cognito User Pool ID
         :param client_id: Cognito User Pool Application client ID
         :param username: User Pool username
@@ -152,7 +154,7 @@ class Cognito(object):
 
         self.user_pool_id = user_pool_id
         self.client_id = client_id
-        self.user_pool_region = self.user_pool_id.split('_')[0]
+        self.user_pool_region = self.user_pool_id.split('_')[0] 
         self.username = username
         self.id_token = id_token
         self.access_token = access_token
@@ -163,13 +165,18 @@ class Cognito(object):
         self.base_attributes = None
 
         boto3_client_kwargs = {}
+        boto3_client_kwargs['service_name'] = 'cognito-idp'
         if access_key and secret_key:
             boto3_client_kwargs['aws_access_key_id'] = access_key
             boto3_client_kwargs['aws_secret_access_key'] = secret_key
         if user_pool_region:
             boto3_client_kwargs['region_name'] = user_pool_region
+        
+        # if access_key and secret_key is not provided, make all calls UNSIGNED
+        if not access_key and not secret_key:
+            boto3_client_kwargs['config'] = Config(signature_version=UNSIGNED)
 
-        self.client = boto3.client('cognito-idp', **boto3_client_kwargs)
+        self.client = boto3.client(**boto3_client_kwargs)
 
     def get_keys(self):
 
@@ -242,7 +249,7 @@ class Cognito(object):
         """
         self.client = session.client('cognito-idp')
 
-    def check_token(self, renew=True):
+    def check_token(self, renew=True): 
         """
         Checks the exp attribute of the access_token and either refreshes
         the tokens by calling the renew_access_tokens method or does nothing
@@ -268,14 +275,14 @@ class Cognito(object):
     def add_custom_attributes(self, **kwargs):
         custom_key = 'custom'
         custom_attributes = {}
-        
+
         for old_key, value in kwargs.items():
             new_key = custom_key + ':' + old_key
             custom_attributes[new_key] = value
-        
+
         self.custom_attributes = custom_attributes
 
-    def register(self, username, password, attr_map=None):
+    def register(self, username, password, attr_map=None, validation_data=None):
         """
         Register the user. Other base attributes from AWS Cognito User Pools
         are  address, birthdate, email, family_name (last name), gender,
@@ -285,6 +292,7 @@ class Cognito(object):
         :param username: User Pool username
         :param password: User Pool password
         :param attr_map: Attribute map to Cognito's attributes
+        :param validation_data: Validation data dict for custom validation in pre-sign up trigger
         :return response: Response from Cognito
 
         Example response::
@@ -297,7 +305,10 @@ class Cognito(object):
             }
         }
         """
-        attributes = self.base_attributes.copy()
+        if self.base_attributes is None:
+            attributes = {}
+        else:
+            attributes = self.base_attributes.copy()
         if self.custom_attributes:
             attributes.update(self.custom_attributes)
         cognito_attributes = dict_to_cognito(attributes, attr_map)
@@ -307,6 +318,10 @@ class Cognito(object):
             'Password': password,
             'UserAttributes': cognito_attributes
         }
+        if validation_data:
+            cognito_validation_data = dict_to_cognito(validation_data)
+            params.update({'ValidationData': cognito_validation_data})
+
         self._add_secret_hash(params, 'SecretHash')
         response = self.client.sign_up(**params)
 
@@ -330,7 +345,7 @@ class Cognito(object):
             Username=username,
         )
 
-    def confirm_sign_up(self,confirmation_code,username=None):
+    def confirm_sign_up(self, confirmation_code, username=None):
         """
         Using the confirmation code that is either sent via email or text
         message.
@@ -338,13 +353,21 @@ class Cognito(object):
         :param username: User's username
         :return:
         """
-        if not username:
-            username = self.username
         params = {'ClientId': self.client_id,
-                  'Username': username,
+                  'Username': self.username if username is None else username,
                   'ConfirmationCode': confirmation_code}
         self._add_secret_hash(params, 'SecretHash')
         self.client.confirm_sign_up(**params)
+
+    def resend_confirmation_code(self, username=None):
+        """
+        Resend the confirmation for registration
+        :param username: User's username
+        """
+        params = {'ClientId': self.client_id,
+                  'Username': self.username if username is None else username}
+        self._add_secret_hash(params, 'SecretHash')
+        self.client.resend_confirmation_code(**params)
 
     def admin_authenticate(self, password):
         """
@@ -370,13 +393,14 @@ class Cognito(object):
         self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
-    def authenticate(self, password):
+    def authenticate(self, password): 
         """
         Authenticate the user using the SRP protocol
         :param password: The user's passsword
         :return:
         """
-        aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
+
+        aws = WarrantLite(username=self.username, password=password, pool_id=self.user_pool_id,
                      client_id=self.client_id, client=self.client,
                      client_secret=self.client_secret)
         tokens = aws.authenticate_user()
@@ -391,7 +415,7 @@ class Cognito(object):
         :param password: The user's current passsword
         :param password: The user's new passsword
         """
-        aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
+        aws = WarrantLite(username=self.username, password=password, pool_id=self.user_pool_id,
                      client_id=self.client_id, client=self.client,
                      client_secret=self.client_secret)
         tokens = aws.set_new_password_challenge(new_password)
@@ -459,7 +483,7 @@ class Cognito(object):
                                  attribute_list=user.get('UserAttributes'),
                                  metadata=user_metadata,attr_map=attr_map)
 
-    def get_users(self, attr_map=None):
+    def get_users(self, attr_map=None, attr_filter=None):
         """
         Returns all users for a user pool. Returns instances of the
         self.user_class.
@@ -467,6 +491,8 @@ class Cognito(object):
         :return:
         """
         kwargs = {"UserPoolId":self.user_pool_id}
+        if attr_filter is not None:
+            kwargs['Filter'] = "%s = \"%s\"" % (attr_filter['Name'], attr_filter['Value'])
 
         response = self.client.list_users(**kwargs)
         return [self.get_user_obj(user.get('Username'),
@@ -543,10 +569,13 @@ class Cognito(object):
             Code=confirmation_code
         )
 
-    def renew_access_token(self):
+    def renew_access_token(self): # BUG: stems from check_token - NotAuthorizedException
         """
         Sets a new access token on the User using the refresh token.
         """
+
+        # Potential fix: try to make the client request unsigned
+
         auth_params = {'REFRESH_TOKEN': self.refresh_token}
         self._add_secret_hash(auth_params, 'SECRET_HASH')
         refresh_response = self.client.initiate_auth(
@@ -624,7 +653,7 @@ class Cognito(object):
         to a parameters dictionary at a specified key
         """
         if self.client_secret is not None:
-            secret_hash = AWSSRP.get_secret_hash(self.username, self.client_id,
+            secret_hash = WarrantLite.get_secret_hash(self.username, self.client_id,
                                                  self.client_secret)
             parameters[key] = secret_hash
 
