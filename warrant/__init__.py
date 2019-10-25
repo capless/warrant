@@ -589,7 +589,7 @@ class Cognito(object):
             Username=self.username
         )
 
-    def admin_delete_user_attribute(self, attributes):
+    def admin_delete_user_attribute(self, username, attributes):
         """
         This method deletes a user attribute with admin role.
 
@@ -598,7 +598,7 @@ class Cognito(object):
         """
         self.client.admin_delete_user_attribute(
             UserPoolId=self.user_pool_id,
-            Username=self.username,
+            Username=username,
             UserAttributeNames=attributes
         )
 
