@@ -589,10 +589,10 @@ class Cognito(object):
             Username=self.username
         )
 
-    def admin_reset_password(self, client_metadata=None):
+    def admin_reset_password(self, username, client_metadata=None):
         response = self.client.admin_reset_user_password(
             UserPoolId=self.user_pool_id,
-            Username=self.username,
+            Username=username,
             ClientMetatada=client_metadata,
         )
 
