@@ -597,8 +597,8 @@ class Cognito(object):
         :return: None
         """
         self.client.admin_delete_user_attribute(
-            UserPoolId='string',
-            Username='string',
+            UserPoolId=self.user_pool_id,
+            Username=self.username,
             UserAttributeNames=attributes
         )
 
