@@ -169,8 +169,8 @@ class Cognito(object):
         if access_key and secret_key:
             boto3_client_kwargs['aws_access_key_id'] = access_key
             boto3_client_kwargs['aws_secret_access_key'] = secret_key
-        if user_pool_region:
-            boto3_client_kwargs['region_name'] = user_pool_region
+        if self.user_pool_region:
+            boto3_client_kwargs['region_name'] = self.user_pool_region
         
         # if access_key and secret_key is not provided, make all calls UNSIGNED
         if not access_key and not secret_key:
