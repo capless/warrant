@@ -137,7 +137,7 @@ class Cognito(object):
             self, user_pool_id, client_id,user_pool_region=None,
             username=None, id_token=None, refresh_token=None,
             access_token=None, client_secret=None,
-            access_key=None, secret_key=None,
+            access_key=None, secret_key=None, user_context_data=None
             ):
         """
         :param user_pool_id: Cognito User Pool ID
@@ -158,6 +158,7 @@ class Cognito(object):
         self.access_token = access_token
         self.refresh_token = refresh_token
         self.client_secret = client_secret
+        self.user_context_data = user_context_data
         self.token_type = None
         self.custom_attributes = None
         self.base_attributes = None
@@ -268,11 +269,11 @@ class Cognito(object):
     def add_custom_attributes(self, **kwargs):
         custom_key = 'custom'
         custom_attributes = {}
-        
+
         for old_key, value in kwargs.items():
             new_key = custom_key + ':' + old_key
             custom_attributes[new_key] = value
-        
+
         self.custom_attributes = custom_attributes
 
     def register(self, username, password, attr_map=None):
@@ -551,6 +552,7 @@ class Cognito(object):
         self._add_secret_hash(auth_params, 'SECRET_HASH')
         refresh_response = self.client.initiate_auth(
             ClientId=self.client_id,
+            UserContextData=user_context_data,
             AuthFlow='REFRESH_TOKEN',
             AuthParameters=auth_params,
         )
@@ -570,6 +572,7 @@ class Cognito(object):
         """
         params = {
             'ClientId': self.client_id,
+            'UserContextData': self.user_context_data,
             'Username': self.username
         }
         self._add_secret_hash(params, 'SecretHash')
@@ -598,6 +601,7 @@ class Cognito(object):
         :param password: New password
         """
         params = {'ClientId': self.client_id,
+                  'UserContextData': self.user_context_data
                   'Username': self.username,
                   'ConfirmationCode': confirmation_code,
                   'Password': password
