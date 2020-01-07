@@ -96,7 +96,7 @@ class AWSSRP(object):
     PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
 
     def __init__(self, username, password, pool_id, client_id, pool_region=None,
-                 client=None, client_secret=None):
+                 client=None, client_secret=None, user_context_data={}):
         if pool_region is not None and client is not None:
             raise ValueError("pool_region and client should not both be specified "
                              "(region should be passed to the boto3 client instead)")
@@ -106,6 +106,7 @@ class AWSSRP(object):
         self.pool_id = pool_id
         self.client_id = client_id
         self.client_secret = client_secret
+        self.user_context_data = user_context_data
         self.client = client if client else boto3.client('cognito-idp', region_name=pool_region)
         self.big_n = hex_to_long(n_hex)
         self.g = hex_to_long(g_hex)
@@ -197,14 +198,14 @@ class AWSSRP(object):
                 self.get_secret_hash(self.username, self.client_id, self.client_secret)})
         return response
 
-    def authenticate_user(self, client=None, user_context_data={}):
+    def authenticate_user(self, client=None):
         boto_client = self.client or client
         auth_params = self.get_auth_params()
         response = boto_client.initiate_auth(
             AuthFlow='USER_SRP_AUTH',
             AuthParameters=auth_params,
             ClientId=(client or self.client_id),
-            UserContextData=user_context_data
+            UserContextData=self.user_context_data
         )
         if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response['ChallengeParameters'])
@@ -220,14 +221,14 @@ class AWSSRP(object):
         else:
             raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
 
-    def set_new_password_challenge(self, new_password, client=None, user_context_data={}):
+    def set_new_password_challenge(self, new_password, client=None):
         boto_client = self.client or client
         auth_params = self.get_auth_params()
         response = boto_client.initiate_auth(
             AuthFlow='USER_SRP_AUTH',
             AuthParameters=auth_params,
             ClientId=(client or self.client_id),
-            UserContextData=user_context_data
+            UserContextData=self.user_context_data
         )
         if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response['ChallengeParameters'])
