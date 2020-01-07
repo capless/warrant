@@ -137,7 +137,7 @@ class Cognito(object):
             self, user_pool_id, client_id,user_pool_region=None,
             username=None, id_token=None, refresh_token=None,
             access_token=None, client_secret=None,
-            access_key=None, secret_key=None, user_context_data=None
+            access_key=None, secret_key=None, user_context_data={}
             ):
         """
         :param user_pool_id: Cognito User Pool ID

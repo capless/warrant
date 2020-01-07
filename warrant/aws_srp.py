@@ -197,7 +197,7 @@ class AWSSRP(object):
                 self.get_secret_hash(self.username, self.client_id, self.client_secret)})
         return response
 
-    def authenticate_user(self, client=None, user_context_data=None):
+    def authenticate_user(self, client=None, user_context_data={}):
         boto_client = self.client or client
         auth_params = self.get_auth_params()
         response = boto_client.initiate_auth(
@@ -220,7 +220,7 @@ class AWSSRP(object):
         else:
             raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
 
-    def set_new_password_challenge(self, new_password, client=None, user_context_data=None):
+    def set_new_password_challenge(self, new_password, client=None, user_context_data={}):
         boto_client = self.client or client
         auth_params = self.get_auth_params()
         response = boto_client.initiate_auth(
