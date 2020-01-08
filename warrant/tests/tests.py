@@ -2,8 +2,8 @@ import unittest
 
 from botocore.exceptions import ParamValidationError
 from botocore.stub import Stubber
-from mock import patch
 from envs import env
+from mock import patch
 
 from warrant import Cognito, UserObj, GroupObj, TokenVerificationException
 from warrant.aws_srp import AWSSRP
@@ -11,13 +11,13 @@ from warrant.aws_srp import AWSSRP
 
 def _mock_authenticate_user(_, client=None):
     return {
-          'AuthenticationResult': {
-              'TokenType': 'admin',
-              'IdToken': 'dummy_token',
-              'AccessToken': 'dummy_token',
-              'RefreshToken': 'dummy_token'
-          }
-      }
+        'AuthenticationResult': {
+            'TokenType': 'admin',
+            'IdToken': 'dummy_token',
+            'AccessToken': 'dummy_token',
+            'RefreshToken': 'dummy_token'
+        }
+    }
 
 
 def _mock_get_params(_):
@@ -100,7 +100,7 @@ class CognitoAuthTestCase(unittest.TestCase):
     def test_authenticate(self):
 
         self.user.authenticate(self.password)
-        self.assertNotEqual(self.user.access_token,None)
+        self.assertNotEqual(self.user.access_token, None)
         self.assertNotEqual(self.user.id_token, None)
         self.assertNotEqual(self.user.refresh_token, None)
 
@@ -110,7 +110,7 @@ class CognitoAuthTestCase(unittest.TestCase):
         self.user.authenticate(self.password)
         bad_access_token = '{}wrong'.format(self.user.access_token)
 
-        with self.assertRaises(TokenVerificationException) as vm:
+        with self.assertRaises(TokenVerificationException):
             self.user.verify_token(bad_access_token, 'access_token', 'access')
 
     # def test_logout(self):
@@ -129,9 +129,9 @@ class CognitoAuthTestCase(unittest.TestCase):
             name='Brian Jones', email='bjones39@capless.io',
             phone_number='+19194894555', gender='Male',
             preferred_username='billyocean')
-        res = u.register('sampleuser', 'sample4#Password')
+        u.register('sampleuser', 'sample4#Password')
 
-        #TODO: Write assumptions
+        # TODO: Write assumptions
 
     @patch('warrant.aws_srp.AWSSRP.authenticate_user', _mock_authenticate_user)
     @patch('warrant.Cognito.verify_token', _mock_verify_tokens)
@@ -164,11 +164,11 @@ class CognitoAuthTestCase(unittest.TestCase):
             stub.assert_no_pending_responses()
 
     @patch('warrant.Cognito', autospec=True)
-    def test_update_profile(self,cognito_user):
+    def test_update_profile(self, cognito_user):
         u = cognito_user(self.cognito_user_pool_id, self.app_id,
                          username=self.username)
         u.authenticate(self.password)
-        u.update_profile({'given_name':'Jenkins'})
+        u.update_profile({'given_name': 'Jenkins'})
 
     def test_admin_get_user(self):
 
@@ -199,17 +199,17 @@ class CognitoAuthTestCase(unittest.TestCase):
         self.assertFalse(self.user.check_token())
 
     @patch('warrant.Cognito', autospec=True)
-    def test_validate_verification(self,cognito_user):
-        u = cognito_user(self.cognito_user_pool_id,self.app_id,
+    def test_validate_verification(self, cognito_user):
+        u = cognito_user(self.cognito_user_pool_id, self.app_id,
                          username=self.username)
         u.validate_verification('4321')
 
     @patch('warrant.Cognito', autospec=True)
-    def test_confirm_forgot_password(self,cognito_user):
+    def test_confirm_forgot_password(self, cognito_user):
         u = cognito_user(self.cognito_user_pool_id, self.app_id,
                          username=self.username)
-        u.confirm_forgot_password('4553','samplepassword')
-        with self.assertRaises(TypeError) as vm:
+        u.confirm_forgot_password('4553', 'samplepassword')
+        with self.assertRaises(TypeError):
             u.confirm_forgot_password(self.password)
 
     @patch('warrant.aws_srp.AWSSRP.authenticate_user', _mock_authenticate_user)
@@ -236,22 +236,23 @@ class CognitoAuthTestCase(unittest.TestCase):
             self.user.change_password(self.password, 'crazypassword$45DOG')
             stub.assert_no_pending_responses()
 
-        with self.assertRaises(ParamValidationError) as vm:
+        with self.assertRaises(ParamValidationError):
             self.user.change_password(self.password, None)
 
     def test_set_attributes(self):
-        u = Cognito(self.cognito_user_pool_id,self.app_id)
+        u = Cognito(self.cognito_user_pool_id, self.app_id)
         u._set_attributes({
-                'ResponseMetadata': {
-                    'HTTPStatusCode': 200
-                }
+            'ResponseMetadata': {
+                'HTTPStatusCode': 200
+            }
         },
             {
                 'somerandom': 'attribute'
             }
         )
         self.assertEqual(u.somerandom, 'attribute')
-#
+
+    #
 
     @patch('warrant.Cognito.verify_token', _mock_verify_tokens)
     def test_admin_authenticate(self):
