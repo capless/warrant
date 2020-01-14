@@ -212,7 +212,9 @@ class AWSSRP(object):
             tokens = boto_client.respond_to_auth_challenge(
                 ClientId=self.client_id,
                 ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
-                ChallengeResponses=challenge_response)
+                ChallengeResponses=challenge_response,
+                UserContextData=self.user_context_data
+            )
 
             if tokens.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
                 raise ForceChangePasswordException('Change password before authenticating')
@@ -235,7 +237,9 @@ class AWSSRP(object):
             tokens = boto_client.respond_to_auth_challenge(
                 ClientId=self.client_id,
                 ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
-                ChallengeResponses=challenge_response)
+                ChallengeResponses=challenge_response,
+                UserContextData=self.user_context_data
+            )
 
             if tokens['ChallengeName'] == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
                 challenge_response = {
@@ -246,7 +250,9 @@ class AWSSRP(object):
                     ClientId=self.client_id,
                     ChallengeName=self.NEW_PASSWORD_REQUIRED_CHALLENGE,
                     Session=tokens['Session'],
-                    ChallengeResponses=challenge_response)
+                    ChallengeResponses=challenge_response,
+                    UserContextData=self.user_context_data
+                )
                 return new_password_response
             return tokens
         else:
