@@ -198,17 +198,18 @@ class AWSSRP(object):
                 self.get_secret_hash(self.username, self.client_id, self.client_secret)})
         return response
 
-    def authenticate_user(self, client=None):
+    def authenticate_user(self, client=None, user_context_data=None):
         boto_client = self.client or client
+        user_context_data = self.user_context_data or user_context_dataå
         auth_params = self.get_auth_params()
 
-        print('USER_CONTEXT: {0}'.format(self.user_context_data))
+        print('USER_CONTEXT: {0}'.format(user_context_data))
 
         response = boto_client.initiate_auth(
             AuthFlow='USER_SRP_AUTH',
             AuthParameters=auth_params,
             ClientId=(client or self.client_id),
-            UserContextData=self.user_context_data
+            UserContextData=user_context_data
         )
         if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response['ChallengeParameters'])
@@ -216,7 +217,7 @@ class AWSSRP(object):
                 ClientId=self.client_id,
                 ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
                 ChallengeResponses=challenge_response,
-                UserContextData=self.user_context_data
+                UserContextData=user_context_data
             )
 
             if tokens.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
