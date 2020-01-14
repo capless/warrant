@@ -201,6 +201,9 @@ class AWSSRP(object):
     def authenticate_user(self, client=None):
         boto_client = self.client or client
         auth_params = self.get_auth_params()
+
+        print('USER_CONTEXT: {0}'.format(self.user_context_data))
+
         response = boto_client.initiate_auth(
             AuthFlow='USER_SRP_AUTH',
             AuthParameters=auth_params,
