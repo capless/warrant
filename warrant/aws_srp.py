@@ -200,7 +200,7 @@ class AWSSRP(object):
 
     def authenticate_user(self, client=None, user_context_data=None):
         boto_client = self.client or client
-        user_context_data = self.user_context_data or user_context_dataå
+        user_context_data = self.user_context_data or user_context_data
         auth_params = self.get_auth_params()
 
         print('USER_CONTEXT: {0}'.format(user_context_data))
