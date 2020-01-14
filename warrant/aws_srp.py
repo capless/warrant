@@ -211,6 +211,7 @@ class AWSSRP(object):
             ClientId=(client or self.client_id),
             UserContextData=user_context_data
         )
+        print('AUTH_RESPONSE: {0}'.format(response))
         if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response['ChallengeParameters'])
             tokens = boto_client.respond_to_auth_challenge(
@@ -219,6 +220,8 @@ class AWSSRP(object):
                 ChallengeResponses=challenge_response,
                 UserContextData=user_context_data
             )
+
+            print('AUTH_TOKENS: {0}'.format(tokens))
 
             if tokens.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
                 raise ForceChangePasswordException('Change password before authenticating')
