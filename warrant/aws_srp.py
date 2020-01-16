@@ -198,7 +198,7 @@ class AWSSRP(object):
                 self.get_secret_hash(self.username, self.client_id, self.client_secret)})
         return response
 
-    def admin_authenticate_user(self, client=None, context_data=None):
+    def admin_authenticate_user(self, client=None, context_data={}):
         boto_client = self.client or client
         auth_params = self.get_auth_params()
 
@@ -228,7 +228,7 @@ class AWSSRP(object):
             raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
 
 
-    def authenticate_user(self, client=None, user_context_data=None):
+    def authenticate_user(self, client=None, user_context_data={}):
         boto_client = self.client or client
         user_context_data = self.user_context_data or user_context_data
         auth_params = self.get_auth_params()
@@ -256,14 +256,16 @@ class AWSSRP(object):
         else:
             raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
 
-    def set_new_password_challenge(self, new_password, client=None):
+    def set_new_password_challenge(self, new_password, client=None, user_context_data={}):
         boto_client = self.client or client
         auth_params = self.get_auth_params()
+        user_context_data = self.user_context_data or user_context_data
+
         response = boto_client.initiate_auth(
             AuthFlow='USER_SRP_AUTH',
             AuthParameters=auth_params,
             ClientId=(client or self.client_id),
-            UserContextData=self.user_context_data
+            UserContextData=user_context_data
         )
         if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response['ChallengeParameters'])
@@ -271,7 +273,7 @@ class AWSSRP(object):
                 ClientId=self.client_id,
                 ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
                 ChallengeResponses=challenge_response,
-                UserContextData=self.user_context_data
+                UserContextData=user_context_data
             )
 
             if tokens['ChallengeName'] == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
@@ -284,7 +286,7 @@ class AWSSRP(object):
                     ChallengeName=self.NEW_PASSWORD_REQUIRED_CHALLENGE,
                     Session=tokens['Session'],
                     ChallengeResponses=challenge_response,
-                    UserContextData=self.user_context_data
+                    UserContextData=user_context_data
                 )
                 return new_password_response
             return tokens
