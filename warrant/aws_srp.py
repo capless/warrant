@@ -256,6 +256,43 @@ class AWSSRP(object):
         else:
             raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
 
+    def admin_set_new_password_challenge(self, new_password, client=None, context_data={}):
+        boto_client = self.client or client
+        auth_params = self.get_auth_params()
+
+        response = boto_client.admin_initiate_auth(
+            AuthFlow='USER_SRP_AUTH',
+            AuthParameters=auth_params,
+            ClientId=(client or self.client_id),
+            ContextData=context_data
+        )
+        if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
+            challenge_response = self.process_challenge(response['ChallengeParameters'])
+            tokens = boto_client.admin_respond_to_auth_challenge(
+                ClientId=self.client_id,
+                ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
+                ChallengeResponses=challenge_response,
+                ContextData=context_data
+            )
+
+            if tokens['ChallengeName'] == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
+                challenge_response = {
+                    'USERNAME': auth_params['USERNAME'],
+                    'NEW_PASSWORD': new_password
+                }
+                new_password_response = boto_client.admin_respond_to_auth_challenge(
+                    ClientId=self.client_id,
+                    ChallengeName=self.NEW_PASSWORD_REQUIRED_CHALLENGE,
+                    Session=tokens['Session'],
+                    ChallengeResponses=challenge_response,
+                    ContextData=context_data
+                )
+                return new_password_response
+            return tokens
+        else:
+            raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
+
+
     def set_new_password_challenge(self, new_password, client=None, user_context_data={}):
         boto_client = self.client or client
         auth_params = self.get_auth_params()
