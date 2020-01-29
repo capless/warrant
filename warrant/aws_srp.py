@@ -261,6 +261,7 @@ class AWSSRP(object):
         auth_params = self.get_auth_params()
 
         response = boto_client.admin_initiate_auth(
+            UserPoolId=self.pool_id,
             AuthFlow='USER_SRP_AUTH',
             AuthParameters=auth_params,
             ClientId=(client or self.client_id),
@@ -269,6 +270,7 @@ class AWSSRP(object):
         if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response['ChallengeParameters'])
             tokens = boto_client.admin_respond_to_auth_challenge(
+                UserPoolId=self.pool_id,
                 ClientId=self.client_id,
                 ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
                 ChallengeResponses=challenge_response,
@@ -281,6 +283,7 @@ class AWSSRP(object):
                     'NEW_PASSWORD': new_password
                 }
                 new_password_response = boto_client.admin_respond_to_auth_challenge(
+                    UserPoolId=self.pool_id,
                     ClientId=self.client_id,
                     ChallengeName=self.NEW_PASSWORD_REQUIRED_CHALLENGE,
                     Session=tokens['Session'],
