@@ -551,7 +551,7 @@ class Cognito(object):
         self._add_secret_hash(auth_params, 'SECRET_HASH')
         refresh_response = self.client.initiate_auth(
             ClientId=self.client_id,
-            AuthFlow='REFRESH_TOKEN',
+            AuthFlow='REFRESH_TOKEN_AUTH',
             AuthParameters=auth_params,
         )
 
