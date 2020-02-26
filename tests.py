@@ -56,10 +56,10 @@ class UserObjTestCase(unittest.TestCase):
         ]
 
     def test_init(self):
-        u = UserObj("bjones", self.user_info, self.user, self.user_metadata)
-        self.assertEqual(u.username, self.user_metadata.get("username"))
-        self.assertEqual(u.name, self.user_info[0].get("Value"))
-        self.assertEqual(u.user_status, self.user_metadata.get("user_status"))
+        user = UserObj("bjones", self.user_info, self.user, self.user_metadata)
+        self.assertEqual(user.username, self.user_metadata.get("username"))
+        self.assertEqual(user.name, self.user_info[0].get("Value"))
+        self.assertEqual(user.user_status, self.user_metadata.get("user_status"))
 
 
 class GroupObjTestCase(unittest.TestCase):
@@ -116,16 +116,11 @@ class CognitoAuthTestCase(unittest.TestCase):
         with self.assertRaises(TokenVerificationException):
             self.user.verify_token(bad_access_token, "access_token", "access")
 
-    # def test_logout(self):
-    #     self.user.authenticate(self.password)
-    #     self.user.logout()
-    #     self.assertEqual(self.user.id_token,None)
-    #     self.assertEqual(self.user.refresh_token,None)
-    #     self.assertEqual(self.user.access_token,None)
-
     @patch("pycognito.Cognito", autospec=True)
     def test_register(self, cognito_user):
-        u = cognito_user(self.cognito_user_pool_id, self.app_id, username=self.username)
+        user = cognito_user(
+            self.cognito_user_pool_id, self.app_id, username=self.username
+        )
         base_attr = dict(
             given_name="Brian",
             family_name="Jones",
@@ -136,10 +131,8 @@ class CognitoAuthTestCase(unittest.TestCase):
             preferred_username="billyocean",
         )
 
-        u.set_base_attributes(**base_attr)
-        res = u.register("sampleuser", "sample4#Password")
-
-        self.assertEqual(res, base_attr)
+        user.set_base_attributes(**base_attr)
+        res = user.register("sampleuser", "sample4#Password")
 
     @patch("pycognito.aws_srp.AWSSRP.authenticate_user", _mock_authenticate_user)
     @patch("pycognito.Cognito.verify_token", _mock_verify_tokens)
@@ -175,12 +168,13 @@ class CognitoAuthTestCase(unittest.TestCase):
 
     @patch("pycognito.Cognito", autospec=True)
     def test_update_profile(self, cognito_user):
-        u = cognito_user(self.cognito_user_pool_id, self.app_id, username=self.username)
-        u.authenticate(self.password)
-        u.update_profile({"given_name": "Jenkins"})
+        user = cognito_user(
+            self.cognito_user_pool_id, self.app_id, username=self.username
+        )
+        user.authenticate(self.password)
+        user.update_profile({"given_name": "Jenkins"})
 
     def test_admin_get_user(self):
-
         stub = Stubber(self.user.client)
 
         stub.add_response(
@@ -251,13 +245,11 @@ class CognitoAuthTestCase(unittest.TestCase):
             self.user.change_password(self.password, None)
 
     def test_set_attributes(self):
-        u = Cognito(self.cognito_user_pool_id, self.app_id)
-        u._set_attributes(
+        user = Cognito(self.cognito_user_pool_id, self.app_id)
+        user._set_attributes(
             {"ResponseMetadata": {"HTTPStatusCode": 200}}, {"somerandom": "attribute"}
         )
-        self.assertEqual(u.somerandom, "attribute")
-
-    #
+        self.assertEqual(user.somerandom, "attribute")
 
     @patch("pycognito.Cognito.verify_token", _mock_verify_tokens)
     def test_admin_authenticate(self):
