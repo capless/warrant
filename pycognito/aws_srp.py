@@ -37,8 +37,8 @@ INFO_BITS = bytearray("Caldera Derived Key", "utf-8")
 
 def hash_sha256(buf):
     """AuthenticationHelper.hash"""
-    a = hashlib.sha256(buf).hexdigest()
-    return (64 - len(a)) * "0" + a
+    value = hashlib.sha256(buf).hexdigest()
+    return (64 - len(value)) * "0" + value
 
 
 def hex_hash(hex_string):
@@ -84,8 +84,8 @@ def compute_hkdf(ikm, salt):
     @private
     """
     prk = hmac.new(salt, ikm, hashlib.sha256).digest()
-    INFO_BITS_update = INFO_BITS + bytearray(chr(1), "utf-8")
-    hmac_hash = hmac.new(prk, INFO_BITS_update, hashlib.sha256).digest()
+    info_bits_update = INFO_BITS + bytearray(chr(1), "utf-8")
+    hmac_hash = hmac.new(prk, info_bits_update, hashlib.sha256).digest()
     return hmac_hash[:16]
 
 
@@ -100,7 +100,7 @@ def calculate_u(big_a, big_b):
     return hex_to_long(u_hex_hash)
 
 
-class AWSSRP(object):
+class AWSSRP:
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = "NEW_PASSWORD_REQUIRED"
     PASSWORD_VERIFIER_CHALLENGE = "PASSWORD_VERIFIER"
@@ -130,8 +130,8 @@ class AWSSRP(object):
             client if client else boto3.client("cognito-idp", region_name=pool_region)
         )
         self.big_n = hex_to_long(N_HEX)
-        self.g = hex_to_long(G_HEX)
-        self.k = hex_to_long(hex_hash("00" + N_HEX + "0" + G_HEX))
+        self.val_g = hex_to_long(G_HEX)
+        self.val_k = hex_to_long(hex_hash("00" + N_HEX + "0" + G_HEX))
         self.small_a_value = self.generate_random_small_a()
         self.large_a_value = self.calculate_a()
 
@@ -150,7 +150,7 @@ class AWSSRP(object):
         :param {Long integer} a Randomly generated small A.
         :return {Long integer} Computed large A.
         """
-        big_a = pow(self.g, self.small_a_value, self.big_n)
+        big_a = pow(self.val_g, self.small_a_value, self.big_n)
         # safety check
         if (big_a % self.big_n) == 0:
             raise ValueError("Safety check for A failed")
@@ -172,8 +172,8 @@ class AWSSRP(object):
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
-        g_mod_pow_xn = pow(self.g, x_value, self.big_n)
-        int_value2 = server_b_value - self.k * g_mod_pow_xn
+        g_mod_pow_xn = pow(self.val_g, x_value, self.big_n)
+        int_value2 = server_b_value - self.val_k * g_mod_pow_xn
         s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
         hkdf = compute_hkdf(
             bytearray.fromhex(pad_hex(s_value)),
@@ -265,10 +265,10 @@ class AWSSRP(object):
                 )
 
             return tokens
-        else:
-            raise NotImplementedError(
-                "The %s challenge is not supported" % response["ChallengeName"]
-            )
+
+        raise NotImplementedError(
+            "The %s challenge is not supported" % response["ChallengeName"]
+        )
 
     def set_new_password_challenge(self, new_password, client=None):
         boto_client = self.client or client
@@ -299,7 +299,7 @@ class AWSSRP(object):
                 )
                 return new_password_response
             return tokens
-        else:
-            raise NotImplementedError(
-                "The %s challenge is not supported" % response["ChallengeName"]
-            )
+
+        raise NotImplementedError(
+            "The %s challenge is not supported" % response["ChallengeName"]
+        )

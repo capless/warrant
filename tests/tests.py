@@ -57,7 +57,7 @@ class UserObjTestCase(unittest.TestCase):
 
     def test_init(self):
         u = UserObj("bjones", self.user_info, self.user, self.user_metadata)
-        self.assertEqual(u.pk, self.user_metadata.get("username"))
+        self.assertEqual(u.username, self.user_metadata.get("username"))
         self.assertEqual(u.name, self.user_info[0].get("Value"))
         self.assertEqual(u.user_status, self.user_metadata.get("user_status"))
 
@@ -199,7 +199,7 @@ class CognitoAuthTestCase(unittest.TestCase):
 
         with stub:
             u = self.user.admin_get_user()
-            self.assertEqual(u.pk, self.username)
+            self.assertEqual(u.username, self.username)
             stub.assert_no_pending_responses()
 
     def test_check_token(self):

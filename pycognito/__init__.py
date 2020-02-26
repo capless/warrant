@@ -1,11 +1,11 @@
 import ast
-import boto3
 import datetime
 import re
-import requests
 
+import boto3
 from envs import env
-from jose import jwt, JWTError
+from jose import JWTError, jwt
+import requests
 
 from .aws_srp import AWSSRP
 from .exceptions import TokenVerificationException
@@ -15,9 +15,9 @@ def cognito_to_dict(attr_list, attr_map=None):
     if attr_map is None:
         attr_map = {}
     attr_dict = dict()
-    for a in attr_list:
-        name = a.get("Name")
-        value = a.get("Value")
+    for attr in attr_list:
+        name = attr.get("Name")
+        value = attr.get("Value")
         if value in ["true", "false"]:
             value = ast.literal_eval(value.capitalize())
         name = attr_map.get(name, name)
@@ -32,9 +32,9 @@ def dict_to_cognito(attributes, attr_map=None):
     """
     if attr_map is None:
         attr_map = {}
-    for k, v in attr_map.items():
-        if v in attributes.keys():
-            attributes[k] = attributes.pop(v)
+    for key, value in attr_map.items():
+        if value in attributes.keys():
+            attributes[key] = attributes.pop(value)
 
     return [{"Name": key, "Value": value} for key, value in attributes.items()]
 
@@ -44,8 +44,9 @@ def camel_to_snake(camel_str):
     :param camel_str: string
     :return: string converted from a CamelCase to a snake_case
     """
-    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", camel_str)
-    return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+    return re.sub(
+        "([a-z0-9])([A-Z])", r"\1_\2", re.sub("(.)([A-Z][a-z]+)", r"\1_\2", camel_str)
+    ).lower()
 
 
 def snake_to_camel(snake_str):
@@ -57,7 +58,7 @@ def snake_to_camel(snake_str):
     return "".join(x.title() for x in components)
 
 
-class UserObj(object):
+class UserObj:
     def __init__(
         self, username, attribute_list, cognito_obj, metadata=None, attr_map=None
     ):
@@ -67,7 +68,6 @@ class UserObj(object):
         :param metadata: Dictionary of User metadata
         """
         self.username = username
-        self.pk = username
         self._cognito = cognito_obj
         self._attr_map = {} if attr_map is None else attr_map
         self._data = cognito_to_dict(attribute_list, self._attr_map)
@@ -89,6 +89,7 @@ class UserObj(object):
             return self._data.get(name)
         if name in list(self.__dict__.get("_metadata", {}).keys()):
             return self._metadata.get(name)
+        raise AttributeError(name)
 
     def __setattr__(self, name, value):
         if name in list(self.__dict__.get("_data", {}).keys()):
@@ -109,7 +110,7 @@ class UserObj(object):
         self._cognito.delete_user()
 
 
-class GroupObj(object):
+class GroupObj:
     def __init__(self, group_data, cognito_obj):
         """
         :param group_data: a dictionary with information about a group
@@ -133,7 +134,7 @@ class GroupObj(object):
         )
 
 
-class Cognito(object):
+class Cognito:
 
     user_class = UserObj
     group_class = GroupObj
@@ -175,6 +176,7 @@ class Cognito(object):
         self.token_type = None
         self.custom_attributes = None
         self.base_attributes = None
+        self.pool_jwk = None
 
         boto3_client_kwargs = {}
         if access_key and secret_key:
@@ -681,8 +683,8 @@ class Cognito(object):
             "HTTPStatusCode", response["ResponseMetadata"]["HTTPStatusCode"]
         )
         if status_code == 200:
-            for k, v in attribute_dict.items():
-                setattr(self, k, v)
+            for key, value in attribute_dict.items():
+                setattr(self, key, value)
 
     def get_group(self, group_name):
         """
