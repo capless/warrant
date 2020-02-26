@@ -1,10 +1,6 @@
-![alt text](https://s3.amazonaws.com/capless/images/warrant-small.png "Warrant - Serverless Authentication")
-
-# Warrant
+# pyCognito
 
 Makes working with AWS Cognito easier for Python developers.
-
-[![Build Status](https://travis-ci.org/capless/warrant.svg?branch=master)](https://travis-ci.org/capless/warrant)
 
 ## Getting Started
 
@@ -12,7 +8,7 @@ Makes working with AWS Cognito easier for Python developers.
 - [Install](#install)
 - [Environment Variables](#environment-variables)
     - [COGNITO_JWKS](#cognito-jwks) (optional)
-- [Cognito Utility Class](#cognito-utility-class) `warrant.Cognito`
+- [Cognito Utility Class](#cognito-utility-class) `pycognito.Cognito`
     - [Cognito Methods](#cognito-methods)
         - [Register](#register)
         - [Authenticate](#authenticate)
@@ -31,10 +27,10 @@ Makes working with AWS Cognito easier for Python developers.
         - [Get Groups](#get-groups)
         - [Check Token](#check-token)
         - [Logout](#logout)
-- [Cognito SRP Utility](#cognito-srp-utility) `warrant.aws_srp.AWSSRP`
+- [Cognito SRP Utility](#cognito-srp-utility) `pycognito.aws_srp.AWSSRP`
     - [Using AWSSRP](#using-awssrp)
-- [Projects Using Warrant](#projects-using-warrant)
-    - [Django Warrant](#django-warrant)
+- [Projects Using pyCognito](#projects-using-pycognito)
+    - [Django pyCognito](#django-pycognito)
 - [Authors](#authors)
 - [Release Notes](#release-notes)
 
@@ -45,7 +41,7 @@ Makes working with AWS Cognito easier for Python developers.
 
 ## Install
 
-`pip install warrant`
+`pip install pycognito`
 
 
 ## Environment Variables
@@ -64,7 +60,7 @@ COGNITO_JWKS={"keys": [{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKL
 ### Example with All Arguments ###
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     client_secret='optional-client-secret'
@@ -95,7 +91,7 @@ u = Cognito('your-user-pool-id','your-client-id',
 
 Used when you only need information about the user pool (ex. list users in the user pool)
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 ```
@@ -104,7 +100,7 @@ u = Cognito('your-user-pool-id','your-client-id')
 
 Used when the user has not logged in yet. Start with these arguments when you plan to authenticate with either SRP (authenticate) or admin_authenticate (admin_initiate_auth).
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     username='bob')
@@ -115,7 +111,7 @@ u = Cognito('your-user-pool-id','your-client-id',
 Used after the user has already authenticated and you need to build a new Cognito instance (ex. for use in a view).
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='your-id-token',
@@ -133,7 +129,7 @@ Register a user to the user pool
 
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id', 'your-client-id')
 
@@ -147,7 +143,7 @@ Register with custom attributes.
 Firstly, add custom attributes on 'General settings -> Attributes' page.
 Secondly, set permissions on 'Generals settings-> App clients-> Show details-> Set attribute read and write permissions' page.
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id', 'your-client-id')
 
@@ -171,7 +167,7 @@ Authenticates a user
 If this method call succeeds the instance will have the following attributes **id_token**, **refresh_token**, **access_token**, **expires_in**, **expires_datetime**, and **token_type**.
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     username='bob')
@@ -188,7 +184,7 @@ u.authenticate(password='bobs-password')
 Authenticate the user using admin super privileges
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     username='bob')
@@ -236,7 +232,7 @@ to retrieve a forgotten password
 Changes the user's password
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 #If you don't use your tokens then you will need to
 #use your username and password and call the authenticate method
@@ -257,7 +253,7 @@ u.change_password('previous-password','proposed-password')
 Use the confirmation code that is sent via email or text to confirm the user's account
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 
@@ -274,7 +270,7 @@ u.confirm_sign_up('users-conf-code',username='bob')
 Update the user's profile
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='id-token',refresh_token='refresh-token',
@@ -293,7 +289,7 @@ u.update_profile({'given_name':'Edward','family_name':'Smith',},attr_map=dict())
 Send verification email or text for either the email or phone attributes.
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     id_token='id-token',refresh_token='refresh-token',
@@ -333,7 +329,7 @@ u.get_user_obj(username='bjones',
 Get all of the user's attributes. Gets the user's attributes using Boto3 and uses that info to create an instance of the user_class
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id',
     username='bob')
@@ -350,7 +346,7 @@ Get a list of the user in the user pool.
 
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 
@@ -382,7 +378,7 @@ Get all of the group's attributes. Returns an instance of the group_class.
 Requires developer credentials.
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 
@@ -397,7 +393,7 @@ group = u.get_group(group_name='some_group_name')
 Get a list of groups in the user pool. Requires developer credentials.
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 u = Cognito('your-user-pool-id','your-client-id')
 
@@ -424,7 +420,7 @@ No arguments for check_token
 Logs the user out of all clients and removes the expires_in, expires_datetime, id_token, refresh_token, access_token, and token_type attributes.
 
 ```python
-from warrant import Cognito
+from pycognito import Cognito
 
 #If you don't use your tokens then you will need to
 #use your username and password and call the authenticate method
@@ -452,29 +448,10 @@ Afterwards, the `authenticate_user` class method is used for SRP authentication.
 
 ```python
 import boto3
-from warrant.aws_srp import AWSSRP
+from pycognito.aws_srp import AWSSRP
 
 client = boto3.client('cognito-idp')
 aws = AWSSRP(username='username', password='password', pool_id='user_pool_id',
              client_id='client_id', client=client)
 tokens = aws.authenticate_user()
 ```
-
-## Projects Using Warrant
-
-#### [Django Warrant](https://www.github.com/metametricsinc/django-warrant)
-
-## Authors
-
-### Brian Jinwright
-**Twitter:** [@brianjinwright](https://www.twitter.com/brianjinwright)
-**GitHub:** [@bjinwright](https://www.github.com/bjinwright/)
-
-### Eric Petway
-**GitHub:** [@ebpetway](https://www.github.com/ebpetway)
-
-### Sergey Vishnikin
-
-**GitHub:** [@armicron](https://www.github.com/armicron)
-
-## [Release Notes](https://github.com/capless/warrant/blob/master/HISTORY.md)

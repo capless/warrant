@@ -1,0 +1,24 @@
+// See https://aka.ms/vscode-remote/devcontainer.json for format details.
+{
+  "name": "pycognito dev",
+  "context": "..",
+  "dockerFile": "Dockerfile",
+  "postCreateCommand": "pip3 install -e .",
+  "runArgs": ["-e", "GIT_EDITOR=code --wait"],
+  "extensions": [
+    "ms-python.python",
+    "ms-azure-devops.azure-pipelines",
+    "esbenp.prettier-vscode"
+  ],
+  "settings": {
+    "python.pythonPath": "/usr/local/bin/python",
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": ["--target-version", "py36"],
+    "editor.formatOnPaste": false,
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "files.trimTrailingWhitespace": true
+  }
+}
