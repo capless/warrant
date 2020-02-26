@@ -132,7 +132,7 @@ class CognitoAuthTestCase(unittest.TestCase):
         )
 
         user.set_base_attributes(**base_attr)
-        res = user.register("sampleuser", "sample4#Password")
+        user.register("sampleuser", "sample4#Password")
 
     @patch("pycognito.aws_srp.AWSSRP.authenticate_user", _mock_authenticate_user)
     @patch("pycognito.Cognito.verify_token", _mock_verify_tokens)
