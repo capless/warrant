@@ -499,12 +499,21 @@ class Cognito:
         """
         Returns all users for a user pool. Returns instances of the
         self.user_class.
-        :param attr_map:
-        :return:
+        :param attr_map: Dictionary map from Cognito attributes to attribute
+        names we would like to show to our users
+        :return: list of self.user_class
         """
-        kwargs = {"UserPoolId": self.user_pool_id}
+        response = self.client.list_users(UserPoolId=self.user_pool_id)
+        user_list = response.get("Users")
+        page_token = response.get("PaginationToken")
 
-        response = self.client.list_users(**kwargs)
+        while page_token:
+            response = self.client.list_users(
+                UserPoolId=self.user_pool_id, PaginationToken=page_token
+            )
+            user_list.extend(response.get("Users"))
+            page_token = response.get("PaginationToken")
+
         return [
             self.get_user_obj(
                 user.get("Username"),
@@ -512,7 +521,7 @@ class Cognito:
                 metadata={"username": user.get("Username")},
                 attr_map=attr_map,
             )
-            for user in response.get("Users")
+            for user in user_list
         ]
 
     def admin_get_user(self, attr_map=None):
