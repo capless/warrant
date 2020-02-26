@@ -1,0 +1,75 @@
+# Python package
+# Create and test a Python package on multiple Python versions.
+# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+
+trigger:
+  branches:
+    include:
+    - master
+  tags:
+    include:
+    - '*'
+pr:
+- master
+variables:
+- group: twine
+
+
+jobs:
+
+- job: "Tox"
+
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      Python36:
+        python.version: '3.6'
+      Python37:
+        python.version: '3.7'
+      Python38:
+        python.version: '3.8'
+  steps:
+  - task: UsePythonVersion@0
+    displayName: 'Use Python $(python.version)'
+    inputs:
+      versionSpec: '$(python.version)'
+  - script: |
+      pip install tox
+    displayName: 'Install Tox'
+  - script: |
+      tox
+    displayName: 'Run Tox'
+
+- job: 'Release'
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
+  dependsOn:
+  - 'Tox'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - task: UsePythonVersion@0
+    displayName: 'Use Python 3.7'
+    inputs:
+      versionSpec: '3.7'
+  - script: |
+      setup_version="$(python setup.py -V)"
+      branch_version="$(Build.SourceBranchName)"
+      if [ "${setup_version}" != "${branch_version}" ]; then
+        echo "Version of tag ${branch_version} don't match with ${setup_version}!"
+        exit 1
+      fi
+    displayName: 'Check version of branch/tag'
+  - script: |
+      pip install twine wheel
+    displayName: 'Install twine'
+  - script: |
+      python setup.py sdist bdist_wheel
+    displayName: 'Build package'
+  - script: |
+      export TWINE_USERNAME="$(twineUser)"
+      export TWINE_PASSWORD="$(twinePassword)"
+
+      twine upload dist/*
+    displayName: 'Upload pypi'
