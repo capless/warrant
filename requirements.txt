@@ -1,4 +1,0 @@
-boto3>=1.4.3
-envs>=0.3.0
-python-jose[cryptography]>=3.1.0
-requests>=2.13.0

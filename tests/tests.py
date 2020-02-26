@@ -113,7 +113,7 @@ class CognitoAuthTestCase(unittest.TestCase):
         self.user.authenticate(self.password)
         bad_access_token = "{}wrong".format(self.user.access_token)
 
-        with self.assertRaises(TokenVerificationException) as vm:
+        with self.assertRaises(TokenVerificationException):
             self.user.verify_token(bad_access_token, "access_token", "access")
 
     # def test_logout(self):
@@ -220,7 +220,7 @@ class CognitoAuthTestCase(unittest.TestCase):
     def test_confirm_forgot_password(self, cognito_user):
         u = cognito_user(self.cognito_user_pool_id, self.app_id, username=self.username)
         u.confirm_forgot_password("4553", "samplepassword")
-        with self.assertRaises(TypeError) as vm:
+        with self.assertRaises(TypeError):
             u.confirm_forgot_password(self.password)
 
     @patch("warrant.aws_srp.AWSSRP.authenticate_user", _mock_authenticate_user)
@@ -247,7 +247,7 @@ class CognitoAuthTestCase(unittest.TestCase):
             self.user.change_password(self.password, "crazypassword$45DOG")
             stub.assert_no_pending_responses()
 
-        with self.assertRaises(ParamValidationError) as vm:
+        with self.assertRaises(ParamValidationError):
             self.user.change_password(self.password, None)
 
     def test_set_attributes(self):

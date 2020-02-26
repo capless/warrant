@@ -1,24 +1,15 @@
-import os
+from pathlib import Path
 
 from setuptools import setup, find_packages
 
-try:
-    from pip._internal.req import parse_requirements
-except ImportError:
-    from pip.req import parse_requirements
-
-install_reqs = parse_requirements("requirements.txt", session=False)
-test_reqs = parse_requirements("requirements_test.txt", session=False)
-
-version = "0.6.1"
-
-README = """Python class to integrate Boto3's Cognito client so it is easy to login users. With SRP support."""
+VERSION = "0.1.0"
 
 setup(
     name="pycognito",
-    version=version,
-    description=README,
-    long_description=README,
+    version=VERSION,
+    description="Python class to integrate Boto3's Cognito client so it is easy to login users. With SRP support.",
+    long_description=Path("README.md").read_text(),
+    long_description_content_type="text/markdown",
     classifiers=[
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
@@ -33,8 +24,12 @@ setup(
     packages=find_packages(),
     url="https://github.com/pvizeli/pycognito",
     license="Apache License 2.0",
-    install_requires=[str(ir.req) for ir in install_reqs],
-    extras_require={"test": [str(ir.req) for ir in test_reqs]},
+    install_requires=[
+        "boto3>=1.10.49",
+        "envs>=1.3",
+        "python-jose[cryptography]>=3.1.0",
+        "requests>=2.22.0",
+    ],
     include_package_data=True,
     zip_safe=True,
 )
