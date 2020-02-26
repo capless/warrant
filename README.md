@@ -7,57 +7,59 @@ Makes working with AWS Cognito easier for Python developers.
 - [Python Versions Supported](#python-versions-supported)
 - [Install](#install)
 - [Environment Variables](#environment-variables)
-    - [COGNITO_JWKS](#cognito-jwks) (optional)
+  - [COGNITO_JWKS](#cognito-jwks) (optional)
 - [Cognito Utility Class](#cognito-utility-class) `pycognito.Cognito`
-    - [Cognito Methods](#cognito-methods)
-        - [Register](#register)
-        - [Authenticate](#authenticate)
-        - [Admin Authenticate](#admin-authenticate)
-        - [Initiate Forgot Password](#initiate-forgot-password)
-        - [Confirm Forgot Password](#confirm-forgot-password)
-        - [Change Password](#change-password)
-        - [Confirm Sign Up](#confirm-sign-up)
-        - [Update Profile](#update-profile)
-        - [Send Verification](#send-verification)
-        - [Get User Object](#get-user-object)
-        - [Get User](#get-user)
-        - [Get Users](#get-users)
-        - [Get Group Object](#get-group-object)
-        - [Get Group](#get-group)
-        - [Get Groups](#get-groups)
-        - [Check Token](#check-token)
-        - [Logout](#logout)
+  - [Cognito Methods](#cognito-methods)
+    - [Register](#register)
+    - [Authenticate](#authenticate)
+    - [Admin Authenticate](#admin-authenticate)
+    - [Initiate Forgot Password](#initiate-forgot-password)
+    - [Confirm Forgot Password](#confirm-forgot-password)
+    - [Change Password](#change-password)
+    - [Confirm Sign Up](#confirm-sign-up)
+    - [Update Profile](#update-profile)
+    - [Send Verification](#send-verification)
+    - [Get User Object](#get-user-object)
+    - [Get User](#get-user)
+    - [Get Users](#get-users)
+    - [Get Group Object](#get-group-object)
+    - [Get Group](#get-group)
+    - [Get Groups](#get-groups)
+    - [Check Token](#check-token)
+    - [Logout](#logout)
 - [Cognito SRP Utility](#cognito-srp-utility) `pycognito.aws_srp.AWSSRP`
-    - [Using AWSSRP](#using-awssrp)
+  - [Using AWSSRP](#using-awssrp)
 - [Projects Using pyCognito](#projects-using-pycognito)
-    - [Django pyCognito](#django-pycognito)
+  - [Django pyCognito](#django-pycognito)
 - [Authors](#authors)
 - [Release Notes](#release-notes)
 
 ## Python Versions Supported
 
-- 2.7
 - 3.6
+- 3.7
+- 3.8
 
 ## Install
 
 `pip install pycognito`
-
 
 ## Environment Variables
 
 #### COGNITO_JWKS
 
 **Optional:** This environment variable is a dictionary that represent the well known JWKs assigned to your user pool by AWS Cognito. You can find the keys for your user pool by substituting in your AWS region and pool id for the following example.
- `https://cognito-idp.{aws-region}.amazonaws.com/{user-pool-id}/.well-known/jwks.json`
- 
- **Example Value (Not Real):**
- ```commandline
+`https://cognito-idp.{aws-region}.amazonaws.com/{user-pool-id}/.well-known/jwks.json`
+
+**Example Value (Not Real):**
+
+```commandline
 COGNITO_JWKS={"keys": [{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKLMNOP","kty": "RSA","n": "123456789ABCDEFGHIJKLMNOP","use": "sig"},{"alg": "RS256","e": "AQAB","kid": "123456789ABCDEFGHIJKLMNOP","kty": "RSA","n": "123456789ABCDEFGHIJKLMNOP","use": "sig"}]}
 ```
+
 ## Cognito Utility Class
 
-### Example with All Arguments ###
+### Example with All Arguments
 
 ```python
 from pycognito import Cognito
@@ -84,12 +86,12 @@ u = Cognito('your-user-pool-id','your-client-id',
 - **access_key:** AWS IAM access key
 - **secret_key:** AWS IAM secret key
 
+### Examples with Realistic Arguments
 
-### Examples with Realistic Arguments ###
-
-#### User Pool Id and Client ID Only ####
+#### User Pool Id and Client ID Only
 
 Used when you only need information about the user pool (ex. list users in the user pool)
+
 ```python
 from pycognito import Cognito
 
@@ -99,6 +101,7 @@ u = Cognito('your-user-pool-id','your-client-id')
 #### Username
 
 Used when the user has not logged in yet. Start with these arguments when you plan to authenticate with either SRP (authenticate) or admin_authenticate (admin_initiate_auth).
+
 ```python
 from pycognito import Cognito
 
@@ -106,7 +109,7 @@ u = Cognito('your-user-pool-id','your-client-id',
     username='bob')
 ```
 
-#### Tokens ####
+#### Tokens
 
 Used after the user has already authenticated and you need to build a new Cognito instance (ex. for use in a view).
 
@@ -119,14 +122,13 @@ u = Cognito('your-user-pool-id','your-client-id',
     access_token='your-access-token')
 ```
 
-## Cognito Methods ##
+## Cognito Methods
 
-#### Register ####
+#### Register
 
 Register a user to the user pool
 
 **Important:** The arguments for `set_base_attributes` and `add_custom_attributes` methods depend on your user pool's configuration, and make sure the client id (app id) used has write permissions for the attriubtes you are trying to create. Example, if you want to create a user with a given_name equal to Johnson make sure the client_id you're using has permissions to edit or create given_name for a user in the pool.
-
 
 ```python
 from pycognito import Cognito
@@ -142,6 +144,7 @@ Register with custom attributes.
 
 Firstly, add custom attributes on 'General settings -> Attributes' page.
 Secondly, set permissions on 'Generals settings-> App clients-> Show details-> Set attribute read and write permissions' page.
+
 ```python
 from pycognito import Cognito
 
@@ -153,14 +156,14 @@ u.add_custom_attributes(state='virginia', city='Centreville')
 
 u.register('username', 'password')
 ```
+
 ##### Arguments
 
 - **username:** User Pool username
 - **password:** User Pool password
 - **attr_map:** Attribute map to Cognito's attributes
 
-
-#### Authenticate ####
+#### Authenticate
 
 Authenticates a user
 
@@ -224,10 +227,10 @@ u.confirm_forgot_password('your-confirmation-code','your-new-password')
 ##### Arguments
 
 - **confirmation_code:** The confirmation code sent by a user's request
-to retrieve a forgotten password
+  to retrieve a forgotten password
 - **password:** New password
 
-#### Change Password ####
+#### Change Password
 
 Changes the user's password
 
@@ -248,7 +251,7 @@ u.change_password('previous-password','proposed-password')
 - **previous_password:** - User's previous password
 - **proposed_password:** - The password that the user wants to change to.
 
-#### Confirm Sign Up ####
+#### Confirm Sign Up
 
 Use the confirmation code that is sent via email or text to confirm the user's account
 
@@ -265,7 +268,7 @@ u.confirm_sign_up('users-conf-code',username='bob')
 - **confirmation_code:** Confirmation code sent via text or email
 - **username:** User's username
 
-#### Update Profile ####
+#### Update Profile
 
 Update the user's profile
 
@@ -284,7 +287,7 @@ u.update_profile({'given_name':'Edward','family_name':'Smith',},attr_map=dict())
 - **attrs:** Dictionary of attribute name, values
 - **attr_map:** Dictionary map from Cognito attributes to attribute names we would like to show to our users
 
-#### Send Verification ####
+#### Send Verification
 
 Send verification email or text for either the email or phone attributes.
 
@@ -317,12 +320,13 @@ u.get_user_obj(username='bjones',
     attr_map={"given_name":"first_name","family_name":"last_name"}
     )
 ```
+
 ##### Arguments
+
 - **username:** Username of the user
 - **attribute_list:** List of tuples that represent the user's attributes as returned by the admin_get_user or get_user boto3 methods
 - **metadata: (optional)** Metadata about the user
 - **attr_map: (optional)** Dictionary that maps the Cognito attribute names to what we'd like to display to the users
-
 
 #### Get User
 
@@ -338,12 +342,12 @@ user = u.get_user(attr_map={"given_name":"first_name","family_name":"last_name"}
 ```
 
 ##### Arguments
+
 - **attr_map:** Dictionary map from Cognito attributes to attribute names we would like to show to our users
 
 #### Get Users
 
 Get a list of the user in the user pool.
-
 
 ```python
 from pycognito import Cognito
@@ -354,6 +358,7 @@ user = u.get_users(attr_map={"given_name":"first_name","family_name":"last_name"
 ```
 
 ##### Arguments
+
 - **attr_map:** Dictionary map from Cognito attributes to attribute names we would like to show to our users
 
 #### Get Group object
@@ -370,6 +375,7 @@ group_obj = u.get_group_obj(group_data)
 ```
 
 ##### Arguments
+
 - **group_data:** Dictionary with group's attributes.
 
 #### Get Group
@@ -386,6 +392,7 @@ group = u.get_group(group_name='some_group_name')
 ```
 
 ##### Arguments
+
 - **group_name:** Name of a group
 
 #### Get Groups
@@ -411,11 +418,12 @@ u = Cognito('your-user-pool-id','your-client-id',
 
 u.check_token()
 ```
+
 ##### Arguments
 
 No arguments for check_token
 
-#### Logout ####
+#### Logout
 
 Logs the user out of all clients and removes the expires_in, expires_datetime, id_token, refresh_token, access_token, and token_type attributes.
 
@@ -430,21 +438,23 @@ u = Cognito('your-user-pool-id','your-client-id',
 
 u.logout()
 ```
+
 ##### Arguments
 
 No arguments for check_token
 
 ## Cognito SRP Utility
+
 The `AWSSRP` class is used to perform [SRP(Secure Remote Password protocol)](https://www.ietf.org/rfc/rfc2945.txt) authentication.
 This is the preferred method of user authentication with AWS Cognito.
 The process involves a series of authentication challenges and responses, which if successful,
 results in a final response that contains ID, access and refresh tokens.
 
 ### Using AWSSRP
+
 The `AWSSRP` class takes a username, password, cognito user pool id, cognito app id, an optional
 client secret (if app client is configured with client secret), an optional pool_region or `boto3` client.
 Afterwards, the `authenticate_user` class method is used for SRP authentication.
-
 
 ```python
 import boto3
