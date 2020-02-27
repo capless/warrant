@@ -151,6 +151,8 @@ class Cognito:
         client_secret=None,
         access_key=None,
         secret_key=None,
+        session=None,
+        botocore_config=None,
     ):
         """
         :param user_pool_id: Cognito User Pool ID
@@ -161,6 +163,8 @@ class Cognito:
         :param access_token: Access Token returned by authentication
         :param access_key: AWS IAM access key
         :param secret_key: AWS IAM secret key
+        :param session: Boto3 client session
+        :param botocore_config: Botocore Config object for the client
         """
 
         self.user_pool_id = user_pool_id
@@ -184,8 +188,13 @@ class Cognito:
             boto3_client_kwargs["aws_secret_access_key"] = secret_key
         if self.user_pool_region:
             boto3_client_kwargs["region_name"] = self.user_pool_region
+        if botocore_config:
+            boto3_client_kwargs["config"] = botocore_config
 
-        self.client = boto3.client("cognito-idp", **boto3_client_kwargs)
+        if session:
+            self.client = session.client("cognito-idp", **boto3_client_kwargs)
+        else:
+            self.client = boto3.client("cognito-idp", **boto3_client_kwargs)
 
     def get_keys(self):
 
