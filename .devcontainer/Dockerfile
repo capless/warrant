@@ -4,7 +4,7 @@ WORKDIR /workspaces
 
 # Install Python dependencies from requirements.txt if it exists
 COPY requirements_test.txt .
-RUN pip3 install -r requirement_tests.txt \
+RUN pip3 install -r requirement_test.txt \
     && pip3 install tox \
     && rm -f requirements_test.txt
 
