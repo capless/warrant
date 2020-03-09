@@ -197,22 +197,21 @@ class Cognito:
             self.client = boto3.client("cognito-idp", **boto3_client_kwargs)
 
     def get_keys(self):
-
-        try:
+        if self.pool_jwk:
             return self.pool_jwk
-        except AttributeError:
-            # Check for the dictionary in environment variables.
-            pool_jwk_env = env("COGNITO_JWKS", {}, var_type="dict")
-            if len(pool_jwk_env.keys()) > 0:
-                self.pool_jwk = pool_jwk_env
-                return self.pool_jwk
-            # If it is not there use the requests library to get it
+
+        # Check for the dictionary in environment variables.
+        pool_jwk_env = env("COGNITO_JWKS", {}, var_type="dict")
+        if pool_jwk_env:
+            self.pool_jwk = pool_jwk_env
+        # If it is not there use the requests library to get it
+        else:
             self.pool_jwk = requests.get(
                 "https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json".format(
                     self.user_pool_region, self.user_pool_id
                 )
             ).json()
-            return self.pool_jwk
+        return self.pool_jwk
 
     def get_key(self, kid):
         keys = self.get_keys().get("keys")
