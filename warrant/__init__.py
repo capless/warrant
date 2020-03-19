@@ -177,9 +177,9 @@ class Cognito(object):
 
     def get_keys(self):
 
-        try:
+        if self.pool_jwk:
             return self.pool_jwk
-        except AttributeError:
+        else:
             # Check for the dictionary in environment variables.
             pool_jwk_env = env('COGNITO_JWKS', {}, var_type='dict')
             if len(pool_jwk_env.keys()) > 0:
