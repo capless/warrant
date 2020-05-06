@@ -206,11 +206,11 @@ class AWSSRP(object):
             ClientId=self.client_id
         )
         if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
-            challenge_response = self.process_challenge(response['ChallengeParameters'])
+            self.challenge_response = self.process_challenge(response['ChallengeParameters'])
             tokens = boto_client.respond_to_auth_challenge(
                 ClientId=self.client_id,
                 ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
-                ChallengeResponses=challenge_response)
+                ChallengeResponses=self.challenge_response)
 
             if tokens.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
                 raise ForceChangePasswordException('Change password before authenticating')
@@ -228,14 +228,14 @@ class AWSSRP(object):
             ClientId=self.client_id
         )
         if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
-            challenge_response = self.process_challenge(response['ChallengeParameters'])
+            self.challenge_response = self.process_challenge(response['ChallengeParameters'])
             tokens = boto_client.respond_to_auth_challenge(
                 ClientId=self.client_id,
                 ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
-                ChallengeResponses=challenge_response)
+                ChallengeResponses=self.challenge_response)
 
             if tokens['ChallengeName'] == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
-                challenge_response = {
+                self.challenge_response = {
                     'USERNAME': auth_params['USERNAME'],
                     'NEW_PASSWORD': new_password
                 }
@@ -243,7 +243,7 @@ class AWSSRP(object):
                     ClientId=self.client_id,
                     ChallengeName=self.NEW_PASSWORD_REQUIRED_CHALLENGE,
                     Session=tokens['Session'],
-                    ChallengeResponses=challenge_response)
+                    ChallengeResponses=self.challenge_response)
                 return new_password_response
             return tokens
         else:
