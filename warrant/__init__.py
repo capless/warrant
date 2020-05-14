@@ -1,5 +1,6 @@
 import ast
 import boto3
+import botocore
 import datetime
 import re
 import requests
@@ -168,6 +169,9 @@ class Cognito(object):
             boto3_client_kwargs['aws_secret_access_key'] = secret_key
         if user_pool_region:
             boto3_client_kwargs['region_name'] = user_pool_region
+
+        config = botocore.config.Config(signature_version=botocore.UNSIGNED)
+        boto3_client_kwargs['config'] = config
 
         self.client = boto3.client('cognito-idp', **boto3_client_kwargs)
 
