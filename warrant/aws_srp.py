@@ -163,7 +163,7 @@ class AWSSRP(object):
         if self.client_secret is not None:
             auth_params.update({
                 "SECRET_HASH":
-                self.get_secret_hash(self.username,self.client_id, self.client_secret)})
+                self.get_secret_hash(self.username, self.client_id, self.client_secret)})
         return auth_params
 
     @staticmethod
@@ -184,7 +184,7 @@ class AWSSRP(object):
                                                     self.password, hex_to_long(srp_b_hex), salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
         msg = bytearray(self.pool_id.split('_')[1], 'utf-8') + bytearray(user_id_for_srp, 'utf-8') + \
-              bytearray(secret_block_bytes) + bytearray(timestamp, 'utf-8')
+            bytearray(secret_block_bytes) + bytearray(timestamp, 'utf-8')
         hmac_obj = hmac.new(hkdf, msg, digestmod=hashlib.sha256)
         signature_string = base64.standard_b64encode(hmac_obj.digest())
         response = {'TIMESTAMP': timestamp,
