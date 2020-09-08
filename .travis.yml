@@ -3,7 +3,6 @@ env:
   - USE_CLIENT_SECRET=True
   - USE_CLIENT_SECRET=False
 python:
-  - "2.7"
   - "3.6"
 # command to install dependencies
 install:
