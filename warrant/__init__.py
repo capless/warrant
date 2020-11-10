@@ -591,6 +591,19 @@ class Cognito(object):
             Username=self.username
         )
 
+    def admin_delete_user_attribute(self, username, attributes):
+        """
+        This method deletes a user attribute with admin role.
+
+        :param attributes: A list of strings representing the user attributes
+        :return: None
+        """
+        self.client.admin_delete_user_attribute(
+            UserPoolId=self.user_pool_id,
+            Username=username,
+            UserAttributeNames=attributes
+        )
+
     def confirm_forgot_password(self, confirmation_code, password):
         """
         Allows a user to enter a code provided when they reset their password
